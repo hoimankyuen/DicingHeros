@@ -2,7 +2,16 @@ fileFormatVersion: 2
 guid: 32a651bb274e43244bf000bb4bd7108c
 ModelImporter:
   serializedVersion: 20200
-  internalIDToNameTable: []
+  internalIDToNameTable:
+  - first:
+      74: -3813080579552387649
+    second: D10_Base|Cone.001Action
+  - first:
+      74: 124545349473358209
+    second: D10_Collider|Cone.001Action.001
+  - first:
+      74: 4740606679116745906
+    second: D10_Model|Cone.001Action.002
   externalObjects: {}
   materials:
     materialImportMode: 2

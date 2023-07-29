@@ -10,13 +10,15 @@ namespace DiceRoller
     {
         public Vector3 euler;
         public int value;
+
+        public string name()
+        {
+            return string.Format("Value: {0} at ({1}, {2}, {3})", value, euler.x, euler.y, euler.z);
+        }
     }
 
     public class Dice : MonoBehaviour
     {
-        public float throwAngleAdjust = 10f;
-        public float rollTorqueAdjust = 20f;
-
         public List<Face> faces = new List<Face>();
 
         // components
@@ -63,10 +65,11 @@ namespace DiceRoller
         {
             if (Application.isEditor)
             {
-                Gizmos.color = Color.red;
-                foreach(Face face in faces)
+                for (int i = 0; i < faces.Count; i++)
                 {
-                    Gizmos.DrawLine(transform.position, transform.position + transform.rotation * Quaternion.Euler(face.euler) * Vector3.up * 0.25f);
+                    Gizmos.color = Color.HSVToRGB((float)i / faces.Count, 1, 1);
+                    Gizmos.DrawLine(transform.position, transform.position + transform.rotation * Quaternion.Euler(faces[i].euler) * Vector3.up * 0.25f);
+
                 }
             }
         }
