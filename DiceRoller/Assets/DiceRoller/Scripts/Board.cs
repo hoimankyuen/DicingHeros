@@ -184,20 +184,31 @@ namespace DiceRoller
                 {
                     foreach (Tile connectedTile in current.Item1.connectedTiles)
                     {
-                        if (!result.Contains(connectedTile) && !search.Exists(x => x.Item1 == connectedTile))
-                        {
-                            search.Add(new Tuple<Tile, int>(connectedTile, current.Item2 - 1));
-                        }
+                        if (!connectedTile.gameObject.activeInHierarchy)
+                            continue;
+                        if (result.Contains(connectedTile))
+                            continue;
+                        if (search.Exists(x => x.Item1 == connectedTile))
+                            continue;
+
+                        search.Add(new Tuple<Tile, int>(connectedTile, current.Item2 - 1));
                     }
                 }
             }
             return result;
         }
 
+        public List<Tile> GetShortestPath(Tile startingTile, Tile targetTile)
+        {
+            return GetShortestPath(new List<Tile>(new Tile[] { startingTile }), targetTile);
+        }
         public List<Tile> GetShortestPath(List<Tile> startingTiles, Tile targetTile)
         {
+            if (startingTiles.Contains(targetTile))
+                return new List<Tile>(new Tile[] { targetTile });
+
             List<Tuple<List<Tile>, float>> search = new List<Tuple<List<Tile>, float>>();
-            List<Tile> result = new List<Tile>();
+            List<Tile> searched = new List<Tile>();
 
             foreach (Tile startingTile in startingTiles)
             {
@@ -209,12 +220,19 @@ namespace DiceRoller
                 search.Sort((a, b) =>  a.Item2 > b.Item2 ? 1 : a.Item2 < b.Item2 ? -1 : 0);
                 Tuple<List<Tile>, float> current = search[0];
                 search.RemoveAt(0);
+                searched.Add(current.Item1[current.Item1.Count - 1]);
 
                 foreach (Tile connectedTile in current.Item1[current.Item1.Count - 1].connectedTiles)
                 {
+                    if (!connectedTile.gameObject.activeInHierarchy)
+                        continue;
+                    if (searched.Contains(connectedTile))
+                        continue;
+                    if (search.Exists(x => x.Item1[x.Item1.Count - 1] == connectedTile))
+                        continue;
+
                     List<Tile> newList = new List<Tile>(current.Item1);
                     newList.Add(connectedTile);
-
                     if (connectedTile == targetTile)
                     {
                         return newList;

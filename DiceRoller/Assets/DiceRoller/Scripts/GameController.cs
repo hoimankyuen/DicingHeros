@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,7 +7,7 @@ using UnityEngine;
 
 namespace DiceRoller
 {
-    public interface IStateMachine
+    public interface IStateBehaviour
     {
         void OnStateEnter();
         void OnStateUpdate();
@@ -30,7 +31,7 @@ namespace DiceRoller
         public static GameController Instance { get; protected set; }
 
         // working variables
-        protected List<IStateMachine> stateMachines = new List<IStateMachine>();
+        protected Dictionary<State, List<Tuple<MonoBehaviour, IStateBehaviour>>> stateBehaviours = new Dictionary<State, List<Tuple<MonoBehaviour, IStateBehaviour>>>();
         protected State nexState = State.None;
         protected List<object> nextStateParams = new List<object>();
         public State CurrentState { get; protected set; } = State.None;
@@ -77,17 +78,22 @@ namespace DiceRoller
         /// <summary>
         /// Register a state machine behaviour to the game controller.
         /// </summary>
-        public void RegisterStateMachine(IStateMachine stateMachine)
+        public void RegisterStateBehaviour(MonoBehaviour host, State state, IStateBehaviour stateBehaviour)
         {
-            stateMachines.Add(stateMachine);
+            if (!stateBehaviours.ContainsKey(state))
+                stateBehaviours[state] = new List<Tuple<MonoBehaviour, IStateBehaviour>>();
+            stateBehaviours[state].Add(new Tuple<MonoBehaviour, IStateBehaviour>(host, stateBehaviour));
         }
 
         /// <summary>
         /// Deregister a state machine behaviour from the game controller.
         /// </summary>
-        public void DeregisterStateMachine(IStateMachine stateMachine)
+        public void DeregisterStateBehaviour(MonoBehaviour host)
         {
-            stateMachines.Remove(stateMachine);
+            foreach (KeyValuePair<State, List<Tuple<MonoBehaviour, IStateBehaviour>>> kvp in stateBehaviours)
+            {
+                kvp.Value.RemoveAll(x => x.Item1 == host);
+            }
         }
 
         /// <summary>
@@ -108,23 +114,32 @@ namespace DiceRoller
             // state transition
             if (nexState != CurrentState)
             {
-                foreach (IStateMachine stateMachine in stateMachines)
+                if (stateBehaviours.ContainsKey(CurrentState))
                 {
-                    stateMachine.OnStateExit();
+                    foreach (Tuple<MonoBehaviour, IStateBehaviour> tuple in stateBehaviours[CurrentState])
+                    {
+                        tuple.Item2.OnStateExit();
+                    }
                 }
                 CurrentState = nexState;
                 StateParams.Clear();
                 StateParams.AddRange(nextStateParams);
-                foreach (IStateMachine stateMachine in stateMachines)
+                if (stateBehaviours.ContainsKey(CurrentState))
                 {
-                    stateMachine.OnStateEnter();
+                    foreach (Tuple<MonoBehaviour, IStateBehaviour> tuple in stateBehaviours[CurrentState])
+                    {
+                        tuple.Item2.OnStateEnter();
+                    }
                 }
             }
 
             // state update
-            foreach (IStateMachine stateMachine in stateMachines)
+            if (stateBehaviours.ContainsKey(CurrentState))
             {
-                stateMachine.OnStateUpdate();
+                foreach (Tuple<MonoBehaviour, IStateBehaviour> tuple in stateBehaviours[CurrentState])
+                {
+                    tuple.Item2.OnStateUpdate();
+                }
             }
         }
     }

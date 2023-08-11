@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace DiceRoller
 {
-    public class Unit : MonoBehaviour, IStateMachine
+    public class Unit : MonoBehaviour
     {
         // parameters
         public float size = 1f;
@@ -56,7 +56,7 @@ namespace DiceRoller
         /// </summary>
         void Start()
         {
-            game.RegisterStateMachine(this);
+            RegisterStateBehaviours();
         }
 
         /// <summary>
@@ -78,7 +78,7 @@ namespace DiceRoller
         private void OnDestroy()
         {
             if (game != null)
-                game.DeregisterStateMachine(this);
+                DeregisterStateBehaviours();
         }
 
         /// <summary>
@@ -147,247 +147,262 @@ namespace DiceRoller
 
         // ========================================================= State Machine Behaviour =========================================================
 
-        /// <summary>
-        /// OnStateEnter is called when the state is changed into the current one.
-        /// </summary>
-        public void OnStateEnter()
+        protected void RegisterStateBehaviours()
         {
-            switch (game.CurrentState)
-            {
-                case State.Navigation:
-                    NavigationStateEnter();
-                    break;
-                case State.UnitMovementSelection:
-                    UnitMovementSelectionStateEnter();
-                    break;
-                case State.UnitMovement:
-                    UnitMovementStateEnter();
-                    break;
-            }
+            game.RegisterStateBehaviour(this, State.Navigation, new NavitigationStateBehaviour(this));
+            game.RegisterStateBehaviour(this, State.UnitMovementSelection, new UnitMovementSelectionStateBehaviour(this));
+            game.RegisterStateBehaviour(this, State.UnitMovement, new UnitMovementStateBehaviour(this));
         }
 
-        /// <summary>
-        /// OnStateUpdate is called each frame when the state is the current one.
-        /// </summary>
-        public void OnStateUpdate()
+        protected void DeregisterStateBehaviours()
         {
-            switch (game.CurrentState)
-            {
-                case State.Navigation:
-                    NavigationStateUpdate();
-                    break;
-                case State.UnitMovementSelection:
-                    UnitMovementSelectionStateUpdate();
-                    break;
-                case State.UnitMovement:
-                    UnitMovementStateUpdate();
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// OnStateExit is called when the state is changed from the current one.
-        /// </summary>
-        public void OnStateExit()
-        {
-            switch (game.CurrentState)
-            {
-                case State.Navigation:
-                    NavigationStateExit();
-                    break;
-                case State.UnitMovementSelection:
-                    UnitMovementSelectionStateExit();
-                    break;
-                case State.UnitMovement:
-                    UnitMovementStateExit();
-                    break;
-            }
+            game.DeregisterStateBehaviour(this);
         }
 
         // ========================================================= Navigation State =========================================================
 
-        protected List<Tile> navigationInTiles = new List<Tile>();
-
-        protected void NavigationStateEnter()
+        protected class NavitigationStateBehaviour : IStateBehaviour
         {
+            Unit unit = null;
+            protected List<Tile> navigationInTiles = new List<Tile>();
 
-        }
+            public NavitigationStateBehaviour(Unit obj) { this.unit = obj; }
 
-        protected void NavigationStateUpdate()
-        {
-            outline.Show = isHovering;
-            List<Tile> tiles = isHovering ? InTiles : emptyTileList;
-
-            foreach (Tile tile in tiles.Except(navigationInTiles))
+            public void OnStateEnter()
             {
-                tile.AddDisplay(this, Tile.DisplayType.Position);
-            }
-            foreach (Tile tile in navigationInTiles.Except(tiles))
-            {
-                tile.RemoveDisplay(this, Tile.DisplayType.Position);
-            }
-            navigationInTiles.Clear();
-            navigationInTiles.AddRange(tiles);
-        }
+                unit.outline.Show = unit.isHovering;
+                List<Tile> tiles = unit.isHovering ? unit.InTiles : unit.emptyTileList;
 
-        protected void NavigationStateExit()
-        {
-            outline.Show = false;
-            foreach (Tile tile in navigationInTiles)
-            {
-                tile.RemoveDisplay(this, Tile.DisplayType.Position);
+                foreach (Tile tile in tiles.Except(navigationInTiles))
+                {
+                    tile.AddDisplay(this, Tile.DisplayType.Position);
+                }
+                foreach (Tile tile in navigationInTiles.Except(tiles))
+                {
+                    tile.RemoveDisplay(this, Tile.DisplayType.Position);
+                }
+                navigationInTiles.Clear();
+                navigationInTiles.AddRange(tiles);
             }
-            navigationInTiles.Clear();
+
+            public void OnStateUpdate()
+            {
+                unit.outline.Show = unit.isHovering;
+                List<Tile> tiles = unit.isHovering ? unit.InTiles : unit.emptyTileList;
+
+                foreach (Tile tile in tiles.Except(navigationInTiles))
+                {
+                    tile.AddDisplay(this, Tile.DisplayType.Position);
+                }
+                foreach (Tile tile in navigationInTiles.Except(tiles))
+                {
+                    tile.RemoveDisplay(this, Tile.DisplayType.Position);
+                }
+                navigationInTiles.Clear();
+                navigationInTiles.AddRange(tiles);
+            }
+
+            public void OnStateExit()
+            {
+                unit.outline.Show = false;
+                foreach (Tile tile in navigationInTiles)
+                {
+                    tile.RemoveDisplay(this, Tile.DisplayType.Position);
+                }
+                navigationInTiles.Clear();
+            }
         }
 
         // ========================================================= Unit Movement Selection State =========================================================
 
-        protected List<Tile> unitMovementInTiles = new List<Tile>();
-        protected List<Tile> unitMovementMoveTiles = new List<Tile>();
-        protected Tile unitMovementHitTile = null;
-        protected bool unitMovementStartedPress = false;
-
-        protected void UnitMovementSelectionStateEnter()
+        class UnitMovementSelectionStateBehaviour : IStateBehaviour
         {
-            if ((Object)game.StateParams[0] == this)
+            protected Unit unit = null;
+
+            protected List<Tile> unitMovementInTiles = new List<Tile>();
+            protected List<Tile> unitMovementMoveTiles = new List<Tile>();
+            protected List<Tile> unitMovementPathTiles = new List<Tile>();
+            protected Tile unitMovementHitTile = null;
+            protected bool unitMovementStartedPress = false;
+
+            public UnitMovementSelectionStateBehaviour(Unit unit) { this.unit = unit; }
+
+            public void OnStateEnter()
             {
-                outline.Show = true;
-                foreach (Tile tile in InTiles)
+                if ((Object)unit.game.StateParams[0] == unit)
                 {
-                    tile.AddDisplay(this, Tile.DisplayType.Position);
-                }
-                unitMovementInTiles.AddRange(InTiles);
-
-
-                foreach (Tile tile in board.GetTileWithinRange(InTiles, movement))
-                {
-                    tile.AddDisplay(this, Tile.DisplayType.Move);
-                }
-                unitMovementMoveTiles.AddRange(board.GetTileWithinRange(InTiles, movement));
-            }
-        }
-
-        protected void UnitMovementSelectionStateUpdate()
-        {
-            if ((Object)game.StateParams[0] == this)
-            {
-                Tile hitTile = null;
-                if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, Camera.main.farClipPlane, LayerMask.GetMask("Tile")))
-                {
-                    Tile tile = hit.collider.GetComponentInParent<Tile>();
-                    if (unitMovementMoveTiles.Contains(tile))
+                    unit.outline.Show = true;
+                    foreach (Tile tile in unit.InTiles)
                     {
-                        hitTile = tile;
+                        tile.AddDisplay(this, Tile.DisplayType.Position);
+                    }
+                    unitMovementInTiles.AddRange(unit.InTiles);
+
+                    foreach (Tile tile in unit.board.GetTileWithinRange(unit.InTiles, unit.movement))
+                    {
+                        tile.AddDisplay(this, Tile.DisplayType.Move);
+                    }
+                    unitMovementMoveTiles.AddRange(unit.board.GetTileWithinRange(unit.InTiles, unit.movement));
+                }
+            }
+
+            public void OnStateUpdate()
+            {
+                if ((Object)unit.game.StateParams[0] == unit)
+                {
+                    Tile hitTile = null;
+                    if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, Camera.main.farClipPlane, LayerMask.GetMask("Tile")))
+                    {
+                        Tile tile = hit.collider.GetComponentInParent<Tile>();
+                        if (unitMovementMoveTiles.Contains(tile))
+                        {
+                            hitTile = tile;
+                        }
+                    }
+
+                    if (unitMovementHitTile != hitTile)
+                    {
+                        if (unitMovementHitTile != null)
+                        {
+                            foreach (Tile tile in unitMovementPathTiles)
+                            {
+                                tile.HidePath();
+                            }
+                            unitMovementHitTile.RemoveDisplay(this, Tile.DisplayType.MoveTarget);
+                        }
+                        if (hitTile != null)
+                        {
+                            unitMovementPathTiles.Clear();
+                            unitMovementPathTiles.AddRange(unit.board.GetShortestPath(unit.InTiles, hitTile));
+                            foreach (Tile tile in unitMovementPathTiles)
+                            {
+                                tile.ShowPath(unitMovementPathTiles);
+                            }
+                            hitTile.AddDisplay(this, Tile.DisplayType.MoveTarget);
+                        }
+                        else
+                        {
+                            unitMovementPathTiles.Clear();
+                        }
+                    }
+                    unitMovementHitTile = hitTile;
+
+                    if (Input.GetMouseButtonDown(0))
+                    {
+                        unitMovementStartedPress = true;
+                    }
+                    if (Input.GetMouseButtonUp(0) && unitMovementStartedPress)
+                    {
+                        if (unitMovementHitTile != null)
+                        {
+                            unit.game.ChangeState(State.UnitMovement, unit, new List<Tile>(unitMovementPathTiles));
+                        }
+                        else
+                        {
+                            unit.game.ChangeState(State.Navigation);
+                        }
+                        unitMovementStartedPress = false;
                     }
                 }
+            }
 
-                if (unitMovementHitTile != hitTile)
+            public void OnStateExit()
+            {
+                if ((Object)unit.game.StateParams[0] == unit)
                 {
+                    foreach (Tile tile in unitMovementInTiles)
+                    {
+                        tile.RemoveDisplay(this, Tile.DisplayType.Position);
+                    }
+                    unitMovementInTiles.Clear();
+
+                    foreach (Tile tile in unitMovementMoveTiles)
+                    {
+                        tile.RemoveDisplay(this, Tile.DisplayType.Move);
+                    }
+                    unitMovementMoveTiles.Clear();
+
+                    foreach (Tile tile in unitMovementPathTiles)
+                    {
+                        tile.HidePath();
+                    }
+                    unitMovementPathTiles.Clear();
+
                     if (unitMovementHitTile != null)
                     {
                         unitMovementHitTile.RemoveDisplay(this, Tile.DisplayType.MoveTarget);
                     }
-                    if (hitTile != null)
-                    {
-                        hitTile.AddDisplay(this, Tile.DisplayType.MoveTarget);
-                    }
-                }
-                unitMovementHitTile = hitTile;
-
-                if (Input.GetMouseButtonDown(0))
-                {
-                    unitMovementStartedPress = true;
-                }
-                if (Input.GetMouseButtonUp(0) && unitMovementStartedPress)
-                {
-                    if (unitMovementHitTile != null)
-                    {
-                        if (!unitMovementInTiles.Contains(unitMovementHitTile))
-                        {
-                            game.ChangeState(State.UnitMovement, this, unitMovementHitTile);
-                        }
-                    }
-                    else
-                    {
-                        game.ChangeState(State.Navigation);
-                    }
-                    unitMovementStartedPress = false;
+                    unitMovementHitTile = null;
                 }
             }
+
         }
 
-        protected void UnitMovementSelectionStateExit()
-        {
-            if ((Object)game.StateParams[0] == this)
-            {
-                foreach (Tile tile in unitMovementInTiles)
-                {
-                    tile.RemoveDisplay(this, Tile.DisplayType.Position);
-                }
-                unitMovementInTiles.Clear();
-
-                foreach (Tile tile in unitMovementMoveTiles)
-                {
-                    tile.RemoveDisplay(this, Tile.DisplayType.Move);
-                }
-                unitMovementMoveTiles.Clear();
-
-                if (unitMovementHitTile != null)
-                {
-                    unitMovementHitTile.RemoveDisplay(this, Tile.DisplayType.MoveTarget);
-                }
-                unitMovementHitTile = null;
-            }
-        }
 
         // ========================================================= Unit Movement State =========================================================
 
-        protected void UnitMovementStateEnter()
+        class UnitMovementStateBehaviour : IStateBehaviour
         {
-            if ((Object)game.StateParams[0] == this)
-            {
-                StartCoroutine(MoveUnitCoroutine(((Tile)game.StateParams[1])));
-            }
-        }
+            protected Unit unit = null;
 
-        protected IEnumerator MoveUnitCoroutine(Tile targetTile)
-        {
-            List<Vector3> path = board.GetShortestPath(InTiles, targetTile).Select(x => x.transform.position).ToList();
+            public UnitMovementStateBehaviour(Unit unit) { this.unit = unit; }
 
-            if (Vector3.Distance(transform.position, path[0]) > 0.01f)
+            public void OnStateEnter()
             {
-                Vector3 startPosition = transform.position;
-                float startTime = Time.time;
-                float duration = Vector3.Distance(startPosition, path[0]) / targetTile.tileSize * 0.25f;
-                while (Time.time - startTime <= duration)
+                if ((Object)unit.game.StateParams[0] == unit)
                 {
-                    rigidBody.MovePosition(Vector3.Lerp(startPosition, path[0], (Time.time - startTime) / duration));
-                    yield return new WaitForFixedUpdate();
+                    unit.StartCoroutine(MoveUnitCoroutine((List<Tile>)unit.game.StateParams[1]));
                 }
             }
 
-            for (int i = 0; i < path.Count - 1; i++)
+            protected IEnumerator MoveUnitCoroutine(List<Tile> path)
             {
-                float startTime = Time.time;
-                while (Time.time - startTime <= 0.25f)
+                List<Tile> startTiles = new List<Tile>(unit.InTiles);
+                startTiles.ForEach(x => x.AddDisplay(this, Tile.DisplayType.Position));
+                path.ForEach(x => { x.AddDisplay(this, Tile.DisplayType.Move); x.ShowPath(path); });
+                path[path.Count - 1].AddDisplay(this, Tile.DisplayType.MoveTarget);
+
+                List<Vector3> pathPos = path.Select(x => x.transform.position).ToList();
+
+                if (Vector3.Distance(unit.transform.position, pathPos[0]) > 0.01f)
                 {
-                    rigidBody.MovePosition(Vector3.Lerp(path[i], path[i + 1], (Time.time - startTime) / 0.25f));
-                    yield return new WaitForFixedUpdate();
+                    Vector3 startPosition = unit.transform.position;
+                    float startTime = Time.time;
+                    float duration = Vector3.Distance(startPosition, pathPos[0]) / path[0].tileSize * 0.25f;
+                    while (Time.time - startTime <= duration)
+                    {
+                        unit.rigidBody.MovePosition(Vector3.Lerp(startPosition, pathPos[0], (Time.time - startTime) / duration));
+                        yield return new WaitForFixedUpdate();
+                    }
                 }
+
+                for (int i = 0; i < pathPos.Count - 1; i++)
+                {
+                    float startTime = Time.time;
+                    while (Time.time - startTime <= 0.25f)
+                    {
+                        unit.rigidBody.MovePosition(Vector3.Lerp(pathPos[i], pathPos[i + 1], (Time.time - startTime) / 0.25f));
+                        yield return new WaitForFixedUpdate();
+                    }
+                }
+                unit.rigidBody.MovePosition(pathPos[pathPos.Count - 1]);
+                yield return new WaitForFixedUpdate();
+
+                startTiles.ForEach(x => x.RemoveDisplay(this, Tile.DisplayType.Position));
+                path.ForEach(x => { x.RemoveDisplay(this, Tile.DisplayType.Move); x.HidePath(); });
+                path[path.Count - 1].RemoveDisplay(this, Tile.DisplayType.MoveTarget);
+                unit.game.ChangeState(State.Navigation);
             }
-            rigidBody.MovePosition(path[path.Count - 1]);
-            yield return new WaitForFixedUpdate();
 
-            game.ChangeState(State.Navigation);
+            public void OnStateUpdate()
+            {
+            }
+
+            public void OnStateExit()
+            {
+            }
         }
 
-        protected void UnitMovementStateUpdate()
-        {
-        }
-
-        protected void UnitMovementStateExit()
-        {
-        }
 
         // ========================================================= Apparence =========================================================
 

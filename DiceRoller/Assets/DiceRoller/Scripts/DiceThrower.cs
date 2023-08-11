@@ -79,16 +79,18 @@ namespace DiceRoller
         /// </summary>
         void DetectThrow()
         {
-            Debug.Log("HERE");
             if (!ThrowDragging)
             {
                 if (Input.GetMouseButton(0))
                 {
-                    if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, Camera.main.farClipPlane, LayerMask.GetMask("Floor")))
+                    if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, Camera.main.farClipPlane, LayerMask.GetMask("Floor", "Dice", "Unit")))
                     {
-                        ThrowDragging = true;
-                        ThrowDragPosition = hit.point;
-                        throwDragPlane = new Plane(Vector3.up, ThrowDragPosition);
+                        if (hit.collider.gameObject.layer == LayerMask.NameToLayer("Floor"))
+                        {
+                            ThrowDragging = true;
+                            ThrowDragPosition = hit.point;
+                            throwDragPlane = new Plane(Vector3.up, ThrowDragPosition);
+                        }
                     }
                 }
             }
@@ -135,10 +137,9 @@ namespace DiceRoller
                                 right * (i % castSize - (float)(castSize - 1) / 2f) +
                                 up * ((i / castSize) % castSize - (float)(castSize - 1) / 2f) +
                                 forward * (i / (castSize * castSize) - (float)(castSize - 1) / 2f);
-                            Quaternion randomDirection = Quaternion.Euler(new Vector3(
-                               Random.Range(-5, 5),
-                               Random.Range(-5, 5),
-                               Random.Range(-5, 5)));
+                            Quaternion randomDirection = 
+                                Quaternion.AngleAxis(Random.Range(-5, 5) + Random.Range(-5, 5) * ThrowPower, up) *
+                                Quaternion.AngleAxis(Random.Range(-5, 5) + Random.Range(-5, 5) * ThrowPower, right);
                             Vector3 randomTorque = new Vector3(
                                     Random.Range(-rollTorque * 0.5f, rollTorque * 0.5f),
                                     Random.Range(-rollTorque * 0.5f, rollTorque * 0.5f),
