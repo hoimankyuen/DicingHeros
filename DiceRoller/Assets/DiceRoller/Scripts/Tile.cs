@@ -6,6 +6,8 @@ namespace DiceRoller
 {
 	public class Tile : MonoBehaviour
 	{
+		public static List<Tile> EmptyTiles { get; protected set; } = new List<Tile>();
+
 		public enum DisplayType
 		{
 			Normal,
@@ -15,7 +17,6 @@ namespace DiceRoller
 			Move,
 			MoveTarget,
 		}
-
 
 		// parameters
 		public float tileSize = 1f;

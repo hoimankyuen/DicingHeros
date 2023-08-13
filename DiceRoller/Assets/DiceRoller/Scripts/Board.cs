@@ -200,9 +200,17 @@ namespace DiceRoller
 
 		public List<Tile> GetShortestPath(Tile startingTile, Tile targetTile, int range)
 		{
-			return GetShortestPath(new List<Tile>(new Tile[] { startingTile }), targetTile, range);
+			return GetShortestPath(new List<Tile>(new Tile[] { startingTile }), new List<Tile>(), targetTile, range);
 		}
 		public List<Tile> GetShortestPath(List<Tile> startingTiles, Tile targetTile, int range)
+		{
+			return GetShortestPath(new List<Tile>(startingTiles), new List<Tile>(), targetTile, range);
+		}
+		public List<Tile> GetShortestPath(Tile startingTile, List<Tile> excludedTiles, Tile targetTile, int range)
+		{
+			return GetShortestPath(new List<Tile>(new Tile[] { startingTile }), excludedTiles, targetTile, range);
+		}
+		public List<Tile> GetShortestPath(List<Tile> startingTiles, List<Tile> excludedTiles, Tile targetTile, int range)
 		{
 			if (startingTiles.Contains(targetTile))
 				return new List<Tile>(new Tile[] { targetTile });
@@ -228,6 +236,8 @@ namespace DiceRoller
 					{
 						if (!connectedTile.gameObject.activeInHierarchy)
 							continue;
+						if (excludedTiles.Contains(connectedTile))
+							continue;
 						if (searched.Contains(connectedTile))
 							continue;
 						if (search.Exists(x => x.Item1[x.Item1.Count - 1] == connectedTile))
@@ -246,7 +256,7 @@ namespace DiceRoller
 					}
 				}
 			}
-			return new List<Tile>();
+			return null;
 		}
 	}
 }

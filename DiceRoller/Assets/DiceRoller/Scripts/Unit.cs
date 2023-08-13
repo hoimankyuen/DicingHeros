@@ -30,7 +30,6 @@ namespace DiceRoller
 
 		public List<Tile> OccupiedTiles => Vector3.Distance(transform.position, lastPosition) < 0.0001f ? lastOccupiedTiles : RefreshOccupiedTiles();
 		protected Vector3 lastPosition = Vector3.zero;
-		protected List<Tile> emptyTiles = new List<Tile>();
 		protected List<Tile> lastOccupiedTiles = new List<Tile>();
 
 		// ========================================================= Monobehaviour Methods =========================================================
@@ -198,19 +197,6 @@ namespace DiceRoller
 			/// </summary>
 			public void OnStateEnter()
 			{
-				unit.outline.Show = unit.isHovering;
-				List<Tile> tiles = unit.isHovering ? unit.OccupiedTiles : unit.emptyTiles;
-
-				foreach (Tile tile in tiles.Except(lastOccupiedTiles))
-				{
-					tile.AddDisplay(this, Tile.DisplayType.Position);
-				}
-				foreach (Tile tile in lastOccupiedTiles.Except(tiles))
-				{
-					tile.RemoveDisplay(this, Tile.DisplayType.Position);
-				}
-				lastOccupiedTiles.Clear();
-				lastOccupiedTiles.AddRange(tiles);
 			}
 
 			/// <summary>
@@ -218,9 +204,11 @@ namespace DiceRoller
 			/// </summary>
 			public void OnStateUpdate()
 			{
+				// show hovering outline
 				unit.outline.Show = unit.isHovering;
-				List<Tile> tiles = unit.isHovering ? unit.OccupiedTiles : unit.emptyTiles;
 
+				// show occupied tiles on the board
+				List<Tile> tiles = unit.isHovering ? unit.OccupiedTiles : Tile.EmptyTiles;
 				foreach (Tile tile in tiles.Except(lastOccupiedTiles))
 				{
 					tile.AddDisplay(this, Tile.DisplayType.Position);
@@ -238,7 +226,10 @@ namespace DiceRoller
 			/// </summary>
 			public void OnStateExit()
 			{
+				// hide hovering outline
 				unit.outline.Show = false;
+
+				// hide occupied tiles on board
 				foreach (Tile tile in lastOccupiedTiles)
 				{
 					tile.RemoveDisplay(this, Tile.DisplayType.Position);
@@ -259,7 +250,7 @@ namespace DiceRoller
 			protected List<Tile> lastOccupiedTiles = new List<Tile>();
 			protected List<Tile> lastMovementArea = new List<Tile>();
 			protected List<Tile> lastPath = new List<Tile>();
-			protected Tile lastPointedTile = null;
+			protected Tile lastTargetTile = null;
 			protected bool isStartedPressing = false;
 
 			/// <summary>
@@ -275,15 +266,20 @@ namespace DiceRoller
 			/// </summary>
 			public void OnStateEnter()
 			{
+				// execute only if the selected unit is this unit
 				if ((Object)stateMachine.StateParams[0] == unit)
 				{
+					// show selection outline
 					unit.outline.Show = true;
+
+					// show occupied tiles on board, assume unit wont move during movement selection state
 					foreach (Tile tile in unit.OccupiedTiles)
 					{
 						tile.AddDisplay(this, Tile.DisplayType.Position);
 					}
 					lastOccupiedTiles.AddRange(unit.OccupiedTiles);
 
+					// show possible movement area on board, assume unit wont move during movement selection state
 					foreach (Tile tile in unit.board.GetTileWithinRange(unit.OccupiedTiles, unit.movement))
 					{
 						tile.AddDisplay(this, Tile.DisplayType.Move);
@@ -297,57 +293,112 @@ namespace DiceRoller
 			/// </summary>
 			public void OnStateUpdate()
 			{
+				// execute only if the selected unit is this unit
 				if ((Object)stateMachine.StateParams[0] == unit)
 				{
-					Tile hitTile = null;
+					// find the target tile that the mouse is pointing to
+					Tile targetTile = null;
 					if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, Camera.main.farClipPlane, LayerMask.GetMask("Tile")))
 					{
 						Tile tile = hit.collider.GetComponentInParent<Tile>();
 						if (lastMovementArea.Contains(tile))
 						{
-							hitTile = tile;
+							targetTile = tile;
 						}
 					}
 
-					if (lastPointedTile != hitTile)
+					// calculate path towards the target tile
+					List<Tile> nextPath = new List<Tile>(lastPath);
+					if (lastTargetTile == targetTile)
 					{
-						if (lastPointedTile != null)
+						if (targetTile == null)
 						{
-							foreach (Tile tile in lastPath)
-							{
-								tile.HidePath();
-							}
-							lastPointedTile.RemoveDisplay(this, Tile.DisplayType.MoveTarget);
-						}
-						if (hitTile != null)
-						{
-							lastPath.Clear();
-							lastPath.AddRange(unit.board.GetShortestPath(unit.OccupiedTiles, hitTile, unit.movement));
-							foreach (Tile tile in lastPath)
-							{
-								tile.ShowPath(lastPath);
-							}
-							hitTile.AddDisplay(this, Tile.DisplayType.MoveTarget);
+							// no available path found
+							nextPath.Clear();
 						}
 						else
-						{
-							lastPath.Clear();
+						{ 
+							if (unit.OccupiedTiles.Contains(targetTile))
+							{
+								// restart a path
+								nextPath.Clear();
+								nextPath.Add(targetTile);
+							}
+							else
+							{
+								if (nextPath.Contains(targetTile))
+								{
+									// trim the path if target tile is already in the current path
+									nextPath.RemoveRange(nextPath.IndexOf(targetTile) + 1, nextPath.Count - nextPath.IndexOf(targetTile) - 1);
+								}
+								else
+								{
+									if (nextPath.Count == 0)
+									{
+										// no path exist, find the shortest path to target tile
+										nextPath = unit.board.GetShortestPath(unit.OccupiedTiles, targetTile, unit.movement);
+									}
+									else
+									{
+										List<Tile> appendPath = unit.board.GetShortestPath(nextPath[nextPath.Count - 1], targetTile, unit.movement + 1 - nextPath.Count);
+										if (appendPath != null)
+										{
+											// append a path from last tile of the path to the target tile
+											appendPath.RemoveAt(0);
+											nextPath.AddRange(appendPath);
+										}
+										else
+										{
+											// path is too long, retrieve a shortest path to target tile instead
+											nextPath = unit.board.GetShortestPath(unit.OccupiedTiles, targetTile, unit.movement);
+										}
+									}
+								}
+							}
 						}
 					}
-					lastPointedTile = hitTile;
 
+					// show target tile on the board
+					if (lastTargetTile != targetTile)
+					{
+						if (lastTargetTile != null)
+						{
+							lastTargetTile.RemoveDisplay(this, Tile.DisplayType.MoveTarget);
+						}
+						if (targetTile != null)
+						{
+							targetTile.AddDisplay(this, Tile.DisplayType.MoveTarget);
+						}
+					}
+					lastTargetTile = targetTile;
+
+					// show path to target tile on the board
+					foreach (Tile tile in lastPath)
+					{
+						tile.HidePath();
+					}
+					foreach (Tile tile in nextPath)
+					{
+						tile.ShowPath(nextPath);
+					}
+					lastPath.Clear();
+					lastPath.AddRange(nextPath);
+
+					// detect mouse pressing
 					if (Input.GetMouseButtonDown(0))
 					{
 						isStartedPressing = true;
 					}
 					if (Input.GetMouseButtonUp(0) && isStartedPressing)
 					{
-						if (lastPointedTile != null)
+						if (lastTargetTile != null)
 						{
-							stateMachine.ChangeState(State.UnitMovement, unit, new List<Tile>(lastPath));
+							// pressed on a valid tile, initiate movement
+							stateMachine.ChangeState(State.UnitMovement, unit, new List<Tile>(unit.OccupiedTiles), new List<Tile>(lastPath));
 						}
 						else
 						{
+							// return to navigation otherwise
 							stateMachine.ChangeState(State.Navigation);
 						}
 						isStartedPressing = false;
@@ -360,36 +411,43 @@ namespace DiceRoller
 			/// </summary>
 			public void OnStateExit()
 			{
+				// execute only if the selected unit is this unit
 				if ((Object)stateMachine.StateParams[0] == unit)
 				{
+					// hide hovering outline
+					unit.outline.Show = false;
+
+					// hide occupied tiles on board
 					foreach (Tile tile in lastOccupiedTiles)
 					{
 						tile.RemoveDisplay(this, Tile.DisplayType.Position);
 					}
 					lastOccupiedTiles.Clear();
 
+					// hide possible movement area on board
 					foreach (Tile tile in lastMovementArea)
 					{
 						tile.RemoveDisplay(this, Tile.DisplayType.Move);
 					}
 					lastMovementArea.Clear();
 
+					// hdie target tile on board
+					if (lastTargetTile != null)
+					{
+						lastTargetTile.RemoveDisplay(this, Tile.DisplayType.MoveTarget);
+					}
+					lastTargetTile = null;
+
+					// hide path to target tile on board
 					foreach (Tile tile in lastPath)
 					{
 						tile.HidePath();
 					}
 					lastPath.Clear();
-
-					if (lastPointedTile != null)
-					{
-						lastPointedTile.RemoveDisplay(this, Tile.DisplayType.MoveTarget);
-					}
-					lastPointedTile = null;
 				}
 			}
 
 		}
-
 
 		// ========================================================= Unit Movement State =========================================================
 
@@ -416,48 +474,57 @@ namespace DiceRoller
 			/// </summary>
 			public void OnStateEnter()
 			{
+				// execute only if the moving unit is this unit
 				if ((Object)stateMachine.StateParams[0] == unit)
 				{
-					unit.StartCoroutine(MoveUnitCoroutine((List<Tile>)stateMachine.StateParams[1]));
+					unit.StartCoroutine(MoveUnitCoroutine((List<Tile>)stateMachine.StateParams[1], (List<Tile>)stateMachine.StateParams[2]));
 				}
 			}
 
-			protected IEnumerator MoveUnitCoroutine(List<Tile> path)
+			/// <summary>
+			/// Movement coroutine for this unit.
+			/// </summary>
+			protected IEnumerator MoveUnitCoroutine(List<Tile> startTiles, List<Tile> path)
 			{
-				List<Tile> startTiles = new List<Tile>(unit.OccupiedTiles);
+				// show all displays on grid
 				startTiles.ForEach(x => x.AddDisplay(this, Tile.DisplayType.Position));
 				path.ForEach(x => { x.AddDisplay(this, Tile.DisplayType.Move); x.ShowPath(path); });
 				path[path.Count - 1].AddDisplay(this, Tile.DisplayType.MoveTarget);
 
-				List<Vector3> pathPos = path.Select(x => x.transform.position).ToList();
-
-				if (Vector3.Distance(unit.transform.position, pathPos[0]) > 0.01f)
+				// move to first tile on path if needed
+				if (Vector3.Distance(unit.transform.position, path[0].transform.position) > 0.01f)
 				{
 					Vector3 startPosition = unit.transform.position;
 					float startTime = Time.time;
-					float duration = Vector3.Distance(startPosition, pathPos[0]) / path[0].tileSize * 0.25f;
+					float duration = Vector3.Distance(startPosition, path[0].transform.position) / path[0].tileSize * 0.25f;
 					while (Time.time - startTime <= duration)
 					{
-						unit.rigidBody.MovePosition(Vector3.Lerp(startPosition, pathPos[0], (Time.time - startTime) / duration));
+						unit.rigidBody.MovePosition(Vector3.Lerp(startPosition, path[0].transform.position, (Time.time - startTime) / duration));
 						yield return new WaitForFixedUpdate();
 					}
 				}
 
-				for (int i = 0; i < pathPos.Count - 1; i++)
+				// move to next tile on path one by one
+				for (int i = 0; i < path.Count - 1; i++)
 				{
 					float startTime = Time.time;
 					while (Time.time - startTime <= 0.25f)
 					{
-						unit.rigidBody.MovePosition(Vector3.Lerp(pathPos[i], pathPos[i + 1], (Time.time - startTime) / 0.25f));
+						unit.rigidBody.MovePosition(Vector3.Lerp(path[i].transform.position, path[i + 1].transform.position, (Time.time - startTime) / 0.25f));
 						yield return new WaitForFixedUpdate();
 					}
 				}
-				unit.rigidBody.MovePosition(pathPos[pathPos.Count - 1]);
+
+				// file tile on path reached, final movement to destination tile 
+				unit.rigidBody.MovePosition(path[path.Count - 1].transform.position);
 				yield return new WaitForFixedUpdate();
 
+				// hide all displays on grid
 				startTiles.ForEach(x => x.RemoveDisplay(this, Tile.DisplayType.Position));
 				path.ForEach(x => { x.RemoveDisplay(this, Tile.DisplayType.Move); x.HidePath(); });
 				path[path.Count - 1].RemoveDisplay(this, Tile.DisplayType.MoveTarget);
+
+				// change state back to navigation
 				stateMachine.ChangeState(State.Navigation);
 			}
 
@@ -475,7 +542,6 @@ namespace DiceRoller
 			{
 			}
 		}
-
 
 		// ========================================================= Apparence =========================================================
 

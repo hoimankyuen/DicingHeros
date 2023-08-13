@@ -74,10 +74,10 @@ namespace DiceRoller
 		/// </summary>
 		private void UpdateDiceDisplay()
 		{
-			if (Dice.SelectedDice != null && Dice.SelectedDice.Count > 0 && Dice.SelectedDice[0].Value != -1)
+			if (Dice.InspectingDice != null && Dice.InspectingDice.Count > 0 && Dice.InspectingDice[0].Value != -1)
 			{
-				diceImage.sprite = Dice.SelectedDice[0].icon;
-				diceValueText.text = Dice.SelectedDice[0].Value.ToString();
+				diceImage.sprite = Dice.InspectingDice[0].icon;
+				diceValueText.text = Dice.InspectingDice[0].Value.ToString();
 			}
 			else
 			{

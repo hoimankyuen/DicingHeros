@@ -169,7 +169,7 @@ namespace DiceRoller
 		{
 			if (thrown)
 			{
-				if (dice.Aggregate(true, (result, d) => result && d.IsRolling) == false)
+				if (dice.Aggregate(true, (result, d) => result && d.IsMoving) == false)
 				{
 					int totalValue = dice.Aggregate(0, (result, d) => result + d.Value);
 					//Debug.Log(dice.Aggregate("A", (s, d) => s + " + (" + d.gameObject.name + " , " + d.Value + " )") + " = " + totalValue);

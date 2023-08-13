@@ -13,8 +13,6 @@ namespace DiceRoller
 		// singleton
 		public static GameController Instance { get; protected set; }
 
-		
-
 		// ========================================================= Monobehaviour Methods =========================================================
 
 		/// <summary>
