@@ -26,12 +26,13 @@ namespace DiceRoller
 		public Sprite icon = null;
 		public float size = 1f;
 		public List<Face> faces = new List<Face>();
+		public int team = 0;
 		public Unit connectedUnit = null;
 
 		// reference
-		protected GameController Game { get { return GameController.Instance; } }
-		protected StateMachine stateMachine { get { return StateMachine.Instance; } }
-		protected Board board { get { return Board.Instance; } }
+		protected GameController Game { get { return GameController.current; } }
+		protected StateMachine stateMachine { get { return StateMachine.current; } }
+		protected Board board { get { return Board.current; } }
 
 		// components
 		protected Rigidbody rigidBody = null;
@@ -198,7 +199,7 @@ namespace DiceRoller
 		protected List<Tile> RefreshOccupiedTiles()
 		{
 			lastOccupiedTiles.Clear();
-			lastOccupiedTiles.AddRange(Board.Instance.GetCurrentTiles(transform.position, size));
+			lastOccupiedTiles.AddRange(Board.current.GetCurrentTiles(transform.position, size));
 			return lastOccupiedTiles;
 		}
 
@@ -262,9 +263,9 @@ namespace DiceRoller
 		protected class NavitigationStateBehaviour : IStateBehaviour
 		{
 			protected readonly Dice dice = null;
-			protected GameController game { get { return GameController.Instance; } }
-			protected StateMachine stateMachine { get { return StateMachine.Instance; } }
-			protected Board board { get { return Board.Instance; } }
+			protected GameController game { get { return GameController.current; } }
+			protected StateMachine stateMachine { get { return StateMachine.current; } }
+			protected Board board { get { return Board.current; } }
 
 			protected bool lastIsHovering = false;
 			protected List<Tile> lastOccupiedTiles = new List<Tile>();
@@ -305,7 +306,7 @@ namespace DiceRoller
 				lastOccupiedTiles.Clear();
 				lastOccupiedTiles.AddRange(tiles);
 
-				// show tile info on ui
+				// show dice info on ui
 				if (dice.isHovering != lastIsHovering)
 				{
 					if (dice.isHovering)
@@ -337,6 +338,10 @@ namespace DiceRoller
 					tile.RemoveDisplay(this, Tile.DisplayType.Position);
 				}
 				lastOccupiedTiles.Clear();
+
+				// hide dice info on ui
+				InspectingDice.Remove(dice);
+				lastIsHovering = false;
 			}
 		}
 	}

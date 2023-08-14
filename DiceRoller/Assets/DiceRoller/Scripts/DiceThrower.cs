@@ -2,13 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace DiceRoller
 {
 	public class DiceThrower : MonoBehaviour
 	{
 		// singleton
-		public static DiceThrower Instance { get; protected set; }
+		public static DiceThrower current { get; protected set; }
 
 		// parameters
 		public RangeFloat2 throwDragDistances = new RangeFloat2();
@@ -19,8 +20,8 @@ namespace DiceRoller
 		public readonly float rollTorque = 10000f;
 
 		// references
-		protected GameController game { get { return GameController.Instance; } }
-		protected StateMachine stateMachine { get { return StateMachine.Instance; } }
+		protected GameController game { get { return GameController.current; } }
+		protected StateMachine stateMachine { get { return StateMachine.current; } }
 
 
 		// working variables   
@@ -41,7 +42,7 @@ namespace DiceRoller
 		/// </summary>
 		void Awake()
 		{
-			Instance = this;
+			current = this;
 			dice.AddRange(GameObject.FindObjectsOfType<Dice>());
 		}
 
@@ -69,7 +70,7 @@ namespace DiceRoller
 		/// </summary>
 		private void OnDestroy()
 		{
-			Instance = null;
+			current = null;
 		}
 
 		// ========================================================= Throw Dice =========================================================
@@ -82,15 +83,18 @@ namespace DiceRoller
 		{
 			if (!ThrowDragging)
 			{
-				if (Input.GetMouseButton(0))
+				if (Input.GetMouseButtonDown(0))
 				{
-					if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, Camera.main.farClipPlane, LayerMask.GetMask("Floor", "Dice", "Unit")))
+					if (!EventSystem.current.IsPointerOverGameObject())
 					{
-						if (hit.collider.gameObject.layer == LayerMask.NameToLayer("Floor"))
+						if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, Camera.main.farClipPlane, LayerMask.GetMask("Floor", "Dice", "Unit")))
 						{
-							ThrowDragging = true;
-							ThrowDragPosition = hit.point;
-							throwDragPlane = new Plane(Vector3.up, ThrowDragPosition);
+							if (hit.collider.gameObject.layer == LayerMask.NameToLayer("Floor"))
+							{
+								ThrowDragging = true;
+								ThrowDragPosition = hit.point;
+								throwDragPlane = new Plane(Vector3.up, ThrowDragPosition);
+							}
 						}
 					}
 				}

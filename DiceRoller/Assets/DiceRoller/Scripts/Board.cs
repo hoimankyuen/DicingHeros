@@ -9,7 +9,7 @@ namespace DiceRoller
 	public class Board : MonoBehaviour
 	{
 		// singleton
-		public static Board Instance { get; protected set; }
+		public static Board current { get; protected set; }
 
 		public float tileSize = 1f;
 		public int boardSizeX = 1;
@@ -27,7 +27,7 @@ namespace DiceRoller
 		/// </summary>
 		void Awake()
 		{
-			Instance = this;
+			current = this;
 			for (int i = 0; i < transform.childCount; i++)
 			{
 				if (transform.GetChild(i).CompareTag("Tile"))
@@ -61,7 +61,7 @@ namespace DiceRoller
 		/// </summary>
 		void OnDestroy()
 		{
-			Instance = null;
+			current = null;
 		}
 
 		/// <summary>
@@ -215,20 +215,24 @@ namespace DiceRoller
 			if (startingTiles.Contains(targetTile))
 				return new List<Tile>(new Tile[] { targetTile });
 
-			List<Tuple<List<Tile>, float>> search = new List<Tuple<List<Tile>, float>>();
-			List<Tile> searched = new List<Tile>();
+			List<Tuple<List<Tile>, float>> open = new List<Tuple<List<Tile>, float>>();
+			List<Tuple<Tile, float>> closed = new List<Tuple<Tile, float>>();
 
 			foreach (Tile startingTile in startingTiles)
 			{
-				search.Add(new Tuple<List<Tile>, float>(new List<Tile>(new Tile[] { startingTile }), Vector3.Distance(startingTile.transform.position, targetTile.transform.position)));
+				open.Add(new Tuple<List<Tile>, float>(new List<Tile>(new Tile[] { startingTile }), Vector3.Distance(startingTile.transform.position, targetTile.transform.position)));
 			}
 
-			while (search.Count > 0)
+			while (open.Count > 0)
 			{
-				search.Sort((a, b) => a.Item2 > b.Item2 ? 1 : a.Item2 < b.Item2 ? -1 : 0);
-				Tuple<List<Tile>, float> current = search[0];
-				search.RemoveAt(0);
-				searched.Add(current.Item1[current.Item1.Count - 1]);
+				open.Sort((a, b) => a.Item2.CompareTo(b.Item2));
+				Tuple<List<Tile>, float> current = open[0];
+				if (current.Item1[current.Item1.Count - 1] == targetTile)
+				{
+					return current.Item1;
+				}
+
+				open.RemoveAt(0);
 
 				if (current.Item1.Count <= range)
 				{
@@ -238,23 +242,22 @@ namespace DiceRoller
 							continue;
 						if (excludedTiles.Contains(connectedTile))
 							continue;
-						if (searched.Contains(connectedTile))
-							continue;
-						if (search.Exists(x => x.Item1[x.Item1.Count - 1] == connectedTile))
+
+						float heuristic = (current.Item1.Count + 1) * connectedTile.tileSize + Vector3.Distance(connectedTile.transform.position, targetTile.transform.position);
+
+						if (open.Exists(x => x.Item1[x.Item1.Count - 1] == connectedTile && x.Item2 < heuristic))
 							continue;
 
+						if (closed.Exists(x => x.Item1 == connectedTile && x.Item2 < heuristic))
+							continue;
+						
 						List<Tile> newList = new List<Tile>(current.Item1);
 						newList.Add(connectedTile);
-						if (connectedTile == targetTile)
-						{
-							return newList;
-						}
-						else
-						{
-							search.Add(new Tuple<List<Tile>, float>(newList, Vector3.Distance(connectedTile.transform.position, targetTile.transform.position)));
-						}
+						open.Add(new Tuple<List<Tile>, float>(newList, heuristic));
 					}
 				}
+
+				closed.Add(new Tuple<Tile, float>(current.Item1[current.Item1.Count - 1], current.Item2));
 			}
 			return null;
 		}

@@ -8,22 +8,29 @@ namespace DiceRoller
 {
 	public class Unit : MonoBehaviour
 	{
+		public static List<Unit> InspectingUnit { get; protected set; } = new List<Unit>();
+
 		// parameters
+		public Sprite icon = null;
 		public float size = 1f;
 		public int movement = 4;
+		public float moveTimePerTile = 0.2f;
+		public int team = 0;
 
 		// reference
-		protected GameController game { get { return GameController.Instance; } }
-		protected StateMachine stateMachine { get { return StateMachine.Instance; } }
-		protected Board board { get { return Board.Instance; } }
+		protected GameController game { get { return GameController.current; } }
+		protected StateMachine stateMachine { get { return StateMachine.current; } }
+		protected Board board { get { return Board.current; } }
 
 		// components
 		protected Rigidbody rigidBody = null;
 		protected Outline outline = null;
+		protected Overlay overlay = null;
 
 		// working variables
 		protected bool isHovering = false;
 		protected bool initatedPress = false;
+		protected bool hasMoved = false;
 
 		public bool IsMoving { get; protected set; }
 		protected float lastMovingTime = 0;
@@ -79,6 +86,10 @@ namespace DiceRoller
 			}
 		}
 
+		void OnGUI()
+		{
+		}
+
 		/// <summary>
 		/// OnMouseEnter is called when the mouse is start pointing to the game object.
 		/// </summary>
@@ -109,11 +120,11 @@ namespace DiceRoller
 		/// </summary>
 		void OnMouseUp()
 		{
-			if (stateMachine.CurrentState == State.Navigation)
+			if (stateMachine.CurrentState == State.Navigation && !hasMoved)
 			{
 				if (initatedPress)
 				{
-					stateMachine.ChangeState(State.UnitMovementSelection, this);
+					stateMachine.ChangeState(State.UnitMovementSelection, stateMachine.StateParams[0], this);
 				}
 			}
 			initatedPress = false;
@@ -128,6 +139,7 @@ namespace DiceRoller
 		{
 			rigidBody = GetComponent<Rigidbody>();
 			outline = GetComponent<Outline>();
+			overlay = GetComponent<Overlay>();
 		}
 
 		/// <summary>
@@ -148,7 +160,7 @@ namespace DiceRoller
 		protected List<Tile> RefreshOccupiedTiles()
 		{
 			lastOccupiedTiles.Clear();
-			lastOccupiedTiles.AddRange(Board.Instance.GetCurrentTiles(transform.position, size));
+			lastOccupiedTiles.AddRange(Board.current.GetCurrentTiles(transform.position, size));
 			return lastOccupiedTiles;
 		}
 
@@ -159,6 +171,7 @@ namespace DiceRoller
 		/// </summary>
 		protected void RegisterStateBehaviours()
 		{
+			stateMachine.RegisterStateBehaviour(this, State.StartTurn, new StartTurnStateBehaviour(this));
 			stateMachine.RegisterStateBehaviour(this, State.Navigation, new NavitigationStateBehaviour(this));
 			stateMachine.RegisterStateBehaviour(this, State.UnitMovementSelection, new UnitMovementSelectionStateBehaviour(this));
 			stateMachine.RegisterStateBehaviour(this, State.UnitMovement, new UnitMovementStateBehaviour(this));
@@ -173,15 +186,62 @@ namespace DiceRoller
 				stateMachine.DeregisterStateBehaviour(this);
 		}
 
+
+		// ========================================================= Start Turn State =========================================================
+
+		protected class StartTurnStateBehaviour : IStateBehaviour
+		{
+			protected readonly Unit unit = null;
+			protected GameController game { get { return GameController.current; } }
+			protected StateMachine stateMachine { get { return StateMachine.current; } }
+			protected Board board { get { return Board.current; } }
+
+			/// <summary>
+			/// Constructor.
+			/// </summary>
+			public StartTurnStateBehaviour(Unit unit)
+			{
+				this.unit = unit;
+			}
+
+			/// <summary>
+			/// OnStateEnter is called when the centralized state machine is entering the current state.
+			/// </summary>
+			public void OnStateEnter()
+			{
+				// execute only if the current team is the team of this unit
+				if ((int)stateMachine.StateParams[0] == unit.team)
+				{
+					unit.hasMoved = false;
+					unit.overlay.Show = false;
+				}
+			}
+
+			/// <summary>
+			/// OnStateUpdate is called each frame when the centralized state machine is in the current state.
+			/// </summary>
+			public void OnStateUpdate()
+			{
+			}
+
+			/// <summary>
+			/// OnStateExit is called when the centralized state machine is leaving the current state.
+			/// </summary>
+			public void OnStateExit()
+			{
+			}
+		}
+
 		// ========================================================= Navigation State =========================================================
 
 		protected class NavitigationStateBehaviour : IStateBehaviour
 		{
 			protected readonly Unit unit = null;
-			protected GameController game { get { return GameController.Instance; } }
-			protected StateMachine stateMachine { get { return StateMachine.Instance; } }
-			protected Board board { get { return Board.Instance; } }	
+			protected GameController game { get { return GameController.current; } }
+			protected StateMachine stateMachine { get { return StateMachine.current; } }
+			protected Board board { get { return Board.current; } }
 
+			protected bool lastIsHovering = false;
 			protected List<Tile> lastOccupiedTiles = new List<Tile>();
 
 			/// <summary>
@@ -219,6 +279,23 @@ namespace DiceRoller
 				}
 				lastOccupiedTiles.Clear();
 				lastOccupiedTiles.AddRange(tiles);
+
+				// show unit info on ui
+				if (unit.isHovering != lastIsHovering)
+				{
+					if (unit.isHovering)
+					{
+						if (!InspectingUnit.Contains(unit))
+						{
+							InspectingUnit.Add(unit);
+						}
+					}
+					else
+					{
+						InspectingUnit.Remove(unit);
+					}
+				}
+				lastIsHovering = unit.isHovering;
 			}
 
 			/// <summary>
@@ -235,6 +312,10 @@ namespace DiceRoller
 					tile.RemoveDisplay(this, Tile.DisplayType.Position);
 				}
 				lastOccupiedTiles.Clear();
+
+				// hide unit info on ui
+				InspectingUnit.Remove(unit);
+				lastIsHovering = false;
 			}
 		}
 
@@ -243,9 +324,9 @@ namespace DiceRoller
 		class UnitMovementSelectionStateBehaviour : IStateBehaviour
 		{
 			protected readonly Unit unit = null;
-			protected GameController game { get { return GameController.Instance; } }
-			protected StateMachine stateMachine { get { return StateMachine.Instance; } }
-			protected Board board { get { return Board.Instance; } }
+			protected GameController game { get { return GameController.current; } }
+			protected StateMachine stateMachine { get { return StateMachine.current; } }
+			protected Board board { get { return Board.current; } }
 
 			protected List<Tile> lastOccupiedTiles = new List<Tile>();
 			protected List<Tile> lastMovementArea = new List<Tile>();
@@ -267,7 +348,7 @@ namespace DiceRoller
 			public void OnStateEnter()
 			{
 				// execute only if the selected unit is this unit
-				if ((Object)stateMachine.StateParams[0] == unit)
+				if ((Object)stateMachine.StateParams[1] == unit)
 				{
 					// show selection outline
 					unit.outline.Show = true;
@@ -294,7 +375,7 @@ namespace DiceRoller
 			public void OnStateUpdate()
 			{
 				// execute only if the selected unit is this unit
-				if ((Object)stateMachine.StateParams[0] == unit)
+				if ((Object)stateMachine.StateParams[1] == unit)
 				{
 					// find the target tile that the mouse is pointing to
 					Tile targetTile = null;
@@ -340,7 +421,7 @@ namespace DiceRoller
 									}
 									else
 									{
-										List<Tile> appendPath = unit.board.GetShortestPath(nextPath[nextPath.Count - 1], targetTile, unit.movement + 1 - nextPath.Count);
+										List<Tile> appendPath = unit.board.GetShortestPath(nextPath[nextPath.Count - 1], nextPath, targetTile, unit.movement + 1 - nextPath.Count);
 										if (appendPath != null)
 										{
 											// append a path from last tile of the path to the target tile
@@ -394,12 +475,12 @@ namespace DiceRoller
 						if (lastTargetTile != null)
 						{
 							// pressed on a valid tile, initiate movement
-							stateMachine.ChangeState(State.UnitMovement, unit, new List<Tile>(unit.OccupiedTiles), new List<Tile>(lastPath));
+							stateMachine.ChangeState(State.UnitMovement, stateMachine.StateParams[0], unit, new List<Tile>(unit.OccupiedTiles), new List<Tile>(lastPath));
 						}
 						else
 						{
 							// return to navigation otherwise
-							stateMachine.ChangeState(State.Navigation);
+							stateMachine.ChangeState(State.Navigation, stateMachine.StateParams[0]);
 						}
 						isStartedPressing = false;
 					}
@@ -412,7 +493,7 @@ namespace DiceRoller
 			public void OnStateExit()
 			{
 				// execute only if the selected unit is this unit
-				if ((Object)stateMachine.StateParams[0] == unit)
+				if ((Object)stateMachine.StateParams[1] == unit)
 				{
 					// hide hovering outline
 					unit.outline.Show = false;
@@ -457,9 +538,9 @@ namespace DiceRoller
 			protected readonly Unit unit = null;
 
 			// references
-			protected GameController game { get { return GameController.Instance; } }
-			protected StateMachine stateMachine { get { return StateMachine.Instance; } }
-			protected Board board { get { return Board.Instance; } }
+			protected GameController game { get { return GameController.current; } }
+			protected StateMachine stateMachine { get { return StateMachine.current; } }
+			protected Board board { get { return Board.current; } }
 
 			/// <summary>
 			/// Constructor.
@@ -475,9 +556,9 @@ namespace DiceRoller
 			public void OnStateEnter()
 			{
 				// execute only if the moving unit is this unit
-				if ((Object)stateMachine.StateParams[0] == unit)
+				if ((Object)stateMachine.StateParams[1] == unit)
 				{
-					unit.StartCoroutine(MoveUnitCoroutine((List<Tile>)stateMachine.StateParams[1], (List<Tile>)stateMachine.StateParams[2]));
+					unit.StartCoroutine(MoveUnitCoroutine((List<Tile>)stateMachine.StateParams[2], (List<Tile>)stateMachine.StateParams[3]));
 				}
 			}
 
@@ -496,7 +577,7 @@ namespace DiceRoller
 				{
 					Vector3 startPosition = unit.transform.position;
 					float startTime = Time.time;
-					float duration = Vector3.Distance(startPosition, path[0].transform.position) / path[0].tileSize * 0.25f;
+					float duration = Vector3.Distance(startPosition, path[0].transform.position) / path[0].tileSize * unit.moveTimePerTile;
 					while (Time.time - startTime <= duration)
 					{
 						unit.rigidBody.MovePosition(Vector3.Lerp(startPosition, path[0].transform.position, (Time.time - startTime) / duration));
@@ -508,9 +589,9 @@ namespace DiceRoller
 				for (int i = 0; i < path.Count - 1; i++)
 				{
 					float startTime = Time.time;
-					while (Time.time - startTime <= 0.25f)
+					while (Time.time - startTime <= unit.moveTimePerTile)
 					{
-						unit.rigidBody.MovePosition(Vector3.Lerp(path[i].transform.position, path[i + 1].transform.position, (Time.time - startTime) / 0.25f));
+						unit.rigidBody.MovePosition(Vector3.Lerp(path[i].transform.position, path[i + 1].transform.position, (Time.time - startTime) / unit.moveTimePerTile));
 						yield return new WaitForFixedUpdate();
 					}
 				}
@@ -524,8 +605,12 @@ namespace DiceRoller
 				path.ForEach(x => { x.RemoveDisplay(this, Tile.DisplayType.Move); x.HidePath(); });
 				path[path.Count - 1].RemoveDisplay(this, Tile.DisplayType.MoveTarget);
 
+				// set flag
+				unit.hasMoved = true;
+				unit.overlay.Show = true;
+
 				// change state back to navigation
-				stateMachine.ChangeState(State.Navigation);
+				stateMachine.ChangeState(State.Navigation, stateMachine.StateParams[0]);
 			}
 
 			/// <summary>

@@ -47,7 +47,7 @@ namespace DiceRoller
 		public Sprite pathEndBack = null;
 
 		// reference
-		protected GameController Game { get { return GameController.Instance; } }
+		protected GameController Game { get { return GameController.current; } }
 
 		// component
 		protected SpriteRenderer displaySpriteRenderer = null;

@@ -15,6 +15,7 @@ namespace DiceRoller
     public enum State
     {
         None,
+		StartTurn,
         Navigation,
         DiceThrow,
         UnitMovementSelection,
@@ -38,7 +39,7 @@ namespace DiceRoller
 
 
 		// singleton
-		public static StateMachine Instance { get; protected set; }
+		public static StateMachine current { get; protected set; }
 
 		// working variables
 		protected Dictionary<State, List<HostBehaviour>> stateBehaviours = new Dictionary<State, List<HostBehaviour>>();
@@ -56,7 +57,7 @@ namespace DiceRoller
 		/// </summary>
 		protected void Awake()
 		{
-			Instance = this;
+			current = this;
 		}
 
 		/// <summary>
@@ -64,7 +65,7 @@ namespace DiceRoller
 		/// </summary>
 		protected void Start()
 		{
-			ChangeState(State.Navigation);
+			
 		}
 
 		/// <summary>
@@ -80,7 +81,7 @@ namespace DiceRoller
 		/// </summary>
 		protected void OnDestroy()
 		{
-			Instance = null;
+			current = null;
 		}
 
 		// ========================================================= Binding =========================================================

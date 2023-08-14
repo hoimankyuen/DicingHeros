@@ -11,7 +11,12 @@ namespace DiceRoller
 	public class GameController : MonoBehaviour
 	{
 		// singleton
-		public static GameController Instance { get; protected set; }
+		public static GameController current { get; protected set; }
+
+		// references
+		protected StateMachine stateMachine { get { return StateMachine.current; } }
+		protected int totalTeams = 1;
+		protected int currentTeam = -1;
 
 		// ========================================================= Monobehaviour Methods =========================================================
 
@@ -21,7 +26,8 @@ namespace DiceRoller
 		/// </summary>
 		protected void Awake()
 		{
-			Instance = this;
+			current = this;
+			Application.targetFrameRate = 60;
 		}
 
 		/// <summary>
@@ -29,7 +35,8 @@ namespace DiceRoller
 		/// </summary>
 		protected void Start()
 		{
-			Application.targetFrameRate = 60;
+			RegisterStateBehaviours();
+			stateMachine.ChangeState(State.StartTurn, 0);
 		}
 
 		/// <summary>
@@ -44,7 +51,77 @@ namespace DiceRoller
 		/// </summary>
 		protected void OnDestroy()
 		{
-			Instance = null;
+			DeregisterStateBehaviours();
+			current = null;
 		}
+
+		// ========================================================= State Machine Behaviour =========================================================
+
+		/// <summary>
+		/// Register all state behaviour to the centralized state machine.
+		/// </summary>
+		protected void RegisterStateBehaviours()
+		{
+			stateMachine.RegisterStateBehaviour(this, State.StartTurn, new StartTurnStateBehaviour(this));
+		}
+
+		/// <summary>
+		/// Deregister all state behaviours to the centralized state machine.
+		/// </summary>
+		protected void DeregisterStateBehaviours()
+		{
+			if (stateMachine != null)
+				stateMachine.DeregisterStateBehaviour(this);
+		}
+
+		// ========================================================= Start Turn State =========================================================
+
+		protected class StartTurnStateBehaviour : IStateBehaviour
+		{
+			protected readonly GameController game = null;
+			protected StateMachine stateMachine { get { return StateMachine.current; } }
+
+			/// <summary>
+			/// Constructor.
+			/// </summary>
+			public StartTurnStateBehaviour(GameController game)
+			{
+				this.game = game;
+			}
+
+			/// <summary>
+			/// OnStateEnter is called when the centralized state machine is entering the current state.
+			/// </summary>
+			public void OnStateEnter()
+			{
+				stateMachine.ChangeState(State.Navigation, game.currentTeam);
+			}
+
+			/// <summary>
+			/// OnStateUpdate is called each frame when the centralized state machine is in the current state.
+			/// </summary>
+			public void OnStateUpdate()
+			{
+			}
+
+			/// <summary>
+			/// OnStateExit is called when the centralized state machine is leaving the current state.
+			/// </summary>
+			public void OnStateExit()
+			{
+			}
+		}
+
+		// ========================================================= Other =========================================================
+
+		public void ProgressTurn()
+		{
+			if (stateMachine.CurrentState == State.Navigation)
+			{
+				currentTeam = (currentTeam + 1) % totalTeams;
+				stateMachine.ChangeState(State.StartTurn, currentTeam);
+			}
+		}
+
 	}
 }

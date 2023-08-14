@@ -10,7 +10,7 @@ namespace DiceRoller
 	public class UIController : MonoBehaviour
 	{
 		// singleton
-		public static UIController Instance { get; protected set; }
+		public static UIController current { get; protected set; }
 
 		[Header("Zoom Camera")]
 		public Camera zoomCamera;
@@ -37,7 +37,7 @@ namespace DiceRoller
 		/// </summary>
 		private void Awake()
 		{
-			Instance = this;
+			current = this;
 		}
 
 		/// <summary>
@@ -62,7 +62,7 @@ namespace DiceRoller
 		/// </summary>
 		private void OnDestroy()
 		{
-			Instance = null;
+			current = null;
 		}
 
 		// ========================================================= Zoom Camera =========================================================
@@ -93,19 +93,19 @@ namespace DiceRoller
 		/// </summary>
 		void UpdateThrowDisplay()
 		{
-			if (DiceThrower.Instance.ThrowDragging)
+			if (DiceThrower.current.ThrowDragging)
 			{
 				// user throwing
 				throwTarget.SetActive(true);
 				throwPowerIndicator.SetActive(true);
-				throwTarget.transform.position = DiceThrower.Instance.ThrowDragPosition;
-				throwPowerIndicator.transform.localRotation = Quaternion.Euler(new Vector3(-90, 0, 0)) * Quaternion.FromToRotation(Vector3.forward, DiceThrower.Instance.ThrowDirection) * Quaternion.Euler(new Vector3(90, 0, 0));
-				if (DiceThrower.Instance.ThrowPower != -1f)
+				throwTarget.transform.position = DiceThrower.current.ThrowDragPosition;
+				throwPowerIndicator.transform.localRotation = Quaternion.Euler(new Vector3(-90, 0, 0)) * Quaternion.FromToRotation(Vector3.forward, DiceThrower.current.ThrowDirection) * Quaternion.Euler(new Vector3(90, 0, 0));
+				if (DiceThrower.current.ThrowPower != -1f)
 				{
 					// throw have enough power
 					throwArrow.gameObject.SetActive(true);
 					throwCross.gameObject.SetActive(false);
-					throwPowerIndicatorCutoff.CutoffTo(DiceThrower.Instance.ThrowPower);
+					throwPowerIndicatorCutoff.CutoffTo(DiceThrower.current.ThrowPower);
 				}
 				else
 				{
