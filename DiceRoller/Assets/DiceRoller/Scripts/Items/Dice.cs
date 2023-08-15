@@ -18,43 +18,24 @@ namespace DiceRoller
 		}
 	}
 
-	public class Dice : MonoBehaviour
+	public class Dice : Item
 	{
-		public static List<Dice> InspectingDice { get; protected set; } = new List<Dice>();
+		public static UniqueList<Dice> InspectingDice { get; protected set; } = new UniqueList<Dice>();
 
 		// parameters
-		public Sprite icon = null;
-		public float size = 1f;
 		public List<Face> faces = new List<Face>();
-		public int team = 0;
 		public Unit connectedUnit = null;
 
-		// reference
-		protected GameController Game { get { return GameController.current; } }
-		protected StateMachine stateMachine { get { return StateMachine.current; } }
-		protected Board board { get { return Board.current; } }
-
 		// components
-		protected Rigidbody rigidBody = null;
 		protected Outline outline = null;
 		protected Transform effectTransform = null;
 		protected LineRenderer lineRenderer = null;
 
 		// working variables
-		protected bool isHovering = false;
-		protected bool initatedPress = false;
-		
-		public bool IsMoving { get; protected set; }
-		protected float lastMovingTime = 0;
-		protected bool rollInitiating = false;
-
-		public int Value => IsMoving ? -1 : Quaternion.Angle(transform.rotation, lastRotation) < 1f ? lastValue : RefreshtValue();
+	   	public int Value => (IsMoving || rollInitiating) ? -1 : Quaternion.Angle(transform.rotation, lastRotation) < 1f ? lastValue : RefreshtValue();
 		protected Quaternion lastRotation = Quaternion.identity;
+		protected bool rollInitiating = false;
 		protected int lastValue = 0;
-
-		public List<Tile> OccupiedTiles => Vector3.Distance(transform.position, lastPosition) < 0.0001f ? lastOccupiedTiles : RefreshOccupiedTiles();
-		protected Vector3 lastPosition = Vector3.zero;
-		protected List<Tile> lastOccupiedTiles = new List<Tile>();
 
 		// ========================================================= Monobehaviour Methods =========================================================
 
@@ -62,28 +43,28 @@ namespace DiceRoller
 		/// Awake is called when the game object was created. It is always called before start and is 
 		/// independent of if the game object is active or not.
 		/// </summary>
-		protected void Awake()
+		protected override void Awake()
 		{
+			base.Awake();
 			RetrieveComponentReferences();
 		}
 
 		/// <summary>
 		/// Start is called before the first frame update and/or the game object is first active.
 		/// </summary>
-		protected void Start()
+		protected override void Start()
 		{
+			base.Start();
 			RegisterStateBehaviours();
 		}
 
 		/// <summary>
 		/// Update is called once per frame.
 		/// </summary>
-		protected void Update()
+		protected override void Update()
 		{
-			DetectMovement();
-
+			base.Update();
 			effectTransform.rotation = Quaternion.identity;
-
 			if (connectedUnit != null)
 			{
 				lineRenderer.gameObject.SetActive(true);
@@ -99,19 +80,20 @@ namespace DiceRoller
 		/// <summary>
 		/// FixedUpdate is called at a regular interval, along side with physics simulation.
 		/// </summary>
-		protected void FixedUpdate()
+		protected override void FixedUpdate()
 		{
+			base.FixedUpdate();
 			rollInitiating = false;
 		}
 
 		/// <summary>
 		/// OnDestroy is called when an game object is destroyed.
 		/// </summary>
-		protected void OnDestroy()
+		protected override void OnDestroy()
 		{
+			base.OnDestroy();
 			DeregisterStateBehaviours();
 		}
-
 
 		/// <summary>
 		/// OnDrawGizmos is called when the game object is in editor mode
@@ -130,44 +112,6 @@ namespace DiceRoller
 			}
 		}
 
-		/// <summary>
-		/// OnMouseEnter is called when the mouse is start pointing to the game object.
-		/// </summary>
-		protected void OnMouseEnter()
-		{
-			isHovering = true;
-
-			
-		}
-
-		/// <summary>
-		/// OnMouseExit is called when the mouse is stop pointing to the game object.
-		/// </summary>
-		protected void OnMouseExit()
-		{
-			isHovering = false;
-			initatedPress = false;
-
-			InspectingDice.Remove(this);
-		}
-
-		/// <summary>
-		/// OnMouseDown is called when a mouse button is pressed when pointing to the game object.
-		/// </summary>
-		protected void OnMouseDown()
-		{
-			initatedPress = true;
-		}
-
-
-		/// <summary>
-		/// OnMouseUp is called when a mouse button is released when pointing to the game object.
-		/// </summary>
-		void OnMouseUp()
-		{
-			initatedPress = false;
-		}
-
 		// ========================================================= General Behaviour =========================================================
 
 		/// <summary>
@@ -175,32 +119,9 @@ namespace DiceRoller
 		/// </summary>
 		protected void RetrieveComponentReferences()
 		{
-			rigidBody = GetComponentInChildren<Rigidbody>();
 			outline = GetComponentInChildren<Outline>();
 			effectTransform = transform.Find("Effect");
 			lineRenderer = transform.Find("Effect/Line").GetComponent<LineRenderer>();
-		}
-
-		/// <summary>
-		/// Detect movement and update the IsMoving flag accordingly.
-		/// </summary>
-		protected void DetectMovement()
-		{
-			if (rigidBody.velocity.sqrMagnitude > 0.01f || rigidBody.angularVelocity.sqrMagnitude > 0.01f)
-			{
-				lastMovingTime = Time.time;
-			}
-			IsMoving = rollInitiating || (Time.time - lastMovingTime < 0.25f);
-		}
-
-		/// <summary>
-		/// Find which tiles this game object is in.
-		/// </summary>
-		protected List<Tile> RefreshOccupiedTiles()
-		{
-			lastOccupiedTiles.Clear();
-			lastOccupiedTiles.AddRange(Board.current.GetCurrentTiles(transform.position, size));
-			return lastOccupiedTiles;
 		}
 
 		/// <summary>
@@ -238,7 +159,6 @@ namespace DiceRoller
 			rollInitiating = true;
 		}
 
-
 		// ========================================================= State Machine Behaviour =========================================================
 
 		/// <summary>
@@ -246,7 +166,7 @@ namespace DiceRoller
 		/// </summary>
 		protected void RegisterStateBehaviours()
 		{
-			stateMachine.RegisterStateBehaviour(this, State.Navigation, new NavitigationStateBehaviour(this));
+			stateMachine.RegisterStateBehaviour(this, State.Navigation, new NavigationSB(this));
 		}
 
 		/// <summary>
@@ -260,20 +180,17 @@ namespace DiceRoller
 
 		// ========================================================= Navigation State =========================================================
 
-		protected class NavitigationStateBehaviour : IStateBehaviour
+		protected class NavigationSB : StateBehaviour
 		{
 			protected readonly Dice dice = null;
-			protected GameController game { get { return GameController.current; } }
-			protected StateMachine stateMachine { get { return StateMachine.current; } }
-			protected Board board { get { return Board.current; } }
-
+			
 			protected bool lastIsHovering = false;
 			protected List<Tile> lastOccupiedTiles = new List<Tile>();
 
 			/// <summary>
 			/// Constructor.
 			/// </summary>
-			public NavitigationStateBehaviour(Dice dice)
+			public NavigationSB(Dice dice)
 			{
 				this.dice = dice;
 			}
@@ -281,14 +198,14 @@ namespace DiceRoller
 			/// <summary>
 			/// OnStateEnter is called when the centralized state machine is entering the current state.
 			/// </summary>
-			public void OnStateEnter()
+			public override void OnStateEnter()
 			{
 			}
 
 			/// <summary>
 			/// OnStateUpdate is called each frame when the centralized state machine is in the current state.
 			/// </summary>
-			public void OnStateUpdate()
+			public override void OnStateUpdate()
 			{
 				// show hovering outline
 				dice.outline.Show = dice.isHovering;
@@ -311,10 +228,7 @@ namespace DiceRoller
 				{
 					if (dice.isHovering)
 					{
-						if (!InspectingDice.Contains(dice))
-						{
-							InspectingDice.Add(dice);
-						}
+						InspectingDice.Add(dice);
 					}
 					else
 					{
@@ -327,7 +241,7 @@ namespace DiceRoller
 			/// <summary>
 			/// OnStateExit is called when the centralized state machine is leaving the current state.
 			/// </summary>
-			public void OnStateExit()
+			public override void OnStateExit()
 			{
 				// hide hovering outline
 				dice.outline.Show = false;

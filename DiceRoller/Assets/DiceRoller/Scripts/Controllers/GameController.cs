@@ -15,8 +15,12 @@ namespace DiceRoller
 
 		// references
 		protected StateMachine stateMachine { get { return StateMachine.current; } }
-		protected int totalTeams = 1;
-		protected int currentTeam = -1;
+
+		// paramaters
+		public int totalTeams = 1;
+
+		// working va	riables
+		protected int currentTeam = 0;
 
 		// ========================================================= Monobehaviour Methods =========================================================
 
@@ -36,7 +40,7 @@ namespace DiceRoller
 		protected void Start()
 		{
 			RegisterStateBehaviours();
-			stateMachine.ChangeState(State.StartTurn, 0);
+			stateMachine.ChangeState(State.StartTurn, new StateParams() { team = 0 });
 		}
 
 		/// <summary>
@@ -62,7 +66,7 @@ namespace DiceRoller
 		/// </summary>
 		protected void RegisterStateBehaviours()
 		{
-			stateMachine.RegisterStateBehaviour(this, State.StartTurn, new StartTurnStateBehaviour(this));
+			stateMachine.RegisterStateBehaviour(this, State.StartTurn, new StartTurnSB());
 		}
 
 		/// <summary>
@@ -76,38 +80,34 @@ namespace DiceRoller
 
 		// ========================================================= Start Turn State =========================================================
 
-		protected class StartTurnStateBehaviour : IStateBehaviour
+		protected class StartTurnSB : StateBehaviour
 		{
-			protected readonly GameController game = null;
-			protected StateMachine stateMachine { get { return StateMachine.current; } }
-
 			/// <summary>
 			/// Constructor.
 			/// </summary>
-			public StartTurnStateBehaviour(GameController game)
+			public StartTurnSB()
 			{
-				this.game = game;
 			}
 
 			/// <summary>
 			/// OnStateEnter is called when the centralized state machine is entering the current state.
 			/// </summary>
-			public void OnStateEnter()
+			public override void OnStateEnter()
 			{
-				stateMachine.ChangeState(State.Navigation, game.currentTeam);
+				stateMachine.ChangeState(State.Navigation, new StateParams() { team = game.currentTeam });
 			}
 
 			/// <summary>
 			/// OnStateUpdate is called each frame when the centralized state machine is in the current state.
 			/// </summary>
-			public void OnStateUpdate()
+			public override void OnStateUpdate()
 			{
 			}
 
 			/// <summary>
 			/// OnStateExit is called when the centralized state machine is leaving the current state.
 			/// </summary>
-			public void OnStateExit()
+			public override void OnStateExit()
 			{
 			}
 		}
@@ -116,10 +116,10 @@ namespace DiceRoller
 
 		public void ProgressTurn()
 		{
-			if (stateMachine.CurrentState == State.Navigation)
+			if (stateMachine.Current == State.Navigation)
 			{
 				currentTeam = (currentTeam + 1) % totalTeams;
-				stateMachine.ChangeState(State.StartTurn, currentTeam);
+				stateMachine.ChangeState(State.StartTurn, new StateParams() { team = currentTeam });
 			}
 		}
 

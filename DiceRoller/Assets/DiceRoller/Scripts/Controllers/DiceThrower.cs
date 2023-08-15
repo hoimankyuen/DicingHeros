@@ -58,7 +58,7 @@ namespace DiceRoller
 		/// </summary>
 		void Update()
 		{
-			if (stateMachine.CurrentState == State.Navigation)
+			if (stateMachine.Current == State.Navigation)
 			{
 				DetectThrow();
 			}
@@ -102,6 +102,8 @@ namespace DiceRoller
 			else if (ThrowDragging)
 			{
 				Ray mouseRay = Camera.main.ScreenPointToRay(Input.mousePosition);
+				
+				// get the current throw parameters
 				if (throwDragPlane.Raycast(mouseRay, out float enter))
 				{
 					ThrowDirection = (ThrowDragPosition - (mouseRay.origin + mouseRay.direction * enter));
@@ -109,6 +111,7 @@ namespace DiceRoller
 					ThrowDirection = ThrowDirection.normalized;
 				}
 
+				// initiate throw if mouse button is released
 				if (Input.GetMouseButtonUp(0))
 				{
 					if (ThrowPower != -1f)
@@ -117,45 +120,49 @@ namespace DiceRoller
 						Vector3 force = ThrowDirection * throwForces.Lerp(ThrowPower);
 						Vector3 torque = Vector3.Cross(ThrowDirection, Vector3.down) * rollTorque;
 						Vector3 position = ThrowDragPosition + Vector3.up * throwHeight - force * Mathf.Sqrt(2 * throwHeight / 9.81f);
-						int castSize = (int)Mathf.Ceil(Mathf.Pow(dice.Count, 1f / 3f));
 
+						// select all do
 						List<Dice> throwingDice = new List<Dice>();
-						throwingDice.AddRange(dice);
+						throwingDice.AddRange(dice.Where(x => x.team == stateMachine.Params.team));
 
 						// shuffle the list of throwing dices
-						for (int i = 0; i < 20; i++)
+						if (throwingDice.Count > 0)
 						{
-							int from = Random.Range(0, throwingDice.Count);
-							int to = Random.Range(0, throwingDice.Count);
-							Dice temp = throwingDice[from];
-							throwingDice[from] = throwingDice[to];
-							throwingDice[to] = temp;
-						}
+							for (int i = 0; i < throwingDice.Count; i++)
+							{
+								int from = Random.Range(0, throwingDice.Count);
+								int to = Random.Range(0, throwingDice.Count);
+								Dice temp = throwingDice[from];
+								throwingDice[from] = throwingDice[to];
+								throwingDice[to] = temp;
+							}
 
-						// place the dice in the correct 3d position and throw them
-						Vector3 forward = force.normalized;
-						Vector3 up = Vector3.up;
-						Vector3 right = Vector3.Cross(forward, up);
-						for (int i = 0; i < throwingDice.Count; i++)
-						{
-							Vector3 castOffset =
-								right * (i % castSize - (float)(castSize - 1) / 2f) +
-								up * ((i / castSize) % castSize - (float)(castSize - 1) / 2f) +
-								forward * (i / (castSize * castSize) - (float)(castSize - 1) / 2f);
-							Quaternion randomDirection =
-								Quaternion.AngleAxis(Random.Range(-5, 5) + Random.Range(-5, 5) * ThrowPower, up) *
-								Quaternion.AngleAxis(Random.Range(-5, 5) + Random.Range(-5, 5) * ThrowPower, right);
-							Vector3 randomTorque = new Vector3(
-									Random.Range(-rollTorque * 0.5f, rollTorque * 0.5f),
-									Random.Range(-rollTorque * 0.5f, rollTorque * 0.5f),
-									Random.Range(-rollTorque * 0.5f, rollTorque * 0.5f));
+							// place the dice in the correct 3d position and throw them
+							Vector3 forward = force.normalized;
+							Vector3 up = Vector3.up;
+							Vector3 right = Vector3.Cross(forward, up);
+							int castSize = (int)Mathf.Ceil(Mathf.Pow(throwingDice.Count, 1f / 3f));
+							for (int i = 0; i < throwingDice.Count; i++)
+							{
+								Vector3 castOffset =
+									right * (i % castSize - (float)(castSize - 1) / 2f) +
+									up * ((i / castSize) % castSize - (float)(castSize - 1) / 2f) +
+									forward * (i / (castSize * castSize) - (float)(castSize - 1) / 2f);
+								Quaternion randomDirection =
+									Quaternion.AngleAxis(Random.Range(-5, 5) + Random.Range(-5, 5) * ThrowPower, up) *
+									Quaternion.AngleAxis(Random.Range(-5, 5) + Random.Range(-5, 5) * ThrowPower, right);
+								Vector3 randomTorque = new Vector3(
+										Random.Range(-rollTorque * 0.5f, rollTorque * 0.5f),
+										Random.Range(-rollTorque * 0.5f, rollTorque * 0.5f),
+										Random.Range(-rollTorque * 0.5f, rollTorque * 0.5f));
 
-							throwingDice[i].Throw(
-									position + castOffset * 0.25f,
-									randomDirection * force,
-									torque + randomTorque);
+								throwingDice[i].Throw(
+										position + castOffset * 0.25f,
+										randomDirection * force,
+										torque + randomTorque);
 
-							//throwingDice[i].Throw(position + castOffset * 0.25f, force, torque);
+								//throwingDice[i].Throw(position + castOffset * 0.25f, force, torque);
+							}
 						}
 
 						thrown = true;

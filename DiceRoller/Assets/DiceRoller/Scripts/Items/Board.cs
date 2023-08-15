@@ -144,7 +144,7 @@ namespace DiceRoller
 			}
 		}
 
-		// ========================================================= Behaviour =========================================================
+		// ========================================================= Inqury =========================================================
 
 		/// <summary>
 		/// Get all tiles that an object is in.
@@ -198,18 +198,30 @@ namespace DiceRoller
 			return result;
 		}
 
+		/// <summary>
+		/// Find the shortest path between a set of starting tile(s) to a specific target tile.
+		/// </summary>
 		public List<Tile> GetShortestPath(Tile startingTile, Tile targetTile, int range)
 		{
 			return GetShortestPath(new List<Tile>(new Tile[] { startingTile }), new List<Tile>(), targetTile, range);
 		}
+		/// <summary>
+		/// Find the shortest path between a set of starting tile(s) to a specific target tile.
+		/// </summary>
 		public List<Tile> GetShortestPath(List<Tile> startingTiles, Tile targetTile, int range)
 		{
 			return GetShortestPath(new List<Tile>(startingTiles), new List<Tile>(), targetTile, range);
 		}
+		/// <summary>
+		/// Find the shortest path between a set of starting tile(s) to a specific target tile.
+		/// </summary>
 		public List<Tile> GetShortestPath(Tile startingTile, List<Tile> excludedTiles, Tile targetTile, int range)
 		{
 			return GetShortestPath(new List<Tile>(new Tile[] { startingTile }), excludedTiles, targetTile, range);
 		}
+		/// <summary>
+		/// Find the shortest path between a set of starting tile(s) to a specific target tile.
+		/// </summary>
 		public List<Tile> GetShortestPath(List<Tile> startingTiles, List<Tile> excludedTiles, Tile targetTile, int range)
 		{
 			if (startingTiles.Contains(targetTile))

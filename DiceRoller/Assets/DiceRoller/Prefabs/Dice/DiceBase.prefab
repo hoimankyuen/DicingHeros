@@ -60,7 +60,7 @@ Transform:
   m_GameObject: {fileID: 2528647273053015929}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.15, y: 0.15, z: 0.15}
   m_Children: []
   m_Father: {fileID: 7137916824577925228}
   m_RootOrder: 0
@@ -304,7 +304,7 @@ Transform:
   m_GameObject: {fileID: 7980804633894842004}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.1, y: 0.1, z: 0.1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 1752461970474087006}
   - {fileID: 3677537077907612515}
@@ -340,6 +340,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   icon: {fileID: -5843054530652463671, guid: 97d0e16a9c8ab83469c5fd8c4d96235a, type: 3}
-  size: 1
+  size: 0.14
   faces: []
+  team: 0
   connectedUnit: {fileID: 0}

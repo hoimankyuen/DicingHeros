@@ -12,14 +12,13 @@ namespace DiceRoller
 		// singleton
 		public static UIController current { get; protected set; }
 
-		[Header("Zoom Camera")]
-		public Camera zoomCamera;
-		public RawImage zoomCameraDisplay;
-
-		[Header("Dice Display")]
-		public Sprite unknownDiceIcon;
+		[Header("Selectable Display")]
+		public Image frame;
+		public Image unitImage; 
 		public Image diceImage;
 		public TextMeshProUGUI diceValueText;
+		public Sprite unknownDiceIcon;
+		protected bool selectableDisplayDirty = false;
 
 		[Header("Throw Display")]
 		public GameObject throwTarget = null;
@@ -28,14 +27,13 @@ namespace DiceRoller
 		public GameObject throwPowerIndicator = null;
 		public CutoffSpriteRenderer throwPowerIndicatorCutoff = null;
 
-
 		// ========================================================= Monobehaviour Methods =========================================================
 
 		/// <summary>
 		/// Awake is called when the game object was created. It is always called before start and is 
 		/// independent of if the game object is active or not.
 		/// </summary>
-		private void Awake()
+		protected void Awake()
 		{
 			current = this;
 		}
@@ -43,7 +41,7 @@ namespace DiceRoller
 		/// <summary>
 		/// Start is called before the first frame update and/or the game object is first active.
 		/// </summary>
-		private void Start()
+		protected void Start()
 		{
 
 		}
@@ -51,36 +49,74 @@ namespace DiceRoller
 		/// <summary>
 		/// Update is called once per frame.
 		/// </summary>
-		private void Update()
+		protected void Update()
 		{
-			UpdateDiceDisplay();
+			UpdateSelectableDisplay();
 			UpdateThrowDisplay();
 		}
 
 		/// <summary>
 		/// OnDestroy is called when an game object is destroyed.
 		/// </summary>
-		private void OnDestroy()
+		protected void OnDestroy()
 		{
 			current = null;
 		}
 
-		// ========================================================= Zoom Camera =========================================================
+		// ========================================================= Selectable Display =========================================================
 
-		// ========================================================= Dice Display =========================================================
+		/// <summary>
+		/// Request a change in the selectable display.
+		/// </summary>
+		public void SetSelectableDisplayDirty()
+		{
+			selectableDisplayDirty = true;
+		}
 
 		/// <summary>
 		/// Change the dice display to reflect the current selected die.
 		/// </summary>
-		private void UpdateDiceDisplay()
+		protected void UpdateSelectableDisplay()
 		{
-			if (Dice.InspectingDice != null && Dice.InspectingDice.Count > 0 && Dice.InspectingDice[0].Value != -1)
+			// move selectable frame to either side of the screen
+			if (Input.mousePosition.x > Screen.width - frame.rectTransform.rect.width)
 			{
+				frame.rectTransform.anchorMin = new Vector2(0, 0);
+				frame.rectTransform.anchorMax = new Vector2(0, 0);
+				frame.rectTransform.pivot = new Vector2(0, 0);
+			}
+			else if (Input.mousePosition.x < frame.rectTransform.rect.width)
+			{
+				frame.rectTransform.anchorMin = new Vector2(1, 0);
+				frame.rectTransform.anchorMax = new Vector2(1, 0);
+				frame.rectTransform.pivot = new Vector2(1, 0);
+			}
+
+			// display selectable icon
+			if (Unit.InspectingUnit != null && Unit.InspectingUnit.Count > 0)
+			{
+				// show unit icon
+				unitImage.gameObject.SetActive(true);
+				unitImage.sprite = Unit.InspectingUnit[0].icon;
+
+				diceImage.gameObject.SetActive(false);
+
+			}
+			else if (Dice.InspectingDice != null && Dice.InspectingDice.Count > 0 && Dice.InspectingDice[0].Value != -1)
+			{
+				// show dice icon
+				unitImage.gameObject.SetActive(false);
+
+				diceImage.gameObject.SetActive(true);
 				diceImage.sprite = Dice.InspectingDice[0].icon;
 				diceValueText.text = Dice.InspectingDice[0].Value.ToString();
 			}
 			else
 			{
+				// show nothing selected
+				unitImage.gameObject.SetActive(false);
+
+				diceImage.gameObject.SetActive(true);
 				diceImage.sprite = unknownDiceIcon;
 				diceValueText.text = "?";
 			}
@@ -91,7 +127,7 @@ namespace DiceRoller
 		/// <summary>
 		/// Update the apparence of the throw indicator UI.
 		/// </summary>
-		void UpdateThrowDisplay()
+		protected void UpdateThrowDisplay()
 		{
 			if (DiceThrower.current.ThrowDragging)
 			{
