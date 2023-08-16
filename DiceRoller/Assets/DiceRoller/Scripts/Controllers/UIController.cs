@@ -102,14 +102,14 @@ namespace DiceRoller
 				diceImage.gameObject.SetActive(false);
 
 			}
-			else if (Dice.InspectingDice != null && Dice.InspectingDice.Count > 0 && Dice.InspectingDice[0].Value != -1)
+			else if (Die.InspectingDice != null && Die.InspectingDice.Count > 0 && Die.InspectingDice[0].Value != -1)
 			{
 				// show dice icon
 				unitImage.gameObject.SetActive(false);
 
 				diceImage.gameObject.SetActive(true);
-				diceImage.sprite = Dice.InspectingDice[0].icon;
-				diceValueText.text = Dice.InspectingDice[0].Value.ToString();
+				diceImage.sprite = Die.InspectingDice[0].icon;
+				diceValueText.text = Die.InspectingDice[0].Value.ToString();
 			}
 			else
 			{

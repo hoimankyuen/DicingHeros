@@ -28,8 +28,20 @@ namespace DiceRoller
 		public bool IsMoving { get; protected set; }
 		protected float lastMovingTime = 0;
 
-		public List<Tile> OccupiedTiles => Vector3.Distance(transform.position, lastPosition) < 0.0001f ? lastOccupiedTiles : RefreshOccupiedTiles();
-		protected Vector3 lastPosition = Vector3.zero;
+		public List<Tile> OccupiedTiles
+		{
+			get 
+			{
+				if (Vector3.Distance(transform.position, lastOccupiedPosition) > 0.0001f)
+				{
+					lastOccupiedTiles.Clear();
+					Board.current.GetCurrentTiles(transform.position, size, in lastOccupiedTiles);
+					lastOccupiedPosition = transform.position;
+				}
+				return lastOccupiedTiles;
+			}
+		}
+		protected Vector3 lastOccupiedPosition = Vector3.zero;
 		protected List<Tile> lastOccupiedTiles = new List<Tile>();
 
 		// ========================================================= Monobehaviour Methods =========================================================
@@ -136,16 +148,6 @@ namespace DiceRoller
 				completedPress = false;
 				isPressed = true;
 			}
-		}
-
-		/// <summary>
-		/// Find which tiles this game object is in.
-		/// </summary>
-		protected List<Tile> RefreshOccupiedTiles()
-		{
-			lastOccupiedTiles.Clear();
-			lastOccupiedTiles.AddRange(Board.current.GetCurrentTiles(transform.position, size));
-			return lastOccupiedTiles;
 		}
 	}
 }

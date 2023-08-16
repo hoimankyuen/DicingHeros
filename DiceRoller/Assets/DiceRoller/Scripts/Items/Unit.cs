@@ -8,6 +8,7 @@ namespace DiceRoller
 {
 	public class Unit : Item
 	{
+		public static List<Unit> AllUnits { get; protected set; } = new List<Unit>();
 		public static UniqueList<Unit> InspectingUnit { get; protected set; } = new UniqueList<Unit>();
 
 		// parameters
@@ -40,6 +41,7 @@ namespace DiceRoller
 		{
 			base.Start();
 			RegisterStateBehaviours();
+			RegisterToTeam();
 		}
 
 		/// <summary>
@@ -57,6 +59,7 @@ namespace DiceRoller
 		{
 			base.OnDestroy();
 			DeregisterStateBehaviours();
+			DeregisterFromTeam();
 		}
 
 		/// <summary>
@@ -80,6 +83,24 @@ namespace DiceRoller
 		{
 			outline = GetComponent<Outline>();
 			overlay = GetComponent<Overlay>();
+		}
+
+		// ========================================================= Team Behaviour =========================================================
+
+		/// <summary>
+		/// Register this unit to a team.
+		/// </summary>
+		protected void RegisterToTeam()
+		{
+			AllUnits.Add(this);
+		}
+
+		/// <summary>
+		///  Deregister this unit from a team.
+		/// </summary>
+		protected void DeregisterFromTeam()
+		{
+			AllUnits.Remove(this);
 		}
 
 		// ========================================================= State Machine Behaviour =========================================================
@@ -250,6 +271,9 @@ namespace DiceRoller
 			protected bool isPressing0 = false;
 			protected bool isPressing1 = false;
 
+			protected List<Tile> nextPath = new List<Tile>();
+			protected List<Tile> appendPath = new List<Tile>();
+
 			/// <summary>
 			/// Constructor.
 			/// </summary>
@@ -270,18 +294,18 @@ namespace DiceRoller
 					unit.outline.Show = true;
 
 					// show occupied tiles on board, assume unit wont move during movement selection state
-					foreach (Tile tile in unit.OccupiedTiles)
+					lastOccupiedTiles.AddRange(unit.OccupiedTiles);
+					foreach (Tile tile in lastOccupiedTiles)
 					{
 						tile.AddDisplay(this, Tile.DisplayType.Position);
 					}
-					lastOccupiedTiles.AddRange(unit.OccupiedTiles);
 
 					// show possible movement area on board, assume unit wont move during movement selection state
-					foreach (Tile tile in unit.board.GetTileWithinRange(unit.OccupiedTiles, unit.movement))
+					board.GetTilesWithinRange(unit.OccupiedTiles, unit.movement, lastMovementArea);
+					foreach (Tile tile in lastMovementArea)
 					{
 						tile.AddDisplay(this, Tile.DisplayType.Move);
 					}
-					lastMovementArea.AddRange(unit.board.GetTileWithinRange(unit.OccupiedTiles, unit.movement));
 
 					// shwo unit info on ui  
 					InspectingUnit.Add(unit);
@@ -308,7 +332,7 @@ namespace DiceRoller
 					}
 
 					// calculate path towards the target tile
-					List<Tile> nextPath = new List<Tile>(lastPath);
+					nextPath.Clear();
 					if (lastTargetTile == targetTile)
 					{
 						if (targetTile == null)
@@ -325,7 +349,8 @@ namespace DiceRoller
 						else if (nextPath.Count == 0)
 						{
 							// no path exist, find the shortest path to target tile
-							nextPath = unit.board.GetShortestPath(unit.OccupiedTiles, targetTile, unit.movement);
+							nextPath.Clear();
+							unit.board.GetShortestPath(unit.OccupiedTiles, targetTile, unit.movement, in nextPath);
 						}
 						else if (nextPath.Contains(targetTile))
 						{
@@ -335,17 +360,20 @@ namespace DiceRoller
 						else
 						{
 							// target tile is valid and not on current path, attempt to append a path from the end of current path to the target tile
-							List<Tile> appendPath = unit.board.GetShortestPath(nextPath[nextPath.Count - 1], nextPath, targetTile, unit.movement + 1 - nextPath.Count);
+							appendPath.Clear();
+							unit.board.GetShortestPath(nextPath[nextPath.Count - 1], nextPath, targetTile, unit.movement + 1 - nextPath.Count, in appendPath);
 							if (appendPath != null)
 							{
 								// append a path from last tile of the path to the target tile
 								appendPath.RemoveAt(0);
 								nextPath.AddRange(appendPath);
+								appendPath.Clear();
 							}
 							else
 							{
 								// path is too long, retrieve a shortest path to target tile instead
-								nextPath = unit.board.GetShortestPath(unit.OccupiedTiles, targetTile, unit.movement);
+								nextPath.Clear();
+								unit.board.GetShortestPath(unit.OccupiedTiles, targetTile, unit.movement, in nextPath);
 							}
 						}
 					}
@@ -375,6 +403,7 @@ namespace DiceRoller
 					}
 					lastPath.Clear();
 					lastPath.AddRange(nextPath);
+					nextPath.Clear();
 
 					// detect path selection by left mouse pressing
 					if (Input.GetMouseButtonDown(0))

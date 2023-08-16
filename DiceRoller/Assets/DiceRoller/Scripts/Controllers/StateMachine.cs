@@ -30,14 +30,13 @@ namespace DiceRoller
         DiceAttack,
     }
 
-
 	public struct StateParams
 	{
 		public int team;
 		public Unit unit;
 		public List<Tile> startingTiles;
 		public List<Tile> path;
-		public Dice dice;
+		public Die dice;
 		public Unit diceTarget;
 	}
 

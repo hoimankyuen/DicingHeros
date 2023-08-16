@@ -25,7 +25,7 @@ namespace DiceRoller
 
 
 		// working variables   
-		protected List<Dice> dice = new List<Dice>();
+		protected List<Die> dice = new List<Die>();
 		protected Plane throwDragPlane = new Plane();
 		protected bool thrown = false;
 
@@ -43,7 +43,7 @@ namespace DiceRoller
 		void Awake()
 		{
 			current = this;
-			dice.AddRange(GameObject.FindObjectsOfType<Dice>());
+			dice.AddRange(GameObject.FindObjectsOfType<Die>());
 		}
 
 		/// <summary>
@@ -122,7 +122,7 @@ namespace DiceRoller
 						Vector3 position = ThrowDragPosition + Vector3.up * throwHeight - force * Mathf.Sqrt(2 * throwHeight / 9.81f);
 
 						// select all do
-						List<Dice> throwingDice = new List<Dice>();
+						List<Die> throwingDice = new List<Die>();
 						throwingDice.AddRange(dice.Where(x => x.team == stateMachine.Params.team));
 
 						// shuffle the list of throwing dices
@@ -132,7 +132,7 @@ namespace DiceRoller
 							{
 								int from = Random.Range(0, throwingDice.Count);
 								int to = Random.Range(0, throwingDice.Count);
-								Dice temp = throwingDice[from];
+								Die temp = throwingDice[from];
 								throwingDice[from] = throwingDice[to];
 								throwingDice[to] = temp;
 							}
@@ -157,7 +157,7 @@ namespace DiceRoller
 										Random.Range(-rollTorque * 0.5f, rollTorque * 0.5f));
 
 								throwingDice[i].Throw(
-										position + castOffset * 0.25f,
+										position + castOffset * 0.3f,
 										randomDirection * force,
 										torque + randomTorque);
 

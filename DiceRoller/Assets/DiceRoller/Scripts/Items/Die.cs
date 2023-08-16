@@ -18,9 +18,10 @@ namespace DiceRoller
 		}
 	}
 
-	public class Dice : Item
+	public class Die : Item
 	{
-		public static UniqueList<Dice> InspectingDice { get; protected set; } = new UniqueList<Dice>();
+		public static Dictionary<int, List<Die>> DiceInTeam { get; protected set; } = new Dictionary<int, List<Die>>();
+		public static UniqueList<Die> InspectingDice { get; protected set; } = new UniqueList<Die>();
 
 		// parameters
 		public List<Face> faces = new List<Face>();
@@ -28,6 +29,7 @@ namespace DiceRoller
 
 		// components
 		protected Outline outline = null;
+		protected Overlay overlay = null;
 		protected Transform effectTransform = null;
 		protected LineRenderer lineRenderer = null;
 
@@ -56,6 +58,7 @@ namespace DiceRoller
 		{
 			base.Start();
 			RegisterStateBehaviours();
+			RegisterToTeam();
 		}
 
 		/// <summary>
@@ -68,8 +71,9 @@ namespace DiceRoller
 			if (connectedUnit != null)
 			{
 				lineRenderer.gameObject.SetActive(true);
-				lineRenderer.SetPosition(0, transform.position);
-				lineRenderer.SetPosition(1, connectedUnit.transform.position + 0.1f * Vector3.up);
+				lineRenderer.SetPosition(0, connectedUnit.transform.position + 0.1f * Vector3.up);
+				lineRenderer.SetPosition(1, transform.position);
+				
 			}
 			else
 			{
@@ -93,6 +97,7 @@ namespace DiceRoller
 		{
 			base.OnDestroy();
 			DeregisterStateBehaviours();
+			DeregisterFromTeam();
 		}
 
 		/// <summary>
@@ -119,10 +124,12 @@ namespace DiceRoller
 		/// </summary>
 		protected void RetrieveComponentReferences()
 		{
-			outline = GetComponentInChildren<Outline>();
+			outline = GetComponent<Outline>();
+			overlay = GetComponent<Overlay>();
 			effectTransform = transform.Find("Effect");
 			lineRenderer = transform.Find("Effect/Line").GetComponent<LineRenderer>();
 		}
+
 
 		/// <summary>
 		/// Find the value got by this die.
@@ -159,6 +166,32 @@ namespace DiceRoller
 			rollInitiating = true;
 		}
 
+		// ========================================================= Team Behaviour =========================================================
+
+		/// <summary>
+		/// Register this unit to a team.
+		/// </summary>
+		protected void RegisterToTeam()
+		{
+			if (!DiceInTeam.ContainsKey(team))
+			{
+				DiceInTeam[team] = new List<Die>();
+			}
+			DiceInTeam[team].Add(this);
+		}
+
+		/// <summary>
+		///  Deregister this unit from a team.
+		/// </summary>
+		protected void DeregisterFromTeam()
+		{
+			DiceInTeam[team].Remove(this);
+			if (DiceInTeam[team].Count == 0)
+			{
+				DiceInTeam.Remove(team);
+			}
+		}
+
 		// ========================================================= State Machine Behaviour =========================================================
 
 		/// <summary>
@@ -182,7 +215,7 @@ namespace DiceRoller
 
 		protected class NavigationSB : StateBehaviour
 		{
-			protected readonly Dice dice = null;
+			protected readonly Die dice = null;
 			
 			protected bool lastIsHovering = false;
 			protected List<Tile> lastOccupiedTiles = new List<Tile>();
@@ -190,7 +223,7 @@ namespace DiceRoller
 			/// <summary>
 			/// Constructor.
 			/// </summary>
-			public NavigationSB(Dice dice)
+			public NavigationSB(Die dice)
 			{
 				this.dice = dice;
 			}

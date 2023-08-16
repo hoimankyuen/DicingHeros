@@ -8,6 +8,20 @@ namespace DiceRoller
 {
 	public class Board : MonoBehaviour
 	{
+		protected struct TileRangePair
+		{
+			public Tile tile;
+			public int range;
+		}
+
+		protected struct TilePathRangeHeuristicPair
+		{
+			public Tile tile;
+			public Tile previous;
+			public int range;
+			public float heuristic;
+		}
+
 		// singleton
 		public static Board current { get; protected set; }
 
@@ -18,6 +32,12 @@ namespace DiceRoller
 
 		// working variables
 		protected List<Tile> tiles = new List<Tile>();
+
+		// temporary working variables
+		protected List<Tile> tempTiles = new List<Tile>();
+		protected List<TileRangePair> tempTileRangePairs = new List<TileRangePair>();
+		protected List<TilePathRangeHeuristicPair> tempTilePathRangeHeuristicPairs1 = new List<TilePathRangeHeuristicPair>();
+		protected List<TilePathRangeHeuristicPair> tempTilePathRangeHeuristicPairs2 = new List<TilePathRangeHeuristicPair>();
 
 		// ========================================================= Monobehaviour Methods =========================================================
 
@@ -63,38 +83,6 @@ namespace DiceRoller
 		{
 			current = null;
 		}
-
-		/// <summary>
-		/// OnValidate is called when any inspector value is changed.
-		/// </summary>
-		void OnValidate()
-		{
-
-		}
-
-		/// <summary>
-		/// OnMouseEnter is called when the mouse is start pointing to the game object.
-		/// </summary>
-		void OnMouseEnter()
-		{
-
-		}
-
-		/// <summary>
-		/// OnMouseExit is called when the mouse is stop pointing to the game object.
-		/// </summary>
-		void OnMouseExit()
-		{
-		}
-
-		/// <summary>
-		/// OnMouseDown is called when a mouse button is pressed when pointing to the game object.
-		/// </summary>
-		void OnMouseDown()
-		{
-
-		}
-
 
 		// ========================================================= Editor =========================================================
 
@@ -149,9 +137,9 @@ namespace DiceRoller
 		/// <summary>
 		/// Get all tiles that an object is in.
 		/// </summary>
-		public List<Tile> GetCurrentTiles(Vector3 position, float size)
+		public void GetCurrentTiles(Vector3 position, float size, in List<Tile> result)
 		{
-			List<Tile> result = new List<Tile>();
+			result.Clear();
 			foreach (Tile tile in tiles)
 			{
 				if (tile.IsInTile(position, size))
@@ -159,119 +147,185 @@ namespace DiceRoller
 					result.Add(tile);
 				}
 			}
-			return result;
 		}
 
 		/// <summary>
 		/// Find all tiles within a certain range of this tile, and return them in the supplied list.
 		/// </summary>
-		public List<Tile> GetTileWithinRange(List<Tile> startingTiles, int range)
+		public void GetTilesWithinRange(List<Tile> startingTiles, int range, in List<Tile> result)
 		{
-			List<Tuple<Tile, int>> search = new List<Tuple<Tile, int>>();
-			List<Tile> result = new List<Tile>();
+			GetTilesWithinRange(startingTiles, null, range, in result);
+		}
+		/// <summary>
+		/// Find all tiles within a certain range of this tile, and return them in the supplied list.
+		/// </summary>
+		public void GetTilesWithinRange(List<Tile> startingTiles, List<Tile> excludedTiles, int range, in List<Tile> result)
+		{
+			// prepare containers
+			List<TileRangePair> open = tempTileRangePairs;
+			open.Clear();
+			result.Clear();
+
+			// add initial tiles
 			foreach (Tile startingTile in startingTiles)
 			{
-				search.Add(new Tuple<Tile, int>(startingTile, range));
+				if (excludedTiles != null && excludedTiles.Contains(startingTile))
+					continue;
+				open.Add(new TileRangePair() { tile = startingTile, range = range });
 			}
 
-			while (search.Count > 0)
+			// explore in a depth first manner
+			while (open.Count > 0)
 			{
-				Tuple<Tile, int> current = search[0];
-				search.RemoveAt(0);
-				result.Add(current.Item1);
+				// get the tile in the first of the list
+				TileRangePair current = open[0];
+				open.RemoveAt(0);
+				result.Add(current.tile);
 
-				if (current.Item2 > 0)
+				// explore its connections
+				if (current.range > 0)
 				{
-					foreach (Tile connectedTile in current.Item1.connectedTiles)
+					foreach (Tile connectedTile in current.tile.connectedTiles)
 					{
 						if (!connectedTile.gameObject.activeInHierarchy)
+							continue;
+						if (excludedTiles != null && excludedTiles.Contains(connectedTile))
 							continue;
 						if (result.Contains(connectedTile))
 							continue;
-						if (search.Exists(x => x.Item1 == connectedTile))
+						if (open.Exists(x => x.tile == connectedTile))
 							continue;
 
-						search.Add(new Tuple<Tile, int>(connectedTile, current.Item2 - 1));
+						open.Add(new TileRangePair() { tile = connectedTile, range = current.range - 1 });
 					}
 				}
 			}
-			return result;
 		}
 
 		/// <summary>
 		/// Find the shortest path between a set of starting tile(s) to a specific target tile.
 		/// </summary>
-		public List<Tile> GetShortestPath(Tile startingTile, Tile targetTile, int range)
+		public void GetShortestPath(Tile startingTile, Tile targetTile, int range, in List<Tile> result)
 		{
-			return GetShortestPath(new List<Tile>(new Tile[] { startingTile }), new List<Tile>(), targetTile, range);
+			tempTiles.Clear();
+			tempTiles.Add(startingTile);
+			GetShortestPath(tempTiles, null, targetTile, range, in result);
 		}
 		/// <summary>
 		/// Find the shortest path between a set of starting tile(s) to a specific target tile.
 		/// </summary>
-		public List<Tile> GetShortestPath(List<Tile> startingTiles, Tile targetTile, int range)
+		public void GetShortestPath(List<Tile> startingTiles, Tile targetTile, int range, in List<Tile> result)
 		{
-			return GetShortestPath(new List<Tile>(startingTiles), new List<Tile>(), targetTile, range);
+			GetShortestPath(startingTiles, null, targetTile, range, in result);
 		}
 		/// <summary>
 		/// Find the shortest path between a set of starting tile(s) to a specific target tile.
 		/// </summary>
-		public List<Tile> GetShortestPath(Tile startingTile, List<Tile> excludedTiles, Tile targetTile, int range)
+		public void GetShortestPath(Tile startingTile, List<Tile> excludedTiles, Tile targetTile, int range, in List<Tile> result)
 		{
-			return GetShortestPath(new List<Tile>(new Tile[] { startingTile }), excludedTiles, targetTile, range);
+			tempTiles.Clear();
+			tempTiles.Add(startingTile);
+			GetShortestPath(tempTiles, excludedTiles, targetTile, range, in result);
 		}
 		/// <summary>
 		/// Find the shortest path between a set of starting tile(s) to a specific target tile.
 		/// </summary>
-		public List<Tile> GetShortestPath(List<Tile> startingTiles, List<Tile> excludedTiles, Tile targetTile, int range)
+		public void GetShortestPath(List<Tile> startingTiles, List<Tile> excludedTiles, Tile targetTile, int range, in List<Tile> result)
 		{
-			if (startingTiles.Contains(targetTile))
-				return new List<Tile>(new Tile[] { targetTile });
+			// prepare containers
+			List<TilePathRangeHeuristicPair> open = tempTilePathRangeHeuristicPairs1;
+			List<TilePathRangeHeuristicPair> closed = tempTilePathRangeHeuristicPairs2;
+			open.Clear();
+			closed.Clear();
+			result.Clear();
 
-			List<Tuple<List<Tile>, float>> open = new List<Tuple<List<Tile>, float>>();
-			List<Tuple<Tile, float>> closed = new List<Tuple<Tile, float>>();
-
+			// add initial tiles, also check if target tile is already included in the starting tiles
 			foreach (Tile startingTile in startingTiles)
 			{
-				open.Add(new Tuple<List<Tile>, float>(new List<Tile>(new Tile[] { startingTile }), Vector3.Distance(startingTile.transform.position, targetTile.transform.position)));
+				if (excludedTiles != null && excludedTiles.Contains(startingTile))
+					continue;
+				if (startingTile == targetTile)
+				{
+					result.Add(targetTile);
+					return;
+				}
+				open.Add(new TilePathRangeHeuristicPair()
+				{ 
+					tile = startingTile,
+					previous = null,
+					range = 0,
+					heuristic = Vector3.Distance(startingTile.transform.position, targetTile.transform.position) 
+				});
 			}
 
+			// explore in a A* manner
 			while (open.Count > 0)
 			{
-				open.Sort((a, b) => a.Item2.CompareTo(b.Item2));
-				Tuple<List<Tile>, float> current = open[0];
-				if (current.Item1[current.Item1.Count - 1] == targetTile)
-				{
-					return current.Item1;
-				}
-
+				// get the tile in the open list with the smallest heuristic
+				open.Sort((a, b) => a.heuristic.CompareTo(b.heuristic));
+				TilePathRangeHeuristicPair current = open[0];
 				open.RemoveAt(0);
 
-				if (current.Item1.Count <= range)
+				// check if solution is already found, return path if so
+				if (current.tile == targetTile)
 				{
-					foreach (Tile connectedTile in current.Item1[current.Item1.Count - 1].connectedTiles)
+					result.Add(current.tile);
+					do
+					{
+						if (current.previous != null)
+						{
+							result.Insert(0, current.previous);
+							current = closed.Find(x => x.tile == current.previous);
+						}
+					}
+					while (current.previous != null);
+
+					open.Clear();
+					closed.Clear();
+					return;
+				}
+
+				// explore its connections
+				if (current.range < range)
+				{
+					foreach (Tile connectedTile in current.tile.connectedTiles)
 					{
 						if (!connectedTile.gameObject.activeInHierarchy)
 							continue;
-						if (excludedTiles.Contains(connectedTile))
+						if (excludedTiles != null && excludedTiles.Contains(connectedTile))
 							continue;
 
-						float heuristic = (current.Item1.Count + 1) * connectedTile.tileSize + Vector3.Distance(connectedTile.transform.position, targetTile.transform.position);
+						float heuristic = current.range * connectedTile.tileSize + Vector3.Distance(connectedTile.transform.position, targetTile.transform.position);
 
-						if (open.Exists(x => x.Item1[x.Item1.Count - 1] == connectedTile && x.Item2 < heuristic))
+						if (open.Exists(x => x.tile == connectedTile && x.heuristic < heuristic))
 							continue;
 
-						if (closed.Exists(x => x.Item1 == connectedTile && x.Item2 < heuristic))
+						if (closed.Exists(x => x.tile == connectedTile && x.heuristic < heuristic))
 							continue;
 						
-						List<Tile> newList = new List<Tile>(current.Item1);
-						newList.Add(connectedTile);
-						open.Add(new Tuple<List<Tile>, float>(newList, heuristic));
+						open.Add(new TilePathRangeHeuristicPair()
+						{
+							tile = connectedTile,
+							previous = current.tile,
+							range = current.range + 1,
+							heuristic = heuristic
+						});
 					}
 				}
 
-				closed.Add(new Tuple<Tile, float>(current.Item1[current.Item1.Count - 1], current.Item2));
+				closed.Add(new TilePathRangeHeuristicPair() 
+				{ 
+					tile = current.tile,
+					previous = current.previous,
+					range = current.range,
+					heuristic = current.heuristic
+				});
 			}
-			return null;
+
+			// completed without a path found
+			open.Clear();
+			closed.Clear();
+			return;
 		}
 	}
 }
