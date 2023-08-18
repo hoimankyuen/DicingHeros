@@ -320,7 +320,7 @@ namespace DiceRoller
 					});
 
 					// show possible movement area on board, assume unit wont move during movement selection state
-					board.GetTilesWithinRange(unit.OccupiedTiles, otherOccupiedTiles, unit.movement, lastMovementArea);
+					board.GetConnectedTilesInRange(unit.OccupiedTiles, otherOccupiedTiles, unit.movement, lastMovementArea);
 					foreach (Tile tile in lastMovementArea)
 					{
 						tile.AddDisplay(this, Tile.DisplayType.Move);
@@ -349,6 +349,7 @@ namespace DiceRoller
 							targetTile = tile;
 						}
 					}
+					Debug.Log(targetTile == null ? "NULL" : targetTile.boardPos.ToString());
 
 					// calculate path towards the target tile
 					if (lastTargetTile != targetTile)
@@ -357,23 +358,27 @@ namespace DiceRoller
 						nextPath.AddRange(lastPath);
 						if (targetTile == null)
 						{
+							Debug.Log("HERE1");
 							// target tile is unreachable, no path is retrieved
 							nextPath.Clear();
 						}
 						else if (unit.OccupiedTiles.Contains(targetTile))
 						{
+							Debug.Log("HERE2");
 							// target tile is withing the starting tiles, reset the path to the target tile
 							nextPath.Clear();
 							nextPath.Add(targetTile);
 						}
 						else if (nextPath.Count == 0)
 						{
+							Debug.Log("HERE3");
 							// no path exist, find the shortest path to target tile
 							nextPath.Clear();
 							unit.board.GetShortestPath(unit.OccupiedTiles, otherOccupiedTiles, targetTile, unit.movement, in nextPath);
 						}
 						else if (nextPath.Contains(targetTile))
 						{
+							Debug.Log("HERE4");
 							// trim the path if target tile is already in the current path
 							nextPath.RemoveRange(nextPath.IndexOf(targetTile) + 1, nextPath.Count - nextPath.IndexOf(targetTile) - 1);
 						}
@@ -388,6 +393,7 @@ namespace DiceRoller
 							unit.board.GetShortestPath(nextPath[nextPath.Count - 1], appendExcludedTiles, targetTile, unit.movement + 1 - nextPath.Count, in appendPath);
 							if (appendPath.Count > 0)
 							{
+								Debug.Log("HERE5");
 								// append a path from last tile of the path to the target tile
 								appendPath.RemoveAt(0);
 								nextPath.AddRange(appendPath);
@@ -395,6 +401,7 @@ namespace DiceRoller
 							}
 							else
 							{
+								Debug.Log("HERE6");
 								// path is too long, retrieve a shortest path to target tile instead
 								nextPath.Clear();
 								unit.board.GetShortestPath(unit.OccupiedTiles, otherOccupiedTiles, targetTile, unit.movement, in nextPath);

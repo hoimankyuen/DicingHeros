@@ -54,7 +54,8 @@ namespace DiceRoller
             }
             else
             {
-                dieIcon.sprite = defaultDieIconEntries.entries.Find(x => x.type == type).icon;
+                if (defaultDieIconEntries.dieIcons.ContainsKey(type))
+                    dieIcon.sprite = defaultDieIconEntries.dieIcons[type];
                 dieValue.text = value == -1 ? "?" : value.ToString(); 
             }
         }

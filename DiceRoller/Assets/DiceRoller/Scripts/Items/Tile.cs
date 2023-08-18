@@ -6,8 +6,6 @@ namespace DiceRoller
 {
 	public class Tile : MonoBehaviour
 	{
-		public static List<Tile> EmptyTiles { get; protected set; } = new List<Tile>();
-
 		public enum DisplayType
 		{
 			Normal,
@@ -18,33 +16,51 @@ namespace DiceRoller
 			MoveTarget,
 		}
 
+		public enum PathDirection
+		{
+			Start,
+			Right,
+			Front,
+			Left,
+			Back,
+			End,
+		}
+
+		[System.Serializable]
+		public struct PathDirections
+		{
+			public PathDirection from;
+			public PathDirection to;
+			public PathDirections(PathDirection from, PathDirection to)
+			{
+				this.from = from;
+				this.to = to;
+			}
+			public PathDirections Invsersed()
+			{
+				return new PathDirections(to, from);
+			}
+			public override int GetHashCode()
+			{
+				return from.GetHashCode() ^ (to.GetHashCode() << 8);
+			}
+			public override bool Equals(object obj)
+			{
+				return obj is PathDirections other && from == other.from && to == other.to;
+			}
+		}
+
+		public static List<Tile> EmptyTiles { get; protected set; } = new List<Tile>();
+
 		// parameters
+		[HideInInspector]
 		public float tileSize = 1f;
 		[HideInInspector]
 		public List<Tile> connectedTiles = new List<Tile>();
+		[HideInInspector]
+		public Int2 boardPos = Int2.zero;
 
-		[Header("Tile Sprites")]
-		public Sprite normalSprite = null;
-		public Sprite positionSprite = null;
-		public Sprite attackSprite = null;
-		public Sprite moveSprite = null;
-
-		[Header("Path Sprites")]
-		public Sprite pathStartEnd = null;
-		public Sprite pathStartRight = null;
-		public Sprite pathStartFront = null;
-		public Sprite pathStartLeft = null;
-		public Sprite pathStartBack = null;
-		public Sprite pathRightLeft = null;
-		public Sprite pathFrontBack = null;
-		public Sprite pathFrontRight = null;
-		public Sprite pathBackRight = null;
-		public Sprite pathFrontLeft = null;
-		public Sprite pathBackLeft = null;
-		public Sprite pathEndRight = null;
-		public Sprite pathEndFront = null;
-		public Sprite pathEndLeft = null;
-		public Sprite pathEndBack = null;
+		public TileStyle style = null;
 
 		// reference
 		protected GameController Game { get { return GameController.current; } }
@@ -205,32 +221,22 @@ namespace DiceRoller
 		protected void ResolveDisplay()
 		{
 			if (registeredPositionDisplay.Count > 0)
-				displaySpriteRenderer.sprite = positionSprite;
+				displaySpriteRenderer.sprite = style.visualSprites[DisplayType.Position];
 
 			else if (registeredAttackTargetDisplay.Count > 0)
-				displaySpriteRenderer.sprite = attackSprite;
+				displaySpriteRenderer.sprite = style.visualSprites[DisplayType.AttackTarget];
 
 			else if (registeredAttackDisplay.Count > 0)
-				displaySpriteRenderer.sprite = positionSprite;
+				displaySpriteRenderer.sprite = style.visualSprites[DisplayType.Attack];
 
 			else if (registeredMoveTargetDisplay.Count > 0)
-				displaySpriteRenderer.sprite = positionSprite;
+				displaySpriteRenderer.sprite = style.visualSprites[DisplayType.MoveTarget];
 
 			else if (registeredMoveDisplay.Count > 0)
-				displaySpriteRenderer.sprite = moveSprite;
+				displaySpriteRenderer.sprite = style.visualSprites[DisplayType.Move];
 
 			else
-				displaySpriteRenderer.sprite = normalSprite;
-		}
-
-		protected enum PathDir
-		{
-			Start,
-			Right,
-			Front,
-			Left,
-			Back,
-			End,
+				displaySpriteRenderer.sprite = style.visualSprites[DisplayType.Normal];
 		}
 
 		/// <summary>
@@ -241,63 +247,30 @@ namespace DiceRoller
 			int pos = path.IndexOf(this);
 			if (pos != -1)
 			{
-				PathDir from = PathDir.Start;
+				PathDirections pathDirections = new PathDirections(PathDirection.Start, PathDirection.End);
 				if (pos == 0)
-					from = PathDir.Start;
-				else if (transform.InverseTransformPoint(path[pos - 1].transform.position).x > tileSize / 2)
-					from = PathDir.Right;
-				else if (transform.InverseTransformPoint(path[pos - 1].transform.position).z > tileSize / 2)
-					from = PathDir.Front;
-				else if (transform.InverseTransformPoint(path[pos - 1].transform.position).x < -tileSize / 2)
-					from = PathDir.Left;
-				else if (transform.InverseTransformPoint(path[pos - 1].transform.position).z < -tileSize / 2)
-					from = PathDir.Back;
+					pathDirections.from = PathDirection.Start;
+				else if (path[pos - 1].boardPos.x > boardPos.x)
+					pathDirections.from = PathDirection.Right;
+				else if (path[pos - 1].boardPos.z > boardPos.z)
+					pathDirections.from = PathDirection.Front;
+				else if (path[pos - 1].boardPos.x < boardPos.x)
+					pathDirections.from = PathDirection.Left;
+				else if (path[pos - 1].boardPos.z > boardPos.z)
+					pathDirections.from = PathDirection.Back;
 
-				PathDir to = PathDir.End;
 				if (pos == path.Count - 1)
-					to = PathDir.End;
-				else if (transform.InverseTransformPoint(path[pos + 1].transform.position).x > tileSize / 2)
-					to = PathDir.Right;
-				else if (transform.InverseTransformPoint(path[pos + 1].transform.position).z > tileSize / 2)
-					to = PathDir.Front;
-				else if (transform.InverseTransformPoint(path[pos + 1].transform.position).x < -tileSize / 2)
-					to = PathDir.Left;
-				else if (transform.InverseTransformPoint(path[pos + 1].transform.position).z < -tileSize / 2)
-					to = PathDir.Back;
+					pathDirections.to = PathDirection.End;
+				else if (path[pos - 1].boardPos.x > boardPos.x)
+					pathDirections.to = PathDirection.Right;
+				else if (path[pos - 1].boardPos.z > boardPos.z)
+					pathDirections.to = PathDirection.Front;
+				else if (path[pos - 1].boardPos.x < boardPos.x)
+					pathDirections.to = PathDirection.Left;
+				else if (path[pos - 1].boardPos.z < boardPos.z)
+					pathDirections.to = PathDirection.Back;
 
-				if (from == PathDir.Start && to == PathDir.End)
-					pathSpriteRenderer.sprite = pathStartEnd;
-				else if (from == PathDir.Start && to == PathDir.Right)
-					pathSpriteRenderer.sprite = pathStartRight;
-				else if (from == PathDir.Start && to == PathDir.Front)
-					pathSpriteRenderer.sprite = pathStartFront;
-				else if (from == PathDir.Start && to == PathDir.Left)
-					pathSpriteRenderer.sprite = pathStartLeft;
-				else if (from == PathDir.Start && to == PathDir.Back)
-					pathSpriteRenderer.sprite = pathStartBack;
-				else if (from == PathDir.Left && to == PathDir.Right || from == PathDir.Right && to == PathDir.Left)
-					pathSpriteRenderer.sprite = pathRightLeft;
-				else if (from == PathDir.Front && to == PathDir.Back || from == PathDir.Back && to == PathDir.Front)
-					pathSpriteRenderer.sprite = pathFrontBack;
-				else if (from == PathDir.Front && to == PathDir.Right || from == PathDir.Right && to == PathDir.Front)
-					pathSpriteRenderer.sprite = pathFrontRight;
-				else if (from == PathDir.Back && to == PathDir.Right || from == PathDir.Right && to == PathDir.Back)
-					pathSpriteRenderer.sprite = pathBackRight;
-				else if (from == PathDir.Front && to == PathDir.Left || from == PathDir.Left && to == PathDir.Front)
-					pathSpriteRenderer.sprite = pathFrontLeft;
-				else if (from == PathDir.Back && to == PathDir.Left || from == PathDir.Left && to == PathDir.Back)
-					pathSpriteRenderer.sprite = pathBackLeft;
-				else if (from == PathDir.Right && to == PathDir.End)
-					pathSpriteRenderer.sprite = pathEndRight;
-				else if (from == PathDir.Front && to == PathDir.End)
-					pathSpriteRenderer.sprite = pathEndFront;
-				else if (from == PathDir.Left && to == PathDir.End)
-					pathSpriteRenderer.sprite = pathEndLeft;
-				else if (from == PathDir.Back && to == PathDir.End)
-					pathSpriteRenderer.sprite = pathEndBack;
-				else
-					pathSpriteRenderer.sprite = null;
-
+				pathSpriteRenderer.sprite = style.pathDirectionSprites[pathDirections];
 			}
 			else
 			{

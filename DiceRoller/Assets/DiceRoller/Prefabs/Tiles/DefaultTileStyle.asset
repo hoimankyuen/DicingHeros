@@ -1,0 +1,92 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bd5178f2d93509b4b8af54e197842be7, type: 3}
+  m_Name: DefaultTileStyle
+  m_EditorClassIdentifier: 
+  visualSpriteEntries:
+  - type: 0
+    sprite: {fileID: 45957242671070978, guid: 827f87b7621b87c4fab35aab8fc67f15, type: 3}
+  - type: 1
+    sprite: {fileID: -552630910304684261, guid: 827f87b7621b87c4fab35aab8fc67f15, type: 3}
+  - type: 2
+    sprite: {fileID: 4326208813897011473, guid: 827f87b7621b87c4fab35aab8fc67f15, type: 3}
+  - type: 3
+    sprite: {fileID: -552630910304684261, guid: 827f87b7621b87c4fab35aab8fc67f15, type: 3}
+  - type: 4
+    sprite: {fileID: -4904861690540128810, guid: 827f87b7621b87c4fab35aab8fc67f15, type: 3}
+  - type: 5
+    sprite: {fileID: -552630910304684261, guid: 827f87b7621b87c4fab35aab8fc67f15, type: 3}
+  pathDirecitonSpriteEntries:
+  - directions:
+      from: 0
+      to: 5
+    sprite: {fileID: -721147763432946303, guid: f4d44d751dd7ac44f9eb05121cb312ea, type: 3}
+  - directions:
+      from: 0
+      to: 1
+    sprite: {fileID: -4416260571378480354, guid: f4d44d751dd7ac44f9eb05121cb312ea, type: 3}
+  - directions:
+      from: 0
+      to: 2
+    sprite: {fileID: 4896946503828397289, guid: f4d44d751dd7ac44f9eb05121cb312ea, type: 3}
+  - directions:
+      from: 0
+      to: 3
+    sprite: {fileID: -7969914323686318149, guid: f4d44d751dd7ac44f9eb05121cb312ea, type: 3}
+  - directions:
+      from: 0
+      to: 4
+    sprite: {fileID: 8554753132983505479, guid: f4d44d751dd7ac44f9eb05121cb312ea, type: 3}
+  - directions:
+      from: 1
+      to: 3
+    sprite: {fileID: -1583451908156234385, guid: f4d44d751dd7ac44f9eb05121cb312ea, type: 3}
+  - directions:
+      from: 2
+      to: 4
+    sprite: {fileID: -1332514335887367459, guid: f4d44d751dd7ac44f9eb05121cb312ea, type: 3}
+  - directions:
+      from: 1
+      to: 2
+    sprite: {fileID: -508671779734252436, guid: f4d44d751dd7ac44f9eb05121cb312ea, type: 3}
+  - directions:
+      from: 1
+      to: 4
+    sprite: {fileID: 6746290156200942415, guid: f4d44d751dd7ac44f9eb05121cb312ea, type: 3}
+  - directions:
+      from: 3
+      to: 2
+    sprite: {fileID: 1038918107353128576, guid: f4d44d751dd7ac44f9eb05121cb312ea, type: 3}
+  - directions:
+      from: 3
+      to: 4
+    sprite: {fileID: 6193848776667493214, guid: f4d44d751dd7ac44f9eb05121cb312ea, type: 3}
+  - directions:
+      from: 1
+      to: 5
+    sprite: {fileID: -8162889928987077747, guid: f4d44d751dd7ac44f9eb05121cb312ea, type: 3}
+  - directions:
+      from: 2
+      to: 5
+    sprite: {fileID: 6736696984547236392, guid: f4d44d751dd7ac44f9eb05121cb312ea, type: 3}
+  - directions:
+      from: 3
+      to: 5
+    sprite: {fileID: 5944244876686031832, guid: f4d44d751dd7ac44f9eb05121cb312ea, type: 3}
+  - directions:
+      from: 4
+      to: 5
+    sprite: {fileID: 6085758619336620303, guid: f4d44d751dd7ac44f9eb05121cb312ea, type: 3}
+  - directions:
+      from: 5
+      to: 0
+    sprite: {fileID: 1152286761345384294, guid: f4d44d751dd7ac44f9eb05121cb312ea, type: 3}

@@ -47,6 +47,9 @@ TextureImporter:
   - first:
       213: -8162889928987077747
     second: Movement_Sprite_14
+  - first:
+      213: 6085758619336620303
+    second: Movement_Sprite_15
   externalObjects: {}
   serializedVersion: 11
   mipmaps:
@@ -202,8 +205,8 @@ TextureImporter:
       name: Movement_Sprite_3
       rect:
         serializedVersion: 2
-        x: 0
-        y: 256
+        x: 384
+        y: 384
         width: 128
         height: 128
       alignment: 0
@@ -223,7 +226,7 @@ TextureImporter:
       name: Movement_Sprite_4
       rect:
         serializedVersion: 2
-        x: 128
+        x: 0
         y: 256
         width: 128
         height: 128
@@ -244,7 +247,7 @@ TextureImporter:
       name: Movement_Sprite_5
       rect:
         serializedVersion: 2
-        x: 256
+        x: 128
         y: 256
         width: 128
         height: 128
@@ -265,7 +268,7 @@ TextureImporter:
       name: Movement_Sprite_6
       rect:
         serializedVersion: 2
-        x: 384
+        x: 256
         y: 256
         width: 128
         height: 128
@@ -286,8 +289,8 @@ TextureImporter:
       name: Movement_Sprite_7
       rect:
         serializedVersion: 2
-        x: 0
-        y: 128
+        x: 384
+        y: 256
         width: 128
         height: 128
       alignment: 0
@@ -307,7 +310,7 @@ TextureImporter:
       name: Movement_Sprite_8
       rect:
         serializedVersion: 2
-        x: 128
+        x: 0
         y: 128
         width: 128
         height: 128
@@ -328,7 +331,7 @@ TextureImporter:
       name: Movement_Sprite_9
       rect:
         serializedVersion: 2
-        x: 256
+        x: 128
         y: 128
         width: 128
         height: 128
@@ -349,7 +352,7 @@ TextureImporter:
       name: Movement_Sprite_10
       rect:
         serializedVersion: 2
-        x: 384
+        x: 256
         y: 128
         width: 128
         height: 128
@@ -370,8 +373,8 @@ TextureImporter:
       name: Movement_Sprite_11
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
+        x: 384
+        y: 128
         width: 128
         height: 128
       alignment: 0
@@ -391,7 +394,7 @@ TextureImporter:
       name: Movement_Sprite_12
       rect:
         serializedVersion: 2
-        x: 128
+        x: 0
         y: 0
         width: 128
         height: 128
@@ -412,7 +415,7 @@ TextureImporter:
       name: Movement_Sprite_13
       rect:
         serializedVersion: 2
-        x: 256
+        x: 128
         y: 0
         width: 128
         height: 128
@@ -433,7 +436,7 @@ TextureImporter:
       name: Movement_Sprite_14
       rect:
         serializedVersion: 2
-        x: 384
+        x: 256
         y: 0
         width: 128
         height: 128
@@ -446,6 +449,27 @@ TextureImporter:
       bones: []
       spriteID: d839c12cbd697be80800000000000000
       internalID: -8162889928987077747
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Movement_Sprite_15
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 0
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f09b4567835f47450800000000000000
+      internalID: 6085758619336620303
       vertices: []
       indices: 
       edges: []

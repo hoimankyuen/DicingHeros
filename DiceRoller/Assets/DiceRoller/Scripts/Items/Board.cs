@@ -32,6 +32,7 @@ namespace DiceRoller
 
 		// working variables
 		protected List<Tile> tiles = new List<Tile>();
+		protected Dictionary<Int2, Tile> tilesByBoardPos = new Dictionary<Int2, Tile>();
 
 		// temporary working variables
 		protected List<Tile> tempTiles = new List<Tile>();
@@ -54,7 +55,9 @@ namespace DiceRoller
 				{
 					if (transform.GetChild(i).gameObject.activeInHierarchy)
 					{
-						tiles.Add(transform.GetChild(i).GetComponent<Tile>());
+						Tile tile = transform.GetChild(i).GetComponent<Tile>();
+						tiles.Add(tile);
+						tilesByBoardPos[tile.boardPos] = tile;
 					}
 				}
 			}
@@ -111,6 +114,7 @@ namespace DiceRoller
 						transform);
 					Tile tile = go.GetComponent<Tile>();
 					tile.tileSize = tileSize;
+					tile.boardPos = new Int2(i, j);
 					tile.RegenerateTile();
 					tileGrid[i].Add(tile);
 				}
@@ -150,16 +154,50 @@ namespace DiceRoller
 		}
 
 		/// <summary>
-		/// Find all tiles within a certain range of this tile, and return them in the supplied list.
+		/// Get all tiles that are within a certain range from the starting tiles regardless of connectivity, and return them in the supplied list.
 		/// </summary>
-		public void GetTilesWithinRange(List<Tile> startingTiles, int range, in List<Tile> result)
+		public void GetTilesInRange(List<Tile> startingTiles, int range, in List<Tile> result)
 		{
-			GetTilesWithinRange(startingTiles, null, range, in result);
+			// prepare containers
+			result.Clear();
+
+			// calculate the bound of starting tiles
+			Int2 min = Int2.MinValue;
+			Int2 max = Int2.MaxValue;
+			foreach (Tile startingTile in startingTiles)
+			{
+				if (startingTile.boardPos.x < min.x)
+					min.x = startingTile.boardPos.x;
+				if (startingTile.boardPos.z < min.z)
+					min.z = startingTile.boardPos.z;
+				if (startingTile.boardPos.x > max.x)
+					max.x = startingTile.boardPos.x;
+				if (startingTile.boardPos.z > max.z)
+					max.z = startingTile.boardPos.z;
+			}
+			
+			for (int x = min.x - range; x <= max.x + range; x++)
+			{
+				for (int z = min.z - range; z <= max.z + range; z++)
+				{
+					Int2 pos = new Int2(x, z);
+					if (tilesByBoardPos.ContainsKey(pos) && startingTiles.Any(t => Int2.Distance(pos, t.boardPos) <= range))
+						result.Add(tilesByBoardPos[pos]);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Find all connected tiles within a certain range of this tile, and return them in the supplied list.
+		/// </summary>
+		public void GetConnectedTilesInRange(List<Tile> startingTiles, int range, in List<Tile> result)
+		{
+			GetConnectedTilesInRange(startingTiles, null, range, in result);
 		}
 		/// <summary>
-		/// Find all tiles within a certain range of this tile, and return them in the supplied list.
+		/// Find all connected tiles within a certain range of this tile, and return them in the supplied list.
 		/// </summary>
-		public void GetTilesWithinRange(List<Tile> startingTiles, List<Tile> excludedTiles, int range, in List<Tile> result)
+		public void GetConnectedTilesInRange(List<Tile> startingTiles, List<Tile> excludedTiles, int range, in List<Tile> result)
 		{
 			// prepare containers
 			List<TileRangePair> open = tempTileRangePairs;
@@ -169,8 +207,6 @@ namespace DiceRoller
 			// add initial tiles
 			foreach (Tile startingTile in startingTiles)
 			{
-				if (excludedTiles != null && excludedTiles.Contains(startingTile))
-					continue;
 				open.Add(new TileRangePair() { tile = startingTile, range = range });
 			}
 
@@ -242,13 +278,12 @@ namespace DiceRoller
 			// add initial tiles, also check if target tile is already included in the starting tiles
 			foreach (Tile startingTile in startingTiles)
 			{
-				if (excludedTiles != null && excludedTiles.Contains(startingTile))
-					continue;
 				if (startingTile == targetTile)
 				{
 					result.Add(targetTile);
 					return;
 				}
+
 				open.Add(new TilePathRangeHeuristicPair()
 				{ 
 					tile = startingTile,

@@ -14,6 +14,18 @@ namespace DiceRoller
             public Sprite icon;
         }
 
-        public List<DefaultIconEntry> entries = new List<DefaultIconEntry>();
+        [SerializeField]
+        protected List<DefaultIconEntry> entries = new List<DefaultIconEntry>();
+        [HideInInspector]
+        public Dictionary<Die.Type, Sprite> dieIcons = new Dictionary<Die.Type, Sprite>();
+
+        protected void OnEnable()
+        {
+            dieIcons = new Dictionary<Die.Type, Sprite>();
+            foreach(DefaultIconEntry entry in entries)
+            {
+                dieIcons[entry.type] = entry.icon;
+            }
+        }
     }
 }
