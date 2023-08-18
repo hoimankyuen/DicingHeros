@@ -34,10 +34,14 @@ PrefabInstance:
     - target: {fileID: 2142673084969192714, guid: 5b090d167a8fb2a408e7b811e8fb564d, type: 3}
       propertyPath: icon
       value: 
-      objectReference: {fileID: 4721540003760728118, guid: d7610499986bb3946a9401e22f70e9d9, type: 3}
+      objectReference: {fileID: 2248701312305853709, guid: d7610499986bb3946a9401e22f70e9d9, type: 3}
     - target: {fileID: 2142673084969192714, guid: 5b090d167a8fb2a408e7b811e8fb564d, type: 3}
       propertyPath: size
       value: 0.15
+      objectReference: {fileID: 0}
+    - target: {fileID: 2142673084969192714, guid: 5b090d167a8fb2a408e7b811e8fb564d, type: 3}
+      propertyPath: type
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 2142673084969192714, guid: 5b090d167a8fb2a408e7b811e8fb564d, type: 3}
       propertyPath: faces.Array.size

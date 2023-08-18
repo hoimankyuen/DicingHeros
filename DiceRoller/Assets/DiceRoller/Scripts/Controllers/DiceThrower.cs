@@ -75,7 +75,6 @@ namespace DiceRoller
 
 		// ========================================================= Throw Dice =========================================================
 
-
 		/// <summary>
 		/// Detect and perform a throw action by the player.
 		/// </summary>

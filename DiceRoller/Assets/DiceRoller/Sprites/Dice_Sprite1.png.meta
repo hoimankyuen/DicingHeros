@@ -23,6 +23,30 @@ TextureImporter:
   - first:
       213: 8876264485161312847
     second: Dice_Sprite_6
+  - first:
+      213: 469273120858191849
+    second: Dice_Sprite1_0
+  - first:
+      213: 7046266691974694119
+    second: Dice_Sprite1_1
+  - first:
+      213: 5819046205539405631
+    second: Dice_Sprite1_2
+  - first:
+      213: 3285649213598545781
+    second: Dice_Sprite1_3
+  - first:
+      213: 1691940644138461641
+    second: Dice_Sprite1_4
+  - first:
+      213: 2248701312305853709
+    second: Dice_Sprite1_5
+  - first:
+      213: -1225072264141801886
+    second: Dice_Sprite1_6
+  - first:
+      213: 2888318985018834166
+    second: Dice_Sprite1_7
   externalObjects: {}
   serializedVersion: 11
   mipmaps:
@@ -112,7 +136,28 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Dice_Sprite_0
+      name: Dice_Sprite1_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 128
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9e73467ca61338600800000000000000
+      internalID: 469273120858191849
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Dice_Sprite1_1
       rect:
         serializedVersion: 2
         x: 128
@@ -126,14 +171,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: e9482ae75f419be50800000000000000
-      internalID: 6825509754880820382
+      spriteID: 7e481df393e59c160800000000000000
+      internalID: 7046266691974694119
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Dice_Sprite_1
+      name: Dice_Sprite1_2
       rect:
         serializedVersion: 2
         x: 256
@@ -147,14 +192,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 59809066e3c24b3f0800000000000000
-      internalID: -886034580173682539
+      spriteID: f3fc2cc71b761c050800000000000000
+      internalID: 5819046205539405631
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Dice_Sprite_2
+      name: Dice_Sprite1_3
       rect:
         serializedVersion: 2
         x: 384
@@ -168,14 +213,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 6b867f6ac4a9941f0800000000000000
-      internalID: -1060146583259617098
+      spriteID: 57735193d88f89d20800000000000000
+      internalID: 3285649213598545781
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Dice_Sprite_3
+      name: Dice_Sprite1_4
       rect:
         serializedVersion: 2
         x: 0
@@ -189,14 +234,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: cb75828a756e1ea30800000000000000
-      internalID: 4242925588117477308
+      spriteID: 9c92be23d0bfa7710800000000000000
+      internalID: 1691940644138461641
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Dice_Sprite_4
+      name: Dice_Sprite1_5
       rect:
         serializedVersion: 2
         x: 128
@@ -210,14 +255,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 63864fc1e97468140800000000000000
-      internalID: 4721540003760728118
+      spriteID: d05f1fdededf43f10800000000000000
+      internalID: 2248701312305853709
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Dice_Sprite_5
+      name: Dice_Sprite1_6
       rect:
         serializedVersion: 2
         x: 256
@@ -231,14 +276,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 950d182e4328e2950800000000000000
-      internalID: 6426216881954345049
+      spriteID: 266f4a7344baffee0800000000000000
+      internalID: -1225072264141801886
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Dice_Sprite_6
+      name: Dice_Sprite1_7
       rect:
         serializedVersion: 2
         x: 384
@@ -252,8 +297,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: f42a4725583de2b70800000000000000
-      internalID: 8876264485161312847
+      spriteID: 6fc701c50de551820800000000000000
+      internalID: 2888318985018834166
       vertices: []
       indices: 
       edges: []

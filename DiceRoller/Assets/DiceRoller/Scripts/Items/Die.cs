@@ -6,24 +6,37 @@ using System.Linq;
 
 namespace DiceRoller
 {
-	[System.Serializable]
-	public class Face
-	{
-		public Vector3 euler;
-		public int value;
-
-		public string name()
-		{
-			return string.Format("Value: {0} at ({1}, {2}, {3})", value, euler.x, euler.y, euler.z);
-		}
-	}
-
 	public class Die : Item
 	{
+		public enum Type
+		{
+			Unknown,
+			D2,
+			D4,
+			D6,
+			D8,
+			D10,
+			D12,
+			D20,
+		}
+
+		[System.Serializable]
+		public class Face
+		{
+			public Vector3 euler;
+			public int value;
+
+			public string name()
+			{
+				return string.Format("Value: {0} at ({1}, {2}, {3})", value, euler.x, euler.y, euler.z);
+			}
+		}
+
 		public static Dictionary<int, List<Die>> DiceInTeam { get; protected set; } = new Dictionary<int, List<Die>>();
 		public static UniqueList<Die> InspectingDice { get; protected set; } = new UniqueList<Die>();
 
 		// parameters
+		public Type type = Type.Unknown;
 		public List<Face> faces = new List<Face>();
 		public Unit connectedUnit = null;
 
@@ -34,7 +47,7 @@ namespace DiceRoller
 		protected LineRenderer lineRenderer = null;
 
 		// working variables
-	   	public int Value => (IsMoving || rollInitiating) ? -1 : Quaternion.Angle(transform.rotation, lastRotation) < 1f ? lastValue : RefreshtValue();
+	   	public int Value => (IsMoving || rollInitiating) ? -1 : (lastValue != 0 && Quaternion.Angle(transform.rotation, lastRotation) < 1f) ? lastValue : RefreshtValue();
 		protected Quaternion lastRotation = Quaternion.identity;
 		protected bool rollInitiating = false;
 		protected int lastValue = 0;

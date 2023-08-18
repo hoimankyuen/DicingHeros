@@ -23,6 +23,9 @@ TextureImporter:
   - first:
       213: 3758707814057996144
     second: Dice_Sprite0_6
+  - first:
+      213: 4615458321460598140
+    second: Dice_Sprite0_7
   externalObjects: {}
   serializedVersion: 11
   mipmaps:
@@ -115,7 +118,7 @@ TextureImporter:
       name: Dice_Sprite0_0
       rect:
         serializedVersion: 2
-        x: 128
+        x: 0
         y: 128
         width: 128
         height: 128
@@ -136,7 +139,7 @@ TextureImporter:
       name: Dice_Sprite0_1
       rect:
         serializedVersion: 2
-        x: 256
+        x: 128
         y: 128
         width: 128
         height: 128
@@ -157,7 +160,7 @@ TextureImporter:
       name: Dice_Sprite0_2
       rect:
         serializedVersion: 2
-        x: 384
+        x: 256
         y: 128
         width: 128
         height: 128
@@ -178,8 +181,8 @@ TextureImporter:
       name: Dice_Sprite0_3
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
+        x: 384
+        y: 128
         width: 128
         height: 128
       alignment: 0
@@ -199,7 +202,7 @@ TextureImporter:
       name: Dice_Sprite0_4
       rect:
         serializedVersion: 2
-        x: 128
+        x: 0
         y: 0
         width: 128
         height: 128
@@ -220,7 +223,7 @@ TextureImporter:
       name: Dice_Sprite0_5
       rect:
         serializedVersion: 2
-        x: 256
+        x: 128
         y: 0
         width: 128
         height: 128
@@ -241,7 +244,7 @@ TextureImporter:
       name: Dice_Sprite0_6
       rect:
         serializedVersion: 2
-        x: 384
+        x: 256
         y: 0
         width: 128
         height: 128
@@ -254,6 +257,27 @@ TextureImporter:
       bones: []
       spriteID: 07f6967a7dc992430800000000000000
       internalID: 3758707814057996144
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Dice_Sprite0_7
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 0
+        width: 128
+        height: 128
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c75974eb3e66d0040800000000000000
+      internalID: 4615458321460598140
       vertices: []
       indices: 
       edges: []
