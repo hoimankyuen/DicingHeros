@@ -4,8 +4,8 @@ using UnityEngine;
 
 namespace DiceRoller
 {
-    [CreateAssetMenu(fileName = "DefaultDieIconEntries", menuName = "Data/DefaultDieIconEntries", order = 1)]
-    public class UIDefaultDieIconEntries : ScriptableObject
+    [CreateAssetMenu(fileName = "NewDieIcons", menuName = "DataDieIcons", order = 1)]
+    public class UIDieIcons : ScriptableObject
     {
         [System.Serializable]
         public class DefaultIconEntry

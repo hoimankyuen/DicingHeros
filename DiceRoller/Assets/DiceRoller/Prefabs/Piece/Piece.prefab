@@ -51,7 +51,11 @@ MonoBehaviour:
   icon: {fileID: 21300000, guid: 70f364a73dd8dd24693a4260c57ed0e5, type: 3}
   size: 0.19
   team: 0
-  movement: 8
+  maxHealth: 20
+  melee: 3
+  defence: 4
+  magic: 1
+  movement: 4
   moveTimePerTile: 0.2
 --- !u!54 &2284104210925587976
 Rigidbody:

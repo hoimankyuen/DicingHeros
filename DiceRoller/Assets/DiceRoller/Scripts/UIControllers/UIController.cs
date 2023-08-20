@@ -12,13 +12,20 @@ namespace DiceRoller
 		// singleton
 		public static UIController current { get; protected set; }
 
-		[Header("Selectable Display")]
-		public RectTransform frame;
-		public Image unitImage; 
-		public UIDieDisplay dieDisplay;
-		public UIStatDisplay statDisplay;
-		public Sprite unknownDiceIcon;
+		[Header("Simple Die Display")]
+		public RectTransform simpleDieWindow;
+		public UIDie simpleDieDisplay;
 		protected bool selectableDisplayDirty = false;
+
+		[Header("Simple Unit Display")]
+		public RectTransform simpleUnitWindow;
+		public Image simpleUnitImage;
+		public UIStatDisplay simpleStatDisplay;
+
+		[Header("Detailed Unit Display")]
+		public RectTransform detailedUnitWindow;
+		public Image detailedUnitImage;
+		public UIStatDisplay detailedStatDisplay;
 
 		[Header("Throw Display")]
 		public GameObject throwTarget = null;
@@ -66,61 +73,52 @@ namespace DiceRoller
 		// ========================================================= Selectable Display =========================================================
 
 		/// <summary>
-		/// Request a change in the selectable display.
-		/// </summary>
-		public void SetSelectableDisplayDirty()
-		{
-			selectableDisplayDirty = true;
-		}
-
-		/// <summary>
 		/// Change the dice display to reflect the current selected die.
 		/// </summary>
 		protected void RefreshSelectableDisplay()
 		{
+			/*
 			// move selectable frame to either side of the screen
-			if (Input.mousePosition.x > Screen.width - frame.rect.width)
+			if (Input.mousePosition.x > Screen.width - simpleDieFrame.rect.width)
 			{
-				frame.anchorMin = new Vector2(0, 0);
-				frame.anchorMax = new Vector2(0, 0);
-				frame.pivot = new Vector2(0, 0);
+				simpleDieFrame.anchorMin = new Vector2(0, 0);
+				simpleDieFrame.anchorMax = new Vector2(0, 0);
+				simpleDieFrame.pivot = new Vector2(0, 0);
 			}
-			else if (Input.mousePosition.x < frame.rect.width)
+			else if (Input.mousePosition.x < simpleDieFrame.rect.width)
 			{
-				frame.anchorMin = new Vector2(1, 0);
-				frame.anchorMax = new Vector2(1, 0);
-				frame.pivot = new Vector2(1, 0);
+				simpleDieFrame.anchorMin = new Vector2(1, 0);
+				simpleDieFrame.anchorMax = new Vector2(1, 0);
+				simpleDieFrame.pivot = new Vector2(1, 0);
 			}
+			*/
 
 			// display selectable information
 			if (Unit.InspectingUnit != null && Unit.InspectingUnit.Count > 0)
 			{
 				// show unit information
-				unitImage.gameObject.SetActive(true);
-				unitImage.sprite = Unit.InspectingUnit[0].icon;
-				statDisplay.gameObject.SetActive(true);
-				statDisplay.SetDisplay(Unit.InspectingUnit[0]);
+				simpleUnitWindow.gameObject.SetActive(true);
+				simpleUnitImage.sprite = Unit.InspectingUnit[0].icon;
+				simpleStatDisplay.SetDisplay(Unit.InspectingUnit[0]);
 
-				dieDisplay.gameObject.SetActive(false);
+				simpleDieWindow.gameObject.SetActive(false);
 
 			}
 			else if (Die.InspectingDice != null && Die.InspectingDice.Count > 0 && Die.InspectingDice[0].Value != -1)
 			{
 				// show dice information
-				unitImage.gameObject.SetActive(false);
-				statDisplay.gameObject.SetActive(false);
+				simpleUnitWindow.gameObject.SetActive(false);
 
-				dieDisplay.gameObject.SetActive(true);
-				dieDisplay.SetDisplay(Die.InspectingDice[0]);
+				simpleDieWindow.gameObject.SetActive(true);
+				simpleDieDisplay.SetDisplay(Die.InspectingDice[0]);
 			}
 			else
 			{
 				// show nothing selected
-				unitImage.gameObject.SetActive(false);
-				statDisplay.gameObject.SetActive(false);
+				simpleUnitWindow.gameObject.SetActive(false);
 
-				dieDisplay.gameObject.SetActive(true);
-				dieDisplay.SetDisplay(Die.Type.Unknown, -1);
+				simpleDieWindow.gameObject.SetActive(true);
+				simpleDieDisplay.SetDisplay(Die.Type.Unknown, -1);
 			}
 		}
 

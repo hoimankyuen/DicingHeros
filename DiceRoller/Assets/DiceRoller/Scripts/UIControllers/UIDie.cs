@@ -6,10 +6,10 @@ using UnityEngine.UI;
 
 namespace DiceRoller
 {
-    public class UIDieDisplay : MonoBehaviour
+    public class UIDie : MonoBehaviour
     {
         [Header("Data")]
-        public UIDefaultDieIconEntries defaultDieIconEntries;
+        public UIDieIcons defaultDieIcons;
 
         [Header("Components")]
         public Image dieIcon;
@@ -54,8 +54,8 @@ namespace DiceRoller
             }
             else
             {
-                if (defaultDieIconEntries.dieIcons.ContainsKey(type))
-                    dieIcon.sprite = defaultDieIconEntries.dieIcons[type];
+                if (defaultDieIcons.dieIcons.ContainsKey(type))
+                    dieIcon.sprite = defaultDieIcons.dieIcons[type];
                 dieValue.text = value == -1 ? "?" : value.ToString(); 
             }
         }

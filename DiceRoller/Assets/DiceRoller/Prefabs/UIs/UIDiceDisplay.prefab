@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 1240324787327534876}
   - component: {fileID: 1240324787327534877}
   - component: {fileID: 1240324787327534875}
+  - component: {fileID: 40101769389841567}
   m_Layer: 0
   m_Name: UIDiceDisplay
   m_TagString: Untagged
@@ -59,7 +60,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bfa424d0dd1c6124fb7abcf0c73b2137, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  defaultDieIconEntries: {fileID: 11400000, guid: 12f4e2cf5f2a0824fb862c92e685a892, type: 2}
+  defaultDieIcons: {fileID: 11400000, guid: 12f4e2cf5f2a0824fb862c92e685a892, type: 2}
   dieIcon: {fileID: 1240324787327534875}
   dieValue: {fileID: 1240324788397822637}
   type: 0
@@ -86,7 +87,7 @@ MonoBehaviour:
       m_Calls: []
   m_Sprite: {fileID: 1511638878421589578, guid: 97d0e16a9c8ab83469c5fd8c4d96235a, type: 3}
   m_Type: 0
-  m_PreserveAspect: 0
+  m_PreserveAspect: 1
   m_FillCenter: 1
   m_FillMethod: 4
   m_FillAmount: 1
@@ -94,6 +95,21 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &40101769389841567
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1240324787327534873}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_EffectColor: {r: 0.040236473, g: 1, b: 0, a: 1}
+  m_EffectDistance: {x: 1, y: -1}
+  m_UseGraphicAlpha: 0
 --- !u!1 &1240324788397822635
 GameObject:
   m_ObjectHideFlags: 0
@@ -186,7 +202,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 70.05
+  m_fontSize: 43.8
   m_fontSizeBase: 75
   m_fontWeight: 400
   m_enableAutoSizing: 1

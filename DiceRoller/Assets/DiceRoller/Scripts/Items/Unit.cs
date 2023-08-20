@@ -277,6 +277,7 @@ namespace DiceRoller
 			protected List<Tile> lastMovementArea = new List<Tile>();
 			protected List<Tile> lastPath = new List<Tile>();
 			protected Tile lastTargetTile = null;
+			protected bool lastReachable = true;
 			protected bool isPressing0 = false;
 			protected bool isPressing1 = false;
 
@@ -341,44 +342,41 @@ namespace DiceRoller
 				{
 					// find the target tile that the mouse is pointing to
 					Tile targetTile = null;
+					bool reachable = false;
 					if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, Camera.main.farClipPlane, LayerMask.GetMask("Tile")))
 					{
 						Tile tile = hit.collider.GetComponentInParent<Tile>();
+						targetTile = tile;
 						if (lastMovementArea.Contains(tile))
 						{
-							targetTile = tile;
+							reachable = true;
 						}
 					}
-					Debug.Log(targetTile == null ? "NULL" : targetTile.boardPos.ToString());
 
 					// calculate path towards the target tile
 					if (lastTargetTile != targetTile)
 					{
 						nextPath.Clear();
 						nextPath.AddRange(lastPath);
-						if (targetTile == null)
+						if (targetTile == null || !reachable)
 						{
-							Debug.Log("HERE1");
 							// target tile is unreachable, no path is retrieved
 							nextPath.Clear();
 						}
 						else if (unit.OccupiedTiles.Contains(targetTile))
 						{
-							Debug.Log("HERE2");
 							// target tile is withing the starting tiles, reset the path to the target tile
 							nextPath.Clear();
 							nextPath.Add(targetTile);
 						}
 						else if (nextPath.Count == 0)
 						{
-							Debug.Log("HERE3");
 							// no path exist, find the shortest path to target tile
 							nextPath.Clear();
 							unit.board.GetShortestPath(unit.OccupiedTiles, otherOccupiedTiles, targetTile, unit.movement, in nextPath);
 						}
 						else if (nextPath.Contains(targetTile))
 						{
-							Debug.Log("HERE4");
 							// trim the path if target tile is already in the current path
 							nextPath.RemoveRange(nextPath.IndexOf(targetTile) + 1, nextPath.Count - nextPath.IndexOf(targetTile) - 1);
 						}
@@ -393,7 +391,6 @@ namespace DiceRoller
 							unit.board.GetShortestPath(nextPath[nextPath.Count - 1], appendExcludedTiles, targetTile, unit.movement + 1 - nextPath.Count, in appendPath);
 							if (appendPath.Count > 0)
 							{
-								Debug.Log("HERE5");
 								// append a path from last tile of the path to the target tile
 								appendPath.RemoveAt(0);
 								nextPath.AddRange(appendPath);
@@ -401,7 +398,6 @@ namespace DiceRoller
 							}
 							else
 							{
-								Debug.Log("HERE6");
 								// path is too long, retrieve a shortest path to target tile instead
 								nextPath.Clear();
 								unit.board.GetShortestPath(unit.OccupiedTiles, otherOccupiedTiles, targetTile, unit.movement, in nextPath);
@@ -417,24 +413,33 @@ namespace DiceRoller
 						{
 							tile.ShowPath(nextPath);
 						}
-						lastPath.Clear();
-						lastPath.AddRange(nextPath);
-						nextPath.Clear();
-					}
 
-					// show target tile on the board
-					if (lastTargetTile != targetTile)
-					{
-						if (lastTargetTile != null)
+						// show invalid path to target tile on the board
+						if (lastTargetTile != null && !lastReachable)
+						{
+							lastTargetTile.HideInvalidPath();
+						}
+						if (targetTile != null && !reachable)
+						{
+							targetTile.ShowInvalidPath();
+						}
+
+						// show target tile on the board
+						if (lastTargetTile != null && lastReachable)
 						{
 							lastTargetTile.RemoveDisplay(this, Tile.DisplayType.MoveTarget);
 						}
-						if (targetTile != null)
+						if (targetTile != null && reachable)
 						{
 							targetTile.AddDisplay(this, Tile.DisplayType.MoveTarget);
 						}
+
+						lastPath.Clear();
+						lastPath.AddRange(nextPath);
+						nextPath.Clear();
+						lastTargetTile = targetTile;
+						lastReachable = reachable;
 					}
-					lastTargetTile = targetTile;	
 
 					// detect path selection by left mouse pressing
 					if (Input.GetMouseButtonDown(0))
@@ -443,7 +448,7 @@ namespace DiceRoller
 					}
 					if (Input.GetMouseButtonUp(0) && isPressing0)
 					{
-						if (lastTargetTile != null)
+						if (reachable)
 						{
 							// pressed on a valid tile, initiate movement
 							stateMachine.ChangeState(State.UnitMovement,
@@ -513,19 +518,27 @@ namespace DiceRoller
 					}
 					lastMovementArea.Clear();
 
-					// hdie target tile on board
-					if (lastTargetTile != null)
-					{
-						lastTargetTile.RemoveDisplay(this, Tile.DisplayType.MoveTarget);
-					}
-					lastTargetTile = null;
-
 					// hide path to target tile on board
 					foreach (Tile tile in lastPath)
 					{
 						tile.HidePath();
 					}
 					lastPath.Clear();
+
+					// hdie target tile on board
+					if (lastTargetTile != null)
+					{
+						if (lastReachable)
+						{
+							lastTargetTile.RemoveDisplay(this, Tile.DisplayType.MoveTarget);
+						}
+						else
+						{
+							lastTargetTile.HideInvalidPath();
+						}
+					}
+					lastTargetTile = null;
+					lastReachable = true;
 
 					// hide unit info on ui
 					InspectingUnit.Remove(unit);

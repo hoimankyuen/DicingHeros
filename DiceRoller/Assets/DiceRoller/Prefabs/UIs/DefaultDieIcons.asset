@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2874e7a2eb0d1c7418afa11095e930be, type: 3}
-  m_Name: DefaultDieIconEntries
+  m_Name: DefaultDieIcons
   m_EditorClassIdentifier: 
   entries:
   - type: 0

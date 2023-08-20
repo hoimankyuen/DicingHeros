@@ -140,13 +140,19 @@ namespace DiceRoller
 							Vector3 forward = force.normalized;
 							Vector3 up = Vector3.up;
 							Vector3 right = Vector3.Cross(forward, up);
-							int castSize = (int)Mathf.Ceil(Mathf.Pow(throwingDice.Count, 1f / 3f));
+							//int castSize = (int)Mathf.Ceil(Mathf.Pow(throwingDice.Count, 1f / 3f));
+							int castSize = (int)Mathf.Ceil(Mathf.Sqrt(throwingDice.Count));
 							for (int i = 0; i < throwingDice.Count; i++)
 							{
+								/*
 								Vector3 castOffset =
 									right * (i % castSize - (float)(castSize - 1) / 2f) +
 									up * ((i / castSize) % castSize - (float)(castSize - 1) / 2f) +
 									forward * (i / (castSize * castSize) - (float)(castSize - 1) / 2f);
+								*/
+								Vector3 castOffset =
+									right * (i % castSize - (float)(castSize - 1) / 2f) +
+									forward * (i / castSize - (float)(castSize - 1) / 2f);
 								Quaternion randomDirection =
 									Quaternion.AngleAxis(Random.Range(-5, 5) + Random.Range(-5, 5) * ThrowPower, up) *
 									Quaternion.AngleAxis(Random.Range(-5, 5) + Random.Range(-5, 5) * ThrowPower, right);

@@ -256,18 +256,18 @@ namespace DiceRoller
 					pathDirections.from = PathDirection.Front;
 				else if (path[pos - 1].boardPos.x < boardPos.x)
 					pathDirections.from = PathDirection.Left;
-				else if (path[pos - 1].boardPos.z > boardPos.z)
+				else if (path[pos - 1].boardPos.z < boardPos.z)
 					pathDirections.from = PathDirection.Back;
 
 				if (pos == path.Count - 1)
 					pathDirections.to = PathDirection.End;
-				else if (path[pos - 1].boardPos.x > boardPos.x)
+				else if (path[pos + 1].boardPos.x > boardPos.x)
 					pathDirections.to = PathDirection.Right;
-				else if (path[pos - 1].boardPos.z > boardPos.z)
+				else if (path[pos + 1].boardPos.z > boardPos.z)
 					pathDirections.to = PathDirection.Front;
-				else if (path[pos - 1].boardPos.x < boardPos.x)
+				else if (path[pos + 1].boardPos.x < boardPos.x)
 					pathDirections.to = PathDirection.Left;
-				else if (path[pos - 1].boardPos.z < boardPos.z)
+				else if (path[pos + 1].boardPos.z < boardPos.z)
 					pathDirections.to = PathDirection.Back;
 
 				pathSpriteRenderer.sprite = style.pathDirectionSprites[pathDirections];
@@ -282,6 +282,23 @@ namespace DiceRoller
 		/// Hide the path display on the tile.
 		/// </summary>
 		public void HidePath()
+		{
+			pathSpriteRenderer.sprite = null;
+		}
+
+		/// <summary>
+		/// Show a display of not reachable path on this tile.
+		/// </summary>
+		public void ShowInvalidPath()
+		{
+			pathSpriteRenderer.sprite = style.pathDirectionSprites[new PathDirections(PathDirection.End, PathDirection.Start)];
+		}
+
+
+		/// <summary>
+		/// Hide the invalid path display on the tile.
+		/// </summary>
+		public void HideInvalidPath()
 		{
 			pathSpriteRenderer.sprite = null;
 		}

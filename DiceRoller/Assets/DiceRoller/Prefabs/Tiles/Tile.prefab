@@ -91,25 +91,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileSize: 1
   connectedTiles: []
-  normalSprite: {fileID: 45957242671070978, guid: 827f87b7621b87c4fab35aab8fc67f15, type: 3}
-  positionSprite: {fileID: -552630910304684261, guid: 827f87b7621b87c4fab35aab8fc67f15, type: 3}
-  attackSprite: {fileID: 4326208813897011473, guid: 827f87b7621b87c4fab35aab8fc67f15, type: 3}
-  moveSprite: {fileID: -4904861690540128810, guid: 827f87b7621b87c4fab35aab8fc67f15, type: 3}
-  pathStartEnd: {fileID: 1152286761345384294, guid: f4d44d751dd7ac44f9eb05121cb312ea, type: 3}
-  pathStartRight: {fileID: 4896946503828397289, guid: f4d44d751dd7ac44f9eb05121cb312ea, type: 3}
-  pathStartFront: {fileID: -7969914323686318149, guid: f4d44d751dd7ac44f9eb05121cb312ea, type: 3}
-  pathStartLeft: {fileID: 6746290156200942415, guid: f4d44d751dd7ac44f9eb05121cb312ea, type: 3}
-  pathStartBack: {fileID: -4416260571378480354, guid: f4d44d751dd7ac44f9eb05121cb312ea, type: 3}
-  pathRightLeft: {fileID: -1583451908156234385, guid: f4d44d751dd7ac44f9eb05121cb312ea, type: 3}
-  pathFrontBack: {fileID: -1332514335887367459, guid: f4d44d751dd7ac44f9eb05121cb312ea, type: 3}
-  pathFrontRight: {fileID: 1038918107353128576, guid: f4d44d751dd7ac44f9eb05121cb312ea, type: 3}
-  pathBackRight: {fileID: -508671779734252436, guid: f4d44d751dd7ac44f9eb05121cb312ea, type: 3}
-  pathFrontLeft: {fileID: 6193848776667493214, guid: f4d44d751dd7ac44f9eb05121cb312ea, type: 3}
-  pathBackLeft: {fileID: -721147763432946303, guid: f4d44d751dd7ac44f9eb05121cb312ea, type: 3}
-  pathEndRight: {fileID: 6736696984547236392, guid: f4d44d751dd7ac44f9eb05121cb312ea, type: 3}
-  pathEndFront: {fileID: 5944244876686031832, guid: f4d44d751dd7ac44f9eb05121cb312ea, type: 3}
-  pathEndLeft: {fileID: 8554753132983505479, guid: f4d44d751dd7ac44f9eb05121cb312ea, type: 3}
-  pathEndBack: {fileID: -8162889928987077747, guid: f4d44d751dd7ac44f9eb05121cb312ea, type: 3}
+  style: {fileID: 11400000, guid: e2c61dbc275bab54e9228a88c3c67fed, type: 2}
 --- !u!1 &7046917927950825334
 GameObject:
   m_ObjectHideFlags: 0

@@ -12,12 +12,28 @@ namespace DiceRoller
         {
             DrawDefaultInspector();
 
-            Board myScript = (Board)target;
+            Board board = (Board)target;
+
+            if (board == null || board.gameObject == null)
+                return;
 
             if (GUILayout.Button("Regenerate"))
             {
-                myScript.RegenerateBoard();
+                board.RegenerateBoard();
             }
         }
+
+        /*
+        protected void OnSceneGUI()
+        {
+            Board board = (Board)target;
+
+            if (board == null || board.gameObject == null)
+                return;
+
+            //Handles.DrawWireCube(tile.transform.position, Vector3.one * 0.1f);
+
+        }
+        */
     }
 }
