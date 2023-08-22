@@ -337,9 +337,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bdb4ebebaf9cdfd4587b94baa4262671, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  icon: {fileID: -5843054530652463671, guid: 97d0e16a9c8ab83469c5fd8c4d96235a, type: 3}
+  iconSprite: {fileID: 0}
+  outlineSprite: {fileID: 0}
   size: 0.14
   team: 0
+  type: 0
   faces: []
   connectedUnit: {fileID: 0}
 --- !u!114 &279380284527013475
@@ -354,7 +356,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 12b5953e5db74bd48b6d17a3406df640, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  outlineMode: 0
+  outlineMode: 3
   color: {r: 0.104001164, g: 1, b: 0, a: 1}
   width: 3
   show: 0

@@ -10,30 +10,30 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2874e7a2eb0d1c7418afa11095e930be, type: 3}
-  m_Name: DefaultDieIcons
+  m_Name: OrangeDiceIcon
   m_EditorClassIdentifier: 
   entries:
   - type: 0
-    icon: {fileID: 1511638878421589578, guid: 97d0e16a9c8ab83469c5fd8c4d96235a, type: 3}
+    icon: {fileID: -7741349435786802326, guid: 35bfca96065fb1741af7b9db6ed92ce3, type: 3}
     outline: {fileID: -3992394355491782156, guid: 1e3c56116a41d5541b60f01cfc9d91e0, type: 3}
   - type: 1
-    icon: {fileID: -7252482574842474340, guid: 97d0e16a9c8ab83469c5fd8c4d96235a, type: 3}
+    icon: {fileID: 6203708632136823671, guid: 35bfca96065fb1741af7b9db6ed92ce3, type: 3}
     outline: {fileID: 3024090946918556324, guid: 1e3c56116a41d5541b60f01cfc9d91e0, type: 3}
   - type: 2
-    icon: {fileID: -5843054530652463671, guid: 97d0e16a9c8ab83469c5fd8c4d96235a, type: 3}
+    icon: {fileID: 2974585405298039675, guid: 35bfca96065fb1741af7b9db6ed92ce3, type: 3}
     outline: {fileID: 948985927810659570, guid: 1e3c56116a41d5541b60f01cfc9d91e0, type: 3}
   - type: 3
-    icon: {fileID: 1751831029856143908, guid: 97d0e16a9c8ab83469c5fd8c4d96235a, type: 3}
+    icon: {fileID: 1248939229533988899, guid: 35bfca96065fb1741af7b9db6ed92ce3, type: 3}
     outline: {fileID: -1084655474990375921, guid: 1e3c56116a41d5541b60f01cfc9d91e0, type: 3}
   - type: 4
-    icon: {fileID: -4225858040746308885, guid: 97d0e16a9c8ab83469c5fd8c4d96235a, type: 3}
+    icon: {fileID: -3460056034607337129, guid: 35bfca96065fb1741af7b9db6ed92ce3, type: 3}
     outline: {fileID: -5957100593571622188, guid: 1e3c56116a41d5541b60f01cfc9d91e0, type: 3}
   - type: 5
-    icon: {fileID: 840143764691210901, guid: 97d0e16a9c8ab83469c5fd8c4d96235a, type: 3}
+    icon: {fileID: 2705469352464447045, guid: 35bfca96065fb1741af7b9db6ed92ce3, type: 3}
     outline: {fileID: -8638276859388531639, guid: 1e3c56116a41d5541b60f01cfc9d91e0, type: 3}
   - type: 6
-    icon: {fileID: 3758707814057996144, guid: 97d0e16a9c8ab83469c5fd8c4d96235a, type: 3}
+    icon: {fileID: -2221028157726936149, guid: 35bfca96065fb1741af7b9db6ed92ce3, type: 3}
     outline: {fileID: -3810307584609083322, guid: 1e3c56116a41d5541b60f01cfc9d91e0, type: 3}
   - type: 7
-    icon: {fileID: 4615458321460598140, guid: 97d0e16a9c8ab83469c5fd8c4d96235a, type: 3}
+    icon: {fileID: -5903961932189803322, guid: 35bfca96065fb1741af7b9db6ed92ce3, type: 3}
     outline: {fileID: 1681534985476579718, guid: 1e3c56116a41d5541b60f01cfc9d91e0, type: 3}

@@ -98,9 +98,10 @@ namespace DiceRoller
 			{
 				// show unit information
 				simpleUnitWindow.gameObject.SetActive(true);
-				simpleUnitImage.sprite = Unit.InspectingUnit[0].icon;
+				simpleUnitImage.sprite = Unit.InspectingUnit[0].iconSprite;
 				simpleStatDisplay.SetDisplay(Unit.InspectingUnit[0]);
 
+				simpleDieDisplay.SetDisplay(null);
 				simpleDieWindow.gameObject.SetActive(false);
 
 			}

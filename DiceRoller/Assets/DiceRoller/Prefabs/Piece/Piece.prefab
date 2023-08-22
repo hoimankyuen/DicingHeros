@@ -48,7 +48,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 93ffd683f823d284bbc44d52742bc69f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  icon: {fileID: 21300000, guid: 70f364a73dd8dd24693a4260c57ed0e5, type: 3}
+  iconSprite: {fileID: 21300000, guid: 70f364a73dd8dd24693a4260c57ed0e5, type: 3}
+  outlineSprite: {fileID: 0}
   size: 0.19
   team: 0
   maxHealth: 20
@@ -85,7 +86,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 12b5953e5db74bd48b6d17a3406df640, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  outlineMode: 0
+  outlineMode: 3
   color: {r: 0.104001164, g: 1, b: 0, a: 1}
   width: 3
   show: 0

@@ -7,7 +7,8 @@ namespace DiceRoller
 	public class Item : MonoBehaviour
 	{
 		// parameters
-		public Sprite icon = null;
+		public Sprite iconSprite = null;
+		public Sprite outlineSprite = null;
 		public float size = 1f;
 		public int team = 0;
 
@@ -20,9 +21,13 @@ namespace DiceRoller
 		protected Rigidbody rigidBody = null;
 
 		// working variables
+		protected bool isSelfHovering = false;
+		protected bool isUIHovering = false;
 		protected bool isHovering = false;
-		protected bool initiatedPress = false;
-		protected bool completedPress = false;
+
+		protected bool initiatedSelfPress = false;
+		protected bool completedSelfPress = false;
+		protected bool isUIPressed = false;
 		protected bool isPressed = false;
 
 		public bool IsMoving { get; protected set; }
@@ -69,6 +74,7 @@ namespace DiceRoller
 		protected virtual void Update()
 		{
 			DetectMovement();
+			DetectHover();
 			DetectPress();
 		}
 
@@ -92,7 +98,7 @@ namespace DiceRoller
 		/// </summary>
 		protected void OnMouseEnter()
 		{
-			isHovering = true;
+			isSelfHovering = true;
 		}
 
 		/// <summary>
@@ -100,8 +106,8 @@ namespace DiceRoller
 		/// </summary>
 		protected void OnMouseExit()
 		{
-			isHovering = false;
-			initiatedPress = false;
+			isSelfHovering = false;
+			initiatedSelfPress = false;
 		}
 
 		/// <summary>
@@ -109,7 +115,7 @@ namespace DiceRoller
 		/// </summary>
 		protected void OnMouseDown()
 		{
-			initiatedPress = true;
+			initiatedSelfPress = true;
 		}
 
 
@@ -118,11 +124,29 @@ namespace DiceRoller
 		/// </summary>
 		protected void OnMouseUp()
 		{
-			if (initiatedPress)
+			if (initiatedSelfPress)
 			{
-				initiatedPress = false;
-				completedPress = true;
+				initiatedSelfPress = false;
+				completedSelfPress = true;
 			}
+		}
+
+		// ========================================================= Message From UI =========================================================
+
+		/// <summary>
+		/// Set the hovering flag from ui elements.
+		/// </summary>
+		public void SetHoveringFromUI(bool hovering)
+		{
+			isUIHovering = hovering;
+		}
+
+		/// <summary>
+		/// Set the pressed flag from ui.
+		/// </summary>
+		public void SetPressedFromUI()
+		{
+			isUIPressed = true;
 		}
 
 		// ========================================================= General Behaviour =========================================================
@@ -139,13 +163,23 @@ namespace DiceRoller
 			IsMoving = Time.time - lastMovingTime < 0.25f;
 		}
 
+		/// <summary>
+		/// Detect hover events.
+		/// </summary>
+		protected void DetectHover()
+		{
+			isHovering = isSelfHovering || isUIHovering;
+		}
+
 		// Detect press event and trim to a single frame flag.
 		protected void DetectPress()
 		{
 			isPressed = false;
-			if (completedPress)
+			if (completedSelfPress || isUIPressed)
 			{
-				completedPress = false;
+				completedSelfPress = false;
+				isUIPressed = false;
+
 				isPressed = true;
 			}
 		}

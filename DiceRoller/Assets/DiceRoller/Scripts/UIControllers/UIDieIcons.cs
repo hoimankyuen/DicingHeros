@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace DiceRoller
 {
-    [CreateAssetMenu(fileName = "NewDieIcons", menuName = "DataDieIcons", order = 1)]
+    [CreateAssetMenu(fileName = "NewDieIcons", menuName = "Data/DieIcons", order = 1)]
     public class UIDieIcons : ScriptableObject
     {
         [System.Serializable]
@@ -12,12 +12,15 @@ namespace DiceRoller
         {
             public Die.Type type;
             public Sprite icon;
+            public Sprite outline;
         }
 
         [SerializeField]
         protected List<DefaultIconEntry> entries = new List<DefaultIconEntry>();
         [HideInInspector]
         public Dictionary<Die.Type, Sprite> dieIcons = new Dictionary<Die.Type, Sprite>();
+        [HideInInspector]
+        public Dictionary<Die.Type, Sprite> dieOutlines = new Dictionary<Die.Type, Sprite>();
 
         protected void OnEnable()
         {
@@ -25,6 +28,7 @@ namespace DiceRoller
             foreach(DefaultIconEntry entry in entries)
             {
                 dieIcons[entry.type] = entry.icon;
+                dieOutlines[entry.type] = entry.outline;
             }
         }
     }

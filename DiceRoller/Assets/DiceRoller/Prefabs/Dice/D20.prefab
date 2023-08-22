@@ -32,6 +32,18 @@ PrefabInstance:
       value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 2142673084969192714, guid: 5b090d167a8fb2a408e7b811e8fb564d, type: 3}
+      propertyPath: outline
+      value: 
+      objectReference: {fileID: 1681534985476579718, guid: 1e3c56116a41d5541b60f01cfc9d91e0, type: 3}
+    - target: {fileID: 2142673084969192714, guid: 5b090d167a8fb2a408e7b811e8fb564d, type: 3}
+      propertyPath: iconSprite
+      value: 
+      objectReference: {fileID: 2888318985018834166, guid: d7610499986bb3946a9401e22f70e9d9, type: 3}
+    - target: {fileID: 2142673084969192714, guid: 5b090d167a8fb2a408e7b811e8fb564d, type: 3}
+      propertyPath: outlineSprite
+      value: 
+      objectReference: {fileID: 1681534985476579718, guid: 1e3c56116a41d5541b60f01cfc9d91e0, type: 3}
+    - target: {fileID: 2142673084969192714, guid: 5b090d167a8fb2a408e7b811e8fb564d, type: 3}
       propertyPath: faces.Array.size
       value: 20
       objectReference: {fileID: 0}

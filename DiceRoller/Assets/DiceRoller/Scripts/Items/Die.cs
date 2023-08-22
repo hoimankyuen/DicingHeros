@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using QuickerEffects;
 using System.Linq;
+using System;
 
 namespace DiceRoller
 {
@@ -18,6 +19,18 @@ namespace DiceRoller
 			D10,
 			D12,
 			D20,
+		}
+		public enum DieState
+		{
+			Normal,
+			Ready,
+			Done,
+			Rolling,
+			Problem,
+			Locked,
+			Waiting,
+			Buffed,
+			Nerfed,
 		}
 
 		[System.Serializable]
@@ -47,10 +60,19 @@ namespace DiceRoller
 		protected LineRenderer lineRenderer = null;
 
 		// working variables
-	   	public int Value => (IsMoving || rollInitiating) ? -1 : (lastValue != 0 && Quaternion.Angle(transform.rotation, lastRotation) < 1f) ? lastValue : RefreshtValue();
+		public int Value { get; protected set; } = -1;
 		protected Quaternion lastRotation = Quaternion.identity;
+		protected float lastRotatingTime = 0;
 		protected bool rollInitiating = false;
 		protected int lastValue = 0;
+
+		public DieState CurrentDieState { get; protected set; } = DieState.Normal;
+
+		// events
+		public Action onValueChanged = () => { };
+		public Action onDiceStateChanged = () => { };
+		public Action onInspectionChanged = () => { };
+		public Action onSelectionChanged = () => { };
 
 		// ========================================================= Monobehaviour Methods =========================================================
 
@@ -80,13 +102,15 @@ namespace DiceRoller
 		protected override void Update()
 		{
 			base.Update();
+
+			DetectValue();
+
 			effectTransform.rotation = Quaternion.identity;
 			if (connectedUnit != null)
 			{
 				lineRenderer.gameObject.SetActive(true);
 				lineRenderer.SetPosition(0, connectedUnit.transform.position + 0.1f * Vector3.up);
 				lineRenderer.SetPosition(1, transform.position);
-				
 			}
 			else
 			{
@@ -143,26 +167,47 @@ namespace DiceRoller
 			lineRenderer = transform.Find("Effect/Line").GetComponent<LineRenderer>();
 		}
 
-
 		/// <summary>
-		/// Find the value got by this die.
+		/// Detect the current displayed value of this die.
 		/// </summary>
-		protected int RefreshtValue()
+		protected void DetectValue()
 		{
-			float nearestAngle = float.MaxValue;
-			int value = 0;
-			foreach (Face face in faces)
+			// record last moving time for stationary checking
+			if (rigidBody.velocity.sqrMagnitude > 0.01f || rigidBody.angularVelocity.sqrMagnitude > 0.01f)
 			{
-				float angle = Vector3.Angle(transform.rotation * Quaternion.Euler(face.euler) * Vector3.up, Vector3.up);
-				if (angle < nearestAngle)
-				{
-					nearestAngle = angle;
-					value = face.value;
-				}
+				lastRotatingTime = Time.time;
 			}
-			lastRotation = transform.rotation;
-			lastValue = value;
-			return value;
+
+			// determine the value of this die
+			int lastValue = Value;
+			if (IsMoving || rollInitiating)
+			{
+				// die is stiill moving, set value to invalid
+				Value = -1;
+			}
+			else if (Value == -1 || Quaternion.Angle(transform.rotation, lastRotation) < 1f)
+			{
+				// die is stationary and either value is invalid or the rotation is changed, calculate the current value
+				float nearestAngle = float.MaxValue;
+				int foundValue = 0;
+				foreach (Face face in faces)
+				{
+					float angle = Vector3.Angle(transform.rotation * Quaternion.Euler(face.euler) * Vector3.up, Vector3.up);
+					if (angle < nearestAngle)
+					{
+						nearestAngle = angle;
+						foundValue = face.value;
+					}
+				}
+				lastRotation = transform.rotation;
+				Value = foundValue;
+			}
+
+			// fire onValueChange event if needed
+			if (Value != lastValue)
+			{
+				onValueChanged.Invoke();
+			}
 		}
 
 		/// <summary>
@@ -177,6 +222,18 @@ namespace DiceRoller
 			rigidBody.AddTorque(torque, ForceMode.VelocityChange);
 
 			rollInitiating = true;
+		}
+
+		/// <summary>
+		/// Change the current die state of the die and fire the relavent onchange event
+		/// </summary>
+		protected void ChangeDieState(DieState state)
+		{
+			if (CurrentDieState != state)
+			{
+				CurrentDieState = state;
+				onDiceStateChanged();
+			}
 		}
 
 		// ========================================================= Team Behaviour =========================================================
@@ -228,7 +285,7 @@ namespace DiceRoller
 
 		protected class NavigationSB : StateBehaviour
 		{
-			protected readonly Die dice = null;
+			protected readonly Die die = null;
 			
 			protected bool lastIsHovering = false;
 			protected List<Tile> lastOccupiedTiles = new List<Tile>();
@@ -238,7 +295,7 @@ namespace DiceRoller
 			/// </summary>
 			public NavigationSB(Die dice)
 			{
-				this.dice = dice;
+				this.die = dice;
 			}
 
 			/// <summary>
@@ -254,10 +311,10 @@ namespace DiceRoller
 			public override void OnStateUpdate()
 			{
 				// show hovering outline
-				dice.outline.Show = dice.isHovering;
+				die.outline.Show = die.isHovering;
 
 				// show occupied tiles on the board
-				List<Tile> tiles = dice.isHovering ? dice.OccupiedTiles : Tile.EmptyTiles;
+				List<Tile> tiles = die.isHovering ? die.OccupiedTiles : Tile.EmptyTiles;
 				foreach (Tile tile in tiles.Except(lastOccupiedTiles))
 				{
 					tile.AddDisplay(this, Tile.DisplayType.Position);
@@ -270,18 +327,20 @@ namespace DiceRoller
 				lastOccupiedTiles.AddRange(tiles);
 
 				// show dice info on ui
-				if (dice.isHovering != lastIsHovering)
+				if (die.isHovering != lastIsHovering)
 				{
-					if (dice.isHovering)
+					if (die.isHovering)
 					{
-						InspectingDice.Add(dice);
+						InspectingDice.Add(die);
+						die.onInspectionChanged.Invoke();
 					}
 					else
 					{
-						InspectingDice.Remove(dice);
+						InspectingDice.Remove(die);
+						die.onInspectionChanged.Invoke();
 					}
 				}
-				lastIsHovering = dice.isHovering;
+				lastIsHovering = die.isHovering;
 			}
 
 			/// <summary>
@@ -290,7 +349,7 @@ namespace DiceRoller
 			public override void OnStateExit()
 			{
 				// hide hovering outline
-				dice.outline.Show = false;
+				die.outline.Show = false;
 
 				// hide occupied tiles on board
 				foreach (Tile tile in lastOccupiedTiles)
@@ -300,7 +359,8 @@ namespace DiceRoller
 				lastOccupiedTiles.Clear();
 
 				// hide dice info on ui
-				InspectingDice.Remove(dice);
+				InspectingDice.Remove(die);
+				die.onInspectionChanged.Invoke();
 				lastIsHovering = false;
 			}
 		}

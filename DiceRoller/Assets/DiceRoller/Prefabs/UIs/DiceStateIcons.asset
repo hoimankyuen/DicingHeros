@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d78a2aad173a864fa573e5bb32a6bdd, type: 3}
+  m_Name: DiceStateIcons
+  m_EditorClassIdentifier: 
+  entries:
+  - state: 0
+    icon: {fileID: 0}
+  - state: 1
+    icon: {fileID: 5836651483207699491, guid: 887c74288796fb742a164329e1f27b7e, type: 3}
+  - state: 2
+    icon: {fileID: -7723404128042860721, guid: 887c74288796fb742a164329e1f27b7e, type: 3}
+  - state: 3
+    icon: {fileID: -911334816105998624, guid: 887c74288796fb742a164329e1f27b7e, type: 3}
+  - state: 4
+    icon: {fileID: -633711096132803167, guid: 887c74288796fb742a164329e1f27b7e, type: 3}
+  - state: 5
+    icon: {fileID: 5244579240971268765, guid: 887c74288796fb742a164329e1f27b7e, type: 3}
+  - state: 6
+    icon: {fileID: 6627114573438298659, guid: 887c74288796fb742a164329e1f27b7e, type: 3}
+  - state: 7
+    icon: {fileID: 8431574639481673316, guid: 887c74288796fb742a164329e1f27b7e, type: 3}
+  - state: 8
+    icon: {fileID: 5421712953015575254, guid: 887c74288796fb742a164329e1f27b7e, type: 3}

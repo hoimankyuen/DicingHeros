@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace DiceRoller
 {
-    public class UISimpleDieSideWindow : UISideWindow
+    public class UISimpleDieSideWindow : MonoBehaviour
     {
         // Start is called before the first frame update
         void Start()
