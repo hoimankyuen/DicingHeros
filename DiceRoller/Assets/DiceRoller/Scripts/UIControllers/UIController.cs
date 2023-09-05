@@ -12,6 +12,14 @@ namespace DiceRoller
 		// singleton
 		public static UIController current { get; protected set; }
 
+		// references
+		protected StateMachine stateMachine { get { return StateMachine.current; } }
+
+		[Header("Components")]
+		public UIDiceListWindow diceListWindow;
+		public UIUnitListWindow unitListWindow;
+		public UIUnitDetailWindow unitDetailWindow;
+
 		[Header("Simple Die Display")]
 		public RectTransform simpleDieWindow;
 		public UIDie simpleDieDisplay;
@@ -20,12 +28,8 @@ namespace DiceRoller
 		[Header("Simple Unit Display")]
 		public RectTransform simpleUnitWindow;
 		public Image simpleUnitImage;
+		public UIHealthDisplay simpleHealthDisplay;
 		public UIStatDisplay simpleStatDisplay;
-
-		[Header("Detailed Unit Display")]
-		public RectTransform detailedUnitWindow;
-		public Image detailedUnitImage;
-		public UIStatDisplay detailedStatDisplay;
 
 		[Header("Throw Display")]
 		public GameObject throwTarget = null;
@@ -50,7 +54,7 @@ namespace DiceRoller
 		/// </summary>
 		protected void Start()
 		{
-
+			RegisterStateBehaviours();
 		}
 
 		/// <summary>
@@ -67,6 +71,7 @@ namespace DiceRoller
 		/// </summary>
 		protected void OnDestroy()
 		{
+			DeregisterStateBehaviours();
 			current = null;
 		}
 
@@ -77,28 +82,13 @@ namespace DiceRoller
 		/// </summary>
 		protected void RefreshSelectableDisplay()
 		{
-			/*
-			// move selectable frame to either side of the screen
-			if (Input.mousePosition.x > Screen.width - simpleDieFrame.rect.width)
-			{
-				simpleDieFrame.anchorMin = new Vector2(0, 0);
-				simpleDieFrame.anchorMax = new Vector2(0, 0);
-				simpleDieFrame.pivot = new Vector2(0, 0);
-			}
-			else if (Input.mousePosition.x < simpleDieFrame.rect.width)
-			{
-				simpleDieFrame.anchorMin = new Vector2(1, 0);
-				simpleDieFrame.anchorMax = new Vector2(1, 0);
-				simpleDieFrame.pivot = new Vector2(1, 0);
-			}
-			*/
-
 			// display selectable information
 			if (Unit.InspectingUnit != null && Unit.InspectingUnit.Count > 0)
 			{
 				// show unit information
 				simpleUnitWindow.gameObject.SetActive(true);
 				simpleUnitImage.sprite = Unit.InspectingUnit[0].iconSprite;
+				simpleHealthDisplay.SetDisplay(Unit.InspectingUnit[0]);
 				simpleStatDisplay.SetDisplay(Unit.InspectingUnit[0]);
 
 				simpleDieDisplay.SetDisplay(null);
@@ -157,6 +147,143 @@ namespace DiceRoller
 				// user not throwing, disable throw indicator
 				throwTarget.SetActive(false);
 				throwPowerIndicator.SetActive(false);
+			}
+		}
+
+		// ========================================================= State Machine Behaviour =========================================================
+
+		/// <summary>
+		/// Register all state behaviour to the centralized state machine.
+		/// </summary>
+		protected void RegisterStateBehaviours()
+		{
+			stateMachine.RegisterStateBehaviour(this, State.StartTurn, new StartTurnSB(this));
+			stateMachine.RegisterStateBehaviour(this, State.Navigation, new NavigationSB(this));
+			stateMachine.RegisterStateBehaviour(this, State.UnitActionSelect, new UnitActionSB(this));
+		}
+
+		/// <summary>
+		/// Deregister all state behaviours to the centralized state machine.
+		/// </summary>
+		protected void DeregisterStateBehaviours()
+		{
+			if (stateMachine != null)
+				stateMachine.DeregisterStateBehaviour(this);
+		}
+
+		// ========================================================= Start Turn State =========================================================
+
+		protected class StartTurnSB : StateBehaviour
+		{
+			protected readonly UIController self = null;
+
+			/// <summary>
+			/// Constructor.
+			/// </summary>
+			public StartTurnSB(UIController self)
+			{
+				this.self = self;
+			}
+
+			/// <summary>
+			/// OnStateEnter is called when the centralized state machine is entering the current state.
+			/// </summary>
+			public override void OnStateEnter()
+			{
+			}
+
+			/// <summary>
+			/// OnStateUpdate is called each frame when the centralized state machine is in the current state.
+			/// </summary>
+			public override void OnStateUpdate()
+			{
+			}
+
+			/// <summary>
+			/// OnStateExit is called when the centralized state machine is leaving the current state.
+			/// </summary>
+			public override void OnStateExit()
+			{
+			}
+		}
+
+		// ========================================================= Navigation State =========================================================
+
+		protected class NavigationSB : StateBehaviour
+		{
+			protected readonly UIController self = null;
+
+			/// <summary>
+			/// Constructor.
+			/// </summary>
+			public NavigationSB(UIController self)
+			{
+				this.self = self;
+			}
+
+			/// <summary>
+			/// OnStateEnter is called when the centralized state machine is entering the current state.
+			/// </summary>
+			public override void OnStateEnter()
+			{
+				self.diceListWindow.Show = true;
+				self.unitListWindow.Show = true;
+			}
+
+			/// <summary>
+			/// OnStateUpdate is called each frame when the centralized state machine is in the current state.
+			/// </summary>
+			public override void OnStateUpdate()
+			{
+			}
+
+			/// <summary>
+			/// OnStateExit is called when the centralized state machine is leaving the current state.
+			/// </summary>
+			public override void OnStateExit()
+			{
+				self.diceListWindow.Show = false;
+				self.unitListWindow.Show = false;
+			}
+		}
+
+		// ========================================================= Unit Action State =========================================================
+
+		protected class UnitActionSB : StateBehaviour
+		{
+			protected readonly UIController self = null;
+
+			/// <summary>
+			/// Constructor.
+			/// </summary>
+			public UnitActionSB(UIController self)
+			{
+				this.self = self;
+			}
+
+			/// <summary>
+			/// OnStateEnter is called when the centralized state machine is entering the current state.
+			/// </summary>
+			public override void OnStateEnter()
+			{
+				self.unitDetailWindow.Show = true;
+				self.diceListWindow.Show = true;
+			}
+
+			/// <summary>
+			/// OnStateUpdate is called each frame when the centralized state machine is in the current state.
+			/// </summary>
+			public override void OnStateUpdate()
+			{
+			}
+
+			/// <summary>
+			/// OnStateExit is called when the centralized state machine is leaving the current state.
+			/// </summary>
+			public override void OnStateExit()
+			{
+				self.unitDetailWindow.Show = false;
+				self.diceListWindow.Show = false;
 			}
 		}
 	}

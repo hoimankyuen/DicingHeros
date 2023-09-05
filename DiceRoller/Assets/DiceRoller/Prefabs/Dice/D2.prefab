@@ -24,6 +24,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 7046266691974694119, guid: d7610499986bb3946a9401e22f70e9d9, type: 3}
     - target: {fileID: 2142673084969192714, guid: 5b090d167a8fb2a408e7b811e8fb564d, type: 3}
+      propertyPath: name
+      value: Simple D2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2142673084969192714, guid: 5b090d167a8fb2a408e7b811e8fb564d, type: 3}
       propertyPath: size
       value: 0.14
       objectReference: {fileID: 0}

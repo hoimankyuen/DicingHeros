@@ -122,11 +122,16 @@ namespace DiceRoller
 			if (this.die != null)
 			{
 				this.die.onValueChanged -= RefreshDisplay;
+				this.die.onDiceStateChanged -= RefreshDisplay;
+				this.die.onInspectionChanged -= RefreshDisplay;
+				this.die.onSelectionChanged -= RefreshDisplay;
 			}
 			if (die != null)
 			{
 				die.onValueChanged += RefreshDisplay;
+				die.onDiceStateChanged += RefreshDisplay;
 				die.onInspectionChanged += RefreshDisplay;
+				die.onSelectionChanged += RefreshDisplay;
 			}
 
 			// stop running animations

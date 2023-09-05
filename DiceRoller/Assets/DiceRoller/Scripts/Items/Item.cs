@@ -7,6 +7,8 @@ namespace DiceRoller
 	public class Item : MonoBehaviour
 	{
 		// parameters
+		[Header("Basic Information")]
+		public new string name = "";
 		public Sprite iconSprite = null;
 		public Sprite outlineSprite = null;
 		public float size = 1f;

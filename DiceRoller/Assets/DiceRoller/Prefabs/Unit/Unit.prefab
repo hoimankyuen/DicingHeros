@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 725107107974870647}
   - component: {fileID: 6840770681751146190}
   m_Layer: 13
-  m_Name: Piece
+  m_Name: Unit
   m_TagString: Dice
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -48,15 +48,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 93ffd683f823d284bbc44d52742bc69f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  name: Simple Unit
   iconSprite: {fileID: 21300000, guid: 70f364a73dd8dd24693a4260c57ed0e5, type: 3}
-  outlineSprite: {fileID: 0}
+  outlineSprite: {fileID: 21300000, guid: 7db0928e898551a4fba1d69713871f8b, type: 3}
   size: 0.19
   team: 0
   maxHealth: 20
-  melee: 3
-  defence: 4
-  magic: 1
-  movement: 4
+  baseMelee: 3
+  baseDefence: 4
+  baseMagic: 1
+  baseMovement: 4
   moveTimePerTile: 0.2
 --- !u!54 &2284104210925587976
 Rigidbody:

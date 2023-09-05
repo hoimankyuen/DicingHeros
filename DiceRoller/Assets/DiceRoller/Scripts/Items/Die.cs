@@ -64,7 +64,6 @@ namespace DiceRoller
 		protected Quaternion lastRotation = Quaternion.identity;
 		protected float lastRotatingTime = 0;
 		protected bool rollInitiating = false;
-		protected int lastValue = 0;
 
 		public DieState CurrentDieState { get; protected set; } = DieState.Normal;
 
@@ -285,7 +284,7 @@ namespace DiceRoller
 
 		protected class NavigationSB : StateBehaviour
 		{
-			protected readonly Die die = null;
+			protected readonly Die self = null;
 			
 			protected bool lastIsHovering = false;
 			protected List<Tile> lastOccupiedTiles = new List<Tile>();
@@ -293,9 +292,9 @@ namespace DiceRoller
 			/// <summary>
 			/// Constructor.
 			/// </summary>
-			public NavigationSB(Die dice)
+			public NavigationSB(Die self)
 			{
-				this.die = dice;
+				this.self = self;
 			}
 
 			/// <summary>
@@ -311,10 +310,10 @@ namespace DiceRoller
 			public override void OnStateUpdate()
 			{
 				// show hovering outline
-				die.outline.Show = die.isHovering;
+				self.outline.Show = self.isHovering;
 
 				// show occupied tiles on the board
-				List<Tile> tiles = die.isHovering ? die.OccupiedTiles : Tile.EmptyTiles;
+				List<Tile> tiles = self.isHovering ? self.OccupiedTiles : Tile.EmptyTiles;
 				foreach (Tile tile in tiles.Except(lastOccupiedTiles))
 				{
 					tile.AddDisplay(this, Tile.DisplayType.Position);
@@ -327,20 +326,20 @@ namespace DiceRoller
 				lastOccupiedTiles.AddRange(tiles);
 
 				// show dice info on ui
-				if (die.isHovering != lastIsHovering)
+				if (self.isHovering != lastIsHovering)
 				{
-					if (die.isHovering)
+					if (self.isHovering)
 					{
-						InspectingDice.Add(die);
-						die.onInspectionChanged.Invoke();
+						InspectingDice.Add(self);
+						self.onInspectionChanged.Invoke();
 					}
 					else
 					{
-						InspectingDice.Remove(die);
-						die.onInspectionChanged.Invoke();
+						InspectingDice.Remove(self);
+						self.onInspectionChanged.Invoke();
 					}
 				}
-				lastIsHovering = die.isHovering;
+				lastIsHovering = self.isHovering;
 			}
 
 			/// <summary>
@@ -349,7 +348,7 @@ namespace DiceRoller
 			public override void OnStateExit()
 			{
 				// hide hovering outline
-				die.outline.Show = false;
+				self.outline.Show = false;
 
 				// hide occupied tiles on board
 				foreach (Tile tile in lastOccupiedTiles)
@@ -359,8 +358,8 @@ namespace DiceRoller
 				lastOccupiedTiles.Clear();
 
 				// hide dice info on ui
-				InspectingDice.Remove(die);
-				die.onInspectionChanged.Invoke();
+				InspectingDice.Remove(self);
+				self.onInspectionChanged.Invoke();
 				lastIsHovering = false;
 			}
 		}

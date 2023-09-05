@@ -5,14 +5,11 @@ using UnityEngine;
 
 namespace DiceRoller
 {
-    public class UIDiceWindow : MonoBehaviour
-    {
-        [Header("Main Frame Components")]
-        public RectTransform mainFrame;
-        public TextMeshProUGUI title;
-
+    public class UIDiceListWindow : UISideWindow
+	{
         [Header("Dice Frame Components")]
-        public RectTransform diceFrame;
+		public TextMeshProUGUI title;
+		public RectTransform diceFrame;
         public GameObject uiDiePrefab;
 
 
@@ -26,34 +23,38 @@ namespace DiceRoller
 		/// Awake is called when the game object was created. It is always called before start and is 
 		/// independent of if the game object is active or not.
 		/// </summary>
-		protected void Awake()
+		protected override void Awake()
 		{
+			base.Awake();
 			uiDiePrefab.SetActive(false);
 		}
 
 		/// <summary>
 		/// Start is called before the first frame update and/or the game object is first active.
 		/// </summary>
-		protected void Start()
+		protected override void Start()
 		{
+			base.Start();
 			Populate();
 		}
 
 		/// <summary>
 		/// Update is called once per frame.
 		/// </summary>
-		protected void Update()
+		protected override void Update()
 		{
+			base.Update();
 		}
 
 		/// <summary>
 		/// OnDestroy is called when an game object is destroyed.
 		/// </summary>
-		protected void OnDestroy()
+		protected override void OnDestroy()
 		{
+			base.OnDestroy();
 		}
 
-		// ========================================================= Behaviour Display =========================================================
+		// ========================================================= Behaviour =========================================================
 		
 		protected void Populate()
 		{

@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,14 +12,20 @@ namespace DiceRoller
 		public static List<Unit> AllUnits { get; protected set; } = new List<Unit>();
 		public static UniqueList<Unit> InspectingUnit { get; protected set; } = new UniqueList<Unit>();
 
-		public int CurrentHealth { get; protected set; }
+		public int Health { get; protected set; }
+		public int Melee { get; protected set; }
+		public int Defence { get; protected set; }
+		public int Magic { get; protected set; }
+		public int Movement { get; protected set; }
 
 		// parameters
+		[Header("Unit Parameters")]
 		public int maxHealth = 20;
-		public int melee = 3;
-		public int defence = 4;
-		public int magic = 1;
-		public int movement = 4;
+		public int baseMelee = 3;
+		public int baseDefence = 4;
+		public int baseMagic = 1;
+		public int baseMovement = 4;
+
 		public float moveTimePerTile = 0.2f;
 
 		// components
@@ -27,6 +34,13 @@ namespace DiceRoller
 
 		// working variables
 		protected bool actionDepleted = false;
+
+		// events
+		public Action onHealthChanged = () => { };
+		public Action onStatChanged = () => { };
+		public Action onInspectionChanged = () => { };
+		public Action onSelectionChanged = () => { };
+
 
 		// ========================================================= Monobehaviour Methods =========================================================
 
@@ -49,7 +63,8 @@ namespace DiceRoller
 			RegisterStateBehaviours();
 			RegisterToTeam();
 
-			CurrentHealth = maxHealth;
+			SetHealth(maxHealth);
+			ResetStat();
 		}
 
 		/// <summary>
@@ -93,6 +108,74 @@ namespace DiceRoller
 			overlay = GetComponent<Overlay>();
 		}
 
+		/// <summary>
+		/// Add or remove health by a set amount.
+		/// </summary>
+		public void ChangeHealth(int delta)
+		{
+			SetHealth(Health + delta);
+		}
+
+		/// <summary>
+		/// Directly set health to a specific value.
+		/// </summary>
+		public void SetHealth(int value)
+		{
+			if (Health != value)
+			{
+				Health = value;
+				onHealthChanged.Invoke();
+			}
+		}
+
+		/// <summary>
+		/// Add or remove value of each stat by a set amount.
+		/// </summary>
+		public void ChangeStat(int meleeDelta = 0, int defenceDelta = 0, int magicDelta = 0, int movementDelta = 0)
+		{
+			SetStat(Melee + meleeDelta, Defence + defenceDelta, Magic + magicDelta, Movement + movementDelta);
+		}
+
+		/// <summary>
+		/// Reset set to their original value.
+		/// </summary>
+		public void ResetStat()
+		{
+			SetStat(baseMelee, baseDefence, baseMagic, baseMovement);
+		}
+
+		/// <summary>
+		/// Directly set each stat to a specific value.
+		/// </summary>
+		public void SetStat(int meleeValue, int defencevalue, int magicValue, int movementValue)
+		{
+			bool changed = false;
+			if (Melee != meleeValue)
+			{
+				Melee = meleeValue;
+				changed = true;
+			}
+			if (Defence != defencevalue)
+			{
+				Defence = defencevalue;
+				changed = true;
+			}
+			if (Magic != magicValue)
+			{
+				Magic = magicValue;
+				changed = true;
+			}
+			if (Movement != movementValue)
+			{
+				Movement = movementValue;
+				changed = true;
+			}
+			if (changed)
+			{
+				onStatChanged.Invoke();
+			}
+		}
+
 		// ========================================================= Team Behaviour =========================================================
 
 		/// <summary>
@@ -120,7 +203,7 @@ namespace DiceRoller
 		{
 			stateMachine.RegisterStateBehaviour(this, State.StartTurn, new StartTurnSB(this));
 			stateMachine.RegisterStateBehaviour(this, State.Navigation, new NavigationSB(this));
-			stateMachine.RegisterStateBehaviour(this, State.UnitMoveSelect, new UnitMoveSelectSB(this));
+			stateMachine.RegisterStateBehaviour(this, State.UnitActionSelect, new UnitActionSelectSB(this));
 			stateMachine.RegisterStateBehaviour(this, State.UnitMovement, new UnitMoveSB(this));
 		}
 
@@ -176,7 +259,7 @@ namespace DiceRoller
 
 		protected class NavigationSB : StateBehaviour
 		{
-			protected readonly Unit unit = null;
+			protected readonly Unit self = null;
 
 			protected bool lastIsHovering = false;
 			protected List<Tile> lastOccupiedTiles = new List<Tile>();
@@ -184,9 +267,9 @@ namespace DiceRoller
 			/// <summary>
 			/// Constructor.
 			/// </summary>
-			public NavigationSB(Unit unit)
+			public NavigationSB(Unit self)
 			{
-				this.unit = unit;
+				this.self = self;
 			}
 
 			/// <summary>
@@ -202,10 +285,10 @@ namespace DiceRoller
 			public override void OnStateUpdate()
 			{
 				// show hovering outline
-				unit.outline.Show = unit.isHovering;
+				self.outline.Show = self.isHovering;
 
 				// show occupied tiles on the board
-				List<Tile> tiles = unit.isHovering ? unit.OccupiedTiles : Tile.EmptyTiles;
+				List<Tile> tiles = self.isHovering ? self.OccupiedTiles : Tile.EmptyTiles;
 				foreach (Tile tile in tiles.Except(lastOccupiedTiles))
 				{
 					tile.AddDisplay(this, Tile.DisplayType.Position);
@@ -218,27 +301,29 @@ namespace DiceRoller
 				lastOccupiedTiles.AddRange(tiles);
 
 				// show unit info on ui
-				if (unit.isHovering != lastIsHovering)
+				if (self.isHovering != lastIsHovering)
 				{
-					if (unit.isHovering)
+					if (self.isHovering)
 					{
-						InspectingUnit.Add(unit);
+						InspectingUnit.Add(self);
+						self.onInspectionChanged.Invoke();
 					}
 					else
 					{
-						InspectingUnit.Remove(unit);
+						InspectingUnit.Remove(self);
+						self.onInspectionChanged.Invoke();
 					}
 				}
-				lastIsHovering = unit.isHovering;
+				lastIsHovering = self.isHovering;
 
 				// go to unit movement selection state when this unit is pressed
-				if (unit.team == stateMachine.Params.team && unit.isPressed && !unit.actionDepleted && unit.OccupiedTiles.Count > 0)
+				if (self.team == stateMachine.Params.team && self.isPressed && !self.actionDepleted && self.OccupiedTiles.Count > 0)
 				{
-					stateMachine.ChangeState(State.UnitMoveSelect,
+					stateMachine.ChangeState(State.UnitActionSelect,
 						new StateParams()
 						{
 							team = stateMachine.Params.team,
-							unit = unit
+							unit = self
 						});
 				}
 			}
@@ -249,7 +334,7 @@ namespace DiceRoller
 			public override void OnStateExit()
 			{
 				// hide hovering outline
-				unit.outline.Show = false;
+				self.outline.Show = false;
 
 				// hide occupied tiles on board
 				foreach (Tile tile in lastOccupiedTiles)
@@ -259,18 +344,18 @@ namespace DiceRoller
 				lastOccupiedTiles.Clear();
 
 				// hide unit info on ui
-				InspectingUnit.Remove(unit);
+				InspectingUnit.Remove(self);
 
 				// clear flags
 				lastIsHovering = false;
 			}
 		}
 
-		// ========================================================= Unit Movement Selection State =========================================================
+		// ========================================================= Unit Action Selection State =========================================================
 
-		class UnitMoveSelectSB : StateBehaviour
+		class UnitActionSelectSB : StateBehaviour
 		{
-			protected readonly Unit unit = null;
+			protected readonly Unit self = null;
 
 			protected List<Tile> lastOccupiedTiles = new List<Tile>();
 			protected List<Tile> otherOccupiedTiles = new List<Tile>();
@@ -288,9 +373,9 @@ namespace DiceRoller
 			/// <summary>
 			/// Constructor.
 			/// </summary>
-			public UnitMoveSelectSB(Unit unit)
+			public UnitActionSelectSB(Unit self)
 			{
-				this.unit = unit;
+				this.self = self;
 			}
 
 			/// <summary>
@@ -299,13 +384,13 @@ namespace DiceRoller
 			public override void OnStateEnter()
 			{
 				// execute only if the selected unit is this unit
-				if (stateMachine.Params.unit == unit)
+				if (stateMachine.Params.unit == self)
 				{
 					// show selection outline
-					unit.outline.Show = true;
+					self.outline.Show = true;
 
 					// show occupied tiles on board, assume unit wont move during movement selection state
-					lastOccupiedTiles.AddRange(unit.OccupiedTiles);
+					lastOccupiedTiles.AddRange(self.OccupiedTiles);
 					foreach (Tile tile in lastOccupiedTiles)
 					{
 						tile.AddDisplay(this, Tile.DisplayType.Position);
@@ -314,21 +399,21 @@ namespace DiceRoller
 					// find all tiles that are occupied by other units
 					otherOccupiedTiles.Clear();
 					AllUnits.ForEach(x => {
-						if (x != unit)
+						if (x != self)
 						{
 							otherOccupiedTiles.AddRange(x.OccupiedTiles.Except(otherOccupiedTiles));
 						}
 					});
 
 					// show possible movement area on board, assume unit wont move during movement selection state
-					board.GetConnectedTilesInRange(unit.OccupiedTiles, otherOccupiedTiles, unit.movement, lastMovementArea);
+					board.GetConnectedTilesInRange(self.OccupiedTiles, otherOccupiedTiles, self.baseMovement, lastMovementArea);
 					foreach (Tile tile in lastMovementArea)
 					{
 						tile.AddDisplay(this, Tile.DisplayType.Move);
 					}
 
 					// shwo unit info on ui  
-					InspectingUnit.Add(unit);
+					InspectingUnit.Add(self);
 				}
 			}
 
@@ -338,7 +423,7 @@ namespace DiceRoller
 			public override void OnStateUpdate()
 			{
 				// execute only if the selected unit is this unit
-				if (stateMachine.Params.unit == unit)
+				if (stateMachine.Params.unit == self)
 				{
 					// find the target tile that the mouse is pointing to
 					Tile targetTile = null;
@@ -363,7 +448,7 @@ namespace DiceRoller
 							// target tile is unreachable, no path is retrieved
 							nextPath.Clear();
 						}
-						else if (unit.OccupiedTiles.Contains(targetTile))
+						else if (self.OccupiedTiles.Contains(targetTile))
 						{
 							// target tile is withing the starting tiles, reset the path to the target tile
 							nextPath.Clear();
@@ -373,7 +458,7 @@ namespace DiceRoller
 						{
 							// no path exist, find the shortest path to target tile
 							nextPath.Clear();
-							unit.board.GetShortestPath(unit.OccupiedTiles, otherOccupiedTiles, targetTile, unit.movement, in nextPath);
+							self.board.GetShortestPath(self.OccupiedTiles, otherOccupiedTiles, targetTile, self.baseMovement, in nextPath);
 						}
 						else if (nextPath.Contains(targetTile))
 						{
@@ -388,7 +473,7 @@ namespace DiceRoller
 							appendExcludedTiles.AddRange(nextPath);
 							appendExcludedTiles.AddRange(otherOccupiedTiles);
 							appendExcludedTiles.Remove(nextPath[nextPath.Count - 1]);
-							unit.board.GetShortestPath(nextPath[nextPath.Count - 1], appendExcludedTiles, targetTile, unit.movement + 1 - nextPath.Count, in appendPath);
+							self.board.GetShortestPath(nextPath[nextPath.Count - 1], appendExcludedTiles, targetTile, self.baseMovement + 1 - nextPath.Count, in appendPath);
 							if (appendPath.Count > 0)
 							{
 								// append a path from last tile of the path to the target tile
@@ -400,7 +485,7 @@ namespace DiceRoller
 							{
 								// path is too long, retrieve a shortest path to target tile instead
 								nextPath.Clear();
-								unit.board.GetShortestPath(unit.OccupiedTiles, otherOccupiedTiles, targetTile, unit.movement, in nextPath);
+								self.board.GetShortestPath(self.OccupiedTiles, otherOccupiedTiles, targetTile, self.baseMovement, in nextPath);
 							}
 						}
 
@@ -455,8 +540,8 @@ namespace DiceRoller
 								new StateParams()
 								{
 									team = stateMachine.Params.team,
-									unit = unit,
-									startingTiles = new List<Tile>(unit.OccupiedTiles),
+									unit = self,
+									startingTiles = new List<Tile>(self.OccupiedTiles),
 									path = new List<Tile>(lastPath)
 								});
 						}
@@ -496,10 +581,10 @@ namespace DiceRoller
 			public override void OnStateExit()
 			{
 				// execute only if the selected unit is this unit
-				if (stateMachine.Params.unit == unit)
+				if (stateMachine.Params.unit == self)
 				{
 					// hide hovering outline
-					unit.outline.Show = false;
+					self.outline.Show = false;
 
 					// hide occupied tiles on board
 					foreach (Tile tile in lastOccupiedTiles)
@@ -541,7 +626,7 @@ namespace DiceRoller
 					lastReachable = true;
 
 					// hide unit info on ui
-					InspectingUnit.Remove(unit);
+					InspectingUnit.Remove(self);
 
 					// clear flags
 					isPressing0 = false;
@@ -555,14 +640,14 @@ namespace DiceRoller
 
 		class UnitMoveSB : StateBehaviour
 		{
-			protected readonly Unit unit = null;
+			protected readonly Unit self = null;
 
 			/// <summary>
 			/// Constructor.
 			/// </summary>
-			public UnitMoveSB(Unit unit) 
+			public UnitMoveSB(Unit self) 
 			{ 
-				this.unit = unit; 
+				this.self = self; 
 			}
 
 			/// <summary>
@@ -571,9 +656,9 @@ namespace DiceRoller
 			public override void OnStateEnter()
 			{
 				// execute only if the moving unit is this unit
-				if (stateMachine.Params.unit == unit)
+				if (stateMachine.Params.unit == self)
 				{
-					unit.StartCoroutine(MoveSequence(stateMachine.Params.startingTiles, stateMachine.Params.path));
+					self.StartCoroutine(MoveSequence(stateMachine.Params.startingTiles, stateMachine.Params.path));
 				}
 			}
 
@@ -588,20 +673,20 @@ namespace DiceRoller
 				path[path.Count - 1].AddDisplay(this, Tile.DisplayType.MoveTarget);
 
 				// show unit info on ui
-				InspectingUnit.Add(unit);
+				InspectingUnit.Add(self);
 
 				float startTime = 0;
 				float duration = 0;
 
 				// move to first tile on path if needed
-				if (Vector3.Distance(unit.transform.position, path[0].transform.position) > 0.01f)
+				if (Vector3.Distance(self.transform.position, path[0].transform.position) > 0.01f)
 				{
-					Vector3 startPosition = unit.transform.position;
+					Vector3 startPosition = self.transform.position;
 					startTime = Time.time;
-					duration = Vector3.Distance(startPosition, path[0].transform.position) / path[0].tileSize * unit.moveTimePerTile;
+					duration = Vector3.Distance(startPosition, path[0].transform.position) / path[0].tileSize * self.moveTimePerTile;
 					while (Time.time - startTime <= duration)
 					{
-						unit.rigidBody.MovePosition(Vector3.Lerp(startPosition, path[0].transform.position, (Time.time - startTime) / duration));
+						self.rigidBody.MovePosition(Vector3.Lerp(startPosition, path[0].transform.position, (Time.time - startTime) / duration));
 						yield return new WaitForFixedUpdate();
 					}
 				}
@@ -610,20 +695,20 @@ namespace DiceRoller
 				for (int i = 0; i < path.Count - 1; i++)
 				{
 					startTime = Time.time;
-					duration = unit.moveTimePerTile;
-					while (Time.time - startTime <= unit.moveTimePerTile)
+					duration = self.moveTimePerTile;
+					while (Time.time - startTime <= self.moveTimePerTile)
 					{
-						unit.rigidBody.MovePosition(Vector3.Lerp(path[i].transform.position, path[i + 1].transform.position, (Time.time - startTime) / duration));
+						self.rigidBody.MovePosition(Vector3.Lerp(path[i].transform.position, path[i + 1].transform.position, (Time.time - startTime) / duration));
 						yield return new WaitForFixedUpdate();
 					}
 				}
 
 				// file tile on path reached, final movement to destination tile 
 				startTime = Time.time;
-				duration = unit.moveTimePerTile;
-				while (Time.time - startTime <= unit.moveTimePerTile)
+				duration = self.moveTimePerTile;
+				while (Time.time - startTime <= self.moveTimePerTile)
 				{
-					unit.rigidBody.MovePosition(path[path.Count - 1].transform.position);
+					self.rigidBody.MovePosition(path[path.Count - 1].transform.position);
 					yield return new WaitForFixedUpdate();
 				}
 
@@ -633,11 +718,11 @@ namespace DiceRoller
 				path[path.Count - 1].RemoveDisplay(this, Tile.DisplayType.MoveTarget);
 
 				// hide unit info on ui
-				InspectingUnit.Remove(unit);
+				InspectingUnit.Remove(self);
 
 				// set flag
-				unit.actionDepleted = true;
-				unit.overlay.Show = true;
+				self.actionDepleted = true;
+				self.overlay.Show = true;
 
 				// change state back to navigation
 				stateMachine.ChangeState(State.Navigation,

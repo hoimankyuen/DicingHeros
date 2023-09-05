@@ -9,8 +9,6 @@ namespace DiceRoller
     public class UIStatDisplay : MonoBehaviour
     {
         [Header("Components")]
-        public Image healthIcon;
-        public TextMeshProUGUI healthValue;
         public Image attackIcon;
         public TextMeshProUGUI attackValue;
         public Image defenceIcon;
@@ -23,21 +21,63 @@ namespace DiceRoller
         [Header("Displayed Values")]
         protected Unit unit;
 
+        // ========================================================= Monobehaviour Methods =========================================================
+
+        /// <summary>
+        /// Start is called before the first frame update and/or the game object is first active.
+        /// </summary>
+        protected void Start()
+        {
+            if (unit != null)
+            {
+                unit.onStatChanged += RefreshDisplay;
+            }
+        }
+
+        /// <summary>
+        /// OnDestroy is called when an game object is destroyed.
+        /// </summary>
+        protected void OnDestroy()
+        {
+            // deregister all events
+            if (unit != null)
+            {
+                unit.onStatChanged -= RefreshDisplay;
+            }
+        }
+
         // ========================================================= UI Methods =========================================================
 
+        /// <summary>
+        /// Set the displayed information as an existing unit.
+        /// </summary>
         public void SetDisplay(Unit unit)
         {
+            // register and deregister callbacks
+            if (this.unit != null)
+            {
+                this.unit.onStatChanged -= RefreshDisplay;
+            }
+            if (unit != null)
+            {
+                unit.onStatChanged += RefreshDisplay;
+            }
+
+            // set values
             this.unit = unit;
             RefreshDisplay();
         }
 
+
+        /// <summary>
+        /// Change the current display of this ui element to either match the information of the inspecting object.
+        /// </summary>
         public void RefreshDisplay()
         {
-            healthValue.text = string.Format("{0} / {1}", unit.CurrentHealth, unit.maxHealth);
-            attackValue.text = unit.melee.ToString();
-            defenceValue.text = unit.defence.ToString();
-            magicValue.text = unit.magic.ToString();
-            movementValue.text = unit.movement.ToString();
+            attackValue.text = unit != null ? unit.baseMelee.ToString() : "==";
+            defenceValue.text = unit != null ? unit.baseDefence.ToString() : "==";
+            magicValue.text = unit != null ? unit.baseMagic.ToString() : "==";
+            movementValue.text = unit != null ? unit.baseMovement.ToString() : "==";
         }
     }
 }

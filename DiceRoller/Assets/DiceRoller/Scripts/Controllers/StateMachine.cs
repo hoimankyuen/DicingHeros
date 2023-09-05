@@ -20,14 +20,14 @@ namespace DiceRoller
 
     public enum State
     {
-        None,
-		StartTurn,
-        Navigation,
-        DiceThrow,
-        UnitMoveSelect,
-        UnitMovement,
-        DiceAttackSelect,
-        DiceAttack,
+        None, // params: None
+		StartTurn, // params: team
+        Navigation, // params: team
+        DiceThrow, // parms: ?
+        UnitActionSelect, // params: team, unit
+        UnitMovement, // params: team, unit, startingTiles, path
+        DiceAttackSelect, // params: ?
+        DiceAttack, // params: ?
     }
 
 	public struct StateParams

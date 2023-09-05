@@ -13,7 +13,7 @@ namespace DiceRoller
 
 		// parameters
 		public RangeFloat2 throwDragDistances = new RangeFloat2();
-		public RangeFloat2 throwForces = new RangeFloat2();
+		public RangeFloat2 throwForces = new RangeFloat2(); // in percentage of height of monitor
 		public float throwHeight = 5f;
 
 		// readonly
@@ -174,22 +174,6 @@ namespace DiceRoller
 					}
 
 					ThrowDragging = false;
-				}
-			}
-		}
-
-		/// <summary>
-		/// Retrieve the total value shown on each dice
-		/// </summary>
-		void GetTotalValue()
-		{
-			if (thrown)
-			{
-				if (dice.Aggregate(true, (result, d) => result && d.IsMoving) == false)
-				{
-					int totalValue = dice.Aggregate(0, (result, d) => result + d.Value);
-					//Debug.Log(dice.Aggregate("A", (s, d) => s + " + (" + d.gameObject.name + " , " + d.Value + " )") + " = " + totalValue);
-					thrown = false;
 				}
 			}
 		}
