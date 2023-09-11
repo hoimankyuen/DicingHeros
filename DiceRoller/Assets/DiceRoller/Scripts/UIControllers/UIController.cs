@@ -16,27 +16,14 @@ namespace DiceRoller
 		protected StateMachine stateMachine { get { return StateMachine.current; } }
 
 		[Header("Components")]
+		public UIInfoWindow infoWindow;
+		public UIControlWindow controlWindow;
+		public UIInspectedItemWindow inspectedItemWindow;
 		public UIDiceListWindow diceListWindow;
 		public UIUnitListWindow unitListWindow;
+		public UIDiceDetailWindow diceDetailWindow;
 		public UIUnitDetailWindow unitDetailWindow;
-
-		[Header("Simple Die Display")]
-		public RectTransform simpleDieWindow;
-		public UIDie simpleDieDisplay;
-		protected bool selectableDisplayDirty = false;
-
-		[Header("Simple Unit Display")]
-		public RectTransform simpleUnitWindow;
-		public Image simpleUnitImage;
-		public UIHealthDisplay simpleHealthDisplay;
-		public UIStatDisplay simpleStatDisplay;
-
-		[Header("Throw Display")]
-		public GameObject throwTarget = null;
-		public SpriteRenderer throwArrow = null;
-		public SpriteRenderer throwCross = null;
-		public GameObject throwPowerIndicator = null;
-		public CutoffSpriteRenderer throwPowerIndicatorCutoff = null;
+		public UIThrowDisplay throwDisplay;
 
 		// ========================================================= Monobehaviour Methods =========================================================
 
@@ -62,8 +49,6 @@ namespace DiceRoller
 		/// </summary>
 		protected void Update()
 		{
-			RefreshSelectableDisplay();
-			UpdateThrowDisplay();
 		}
 
 		/// <summary>
@@ -74,82 +59,6 @@ namespace DiceRoller
 			DeregisterStateBehaviours();
 			current = null;
 		}
-
-		// ========================================================= Selectable Display =========================================================
-
-		/// <summary>
-		/// Change the dice display to reflect the current selected die.
-		/// </summary>
-		protected void RefreshSelectableDisplay()
-		{
-			// display selectable information
-			if (Unit.InspectingUnit != null && Unit.InspectingUnit.Count > 0)
-			{
-				// show unit information
-				simpleUnitWindow.gameObject.SetActive(true);
-				simpleUnitImage.sprite = Unit.InspectingUnit[0].iconSprite;
-				simpleHealthDisplay.SetDisplay(Unit.InspectingUnit[0]);
-				simpleStatDisplay.SetDisplay(Unit.InspectingUnit[0]);
-
-				simpleDieDisplay.SetDisplay(null);
-				simpleDieWindow.gameObject.SetActive(false);
-
-			}
-			else if (Die.InspectingDice != null && Die.InspectingDice.Count > 0 && Die.InspectingDice[0].Value != -1)
-			{
-				// show dice information
-				simpleUnitWindow.gameObject.SetActive(false);
-
-				simpleDieWindow.gameObject.SetActive(true);
-				simpleDieDisplay.SetDisplay(Die.InspectingDice[0]);
-			}
-			else
-			{
-				// show nothing selected
-				simpleUnitWindow.gameObject.SetActive(false);
-
-				simpleDieWindow.gameObject.SetActive(true);
-				simpleDieDisplay.SetDisplay(Die.Type.Unknown, -1);
-			}
-		}
-
-		// ========================================================= Throw Display =========================================================
-
-		/// <summary>
-		/// Update the apparence of the throw indicator UI.
-		/// </summary>
-		protected void UpdateThrowDisplay()
-		{
-			if (DiceThrower.current.ThrowDragging)
-			{
-				// user throwing
-				throwTarget.SetActive(true);
-				throwPowerIndicator.SetActive(true);
-				throwTarget.transform.position = DiceThrower.current.ThrowDragPosition;
-				throwPowerIndicator.transform.localRotation = Quaternion.Euler(new Vector3(-90, 0, 0)) * Quaternion.FromToRotation(Vector3.forward, DiceThrower.current.ThrowDirection) * Quaternion.Euler(new Vector3(90, 0, 0));
-				if (DiceThrower.current.ThrowPower != -1f)
-				{
-					// throw have enough power
-					throwArrow.gameObject.SetActive(true);
-					throwCross.gameObject.SetActive(false);
-					throwPowerIndicatorCutoff.CutoffTo(DiceThrower.current.ThrowPower);
-				}
-				else
-				{
-					// throw does not have enough power
-					throwArrow.gameObject.SetActive(false);
-					throwCross.gameObject.SetActive(true);
-					throwPowerIndicatorCutoff.CutoffTo(0);
-				}
-			}
-			else
-			{
-				// user not throwing, disable throw indicator
-				throwTarget.SetActive(false);
-				throwPowerIndicator.SetActive(false);
-			}
-		}
-
 		// ========================================================= State Machine Behaviour =========================================================
 
 		/// <summary>
@@ -157,9 +66,10 @@ namespace DiceRoller
 		/// </summary>
 		protected void RegisterStateBehaviours()
 		{
-			stateMachine.RegisterStateBehaviour(this, State.StartTurn, new StartTurnSB(this));
-			stateMachine.RegisterStateBehaviour(this, State.Navigation, new NavigationSB(this));
-			stateMachine.RegisterStateBehaviour(this, State.UnitActionSelect, new UnitActionSB(this));
+			stateMachine.Register(this, State.StartTurn, new StartTurnSB(this));
+			stateMachine.Register(this, State.Navigation, new NavigationSB(this));
+			stateMachine.Register(this, State.UnitActionSelect, new UnitActionSB(this));
+			stateMachine.Register(this, State.DiceActionSelect, new DiceActionSB(this));
 		}
 
 		/// <summary>
@@ -168,7 +78,7 @@ namespace DiceRoller
 		protected void DeregisterStateBehaviours()
 		{
 			if (stateMachine != null)
-				stateMachine.DeregisterStateBehaviour(this);
+				stateMachine.DeregisterAll(this);
 		}
 
 		// ========================================================= Start Turn State =========================================================
@@ -226,6 +136,7 @@ namespace DiceRoller
 			/// </summary>
 			public override void OnStateEnter()
 			{
+				self.inspectedItemWindow.Show = true;
 				self.diceListWindow.Show = true;
 				self.unitListWindow.Show = true;
 			}
@@ -242,6 +153,7 @@ namespace DiceRoller
 			/// </summary>
 			public override void OnStateExit()
 			{
+				self.inspectedItemWindow.Show = false;
 				self.diceListWindow.Show = false;
 				self.unitListWindow.Show = false;
 			}
@@ -266,6 +178,7 @@ namespace DiceRoller
 			/// </summary>
 			public override void OnStateEnter()
 			{
+				self.inspectedItemWindow.Show = true;
 				self.unitDetailWindow.Show = true;
 				self.diceListWindow.Show = true;
 			}
@@ -282,7 +195,50 @@ namespace DiceRoller
 			/// </summary>
 			public override void OnStateExit()
 			{
+				self.inspectedItemWindow.Show = false;
 				self.unitDetailWindow.Show = false;
+				self.diceListWindow.Show = false;
+			}
+		}
+
+		// ========================================================= Unit Action State =========================================================
+
+		protected class DiceActionSB : StateBehaviour
+		{
+			protected readonly UIController self = null;
+
+			/// <summary>
+			/// Constructor.
+			/// </summary>
+			public DiceActionSB(UIController self)
+			{
+				this.self = self;
+			}
+
+			/// <summary>
+			/// OnStateEnter is called when the centralized state machine is entering the current state.
+			/// </summary>
+			public override void OnStateEnter()
+			{
+				self.inspectedItemWindow.Show = true;
+				self.diceDetailWindow.Show = true;
+				self.diceListWindow.Show = true;
+			}
+
+			/// <summary>
+			/// OnStateUpdate is called each frame when the centralized state machine is in the current state.
+			/// </summary>
+			public override void OnStateUpdate()
+			{
+			}
+
+			/// <summary>
+			/// OnStateExit is called when the centralized state machine is leaving the current state.
+			/// </summary>
+			public override void OnStateExit()
+			{
+				self.inspectedItemWindow.Show = false;
+				self.diceDetailWindow.Show = false;
 				self.diceListWindow.Show = false;
 			}
 		}

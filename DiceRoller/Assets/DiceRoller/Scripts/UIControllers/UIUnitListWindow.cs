@@ -13,9 +13,12 @@ namespace DiceRoller
 		public RectTransform unitFrame;
 		public GameObject uiUnitPrefab;
 
+		// reference
+		protected GameController game => GameController.current;
+
 		// working variables
-		public List<Unit> units = new List<Unit>();
 		protected List<UIUnit> uiUnits = new List<UIUnit>();
+		protected Player inspectingPlayer = null;
 
 		// ========================================================= Monobehaviour Methods =========================================================
 
@@ -35,7 +38,12 @@ namespace DiceRoller
 		protected override void Start()
 		{
 			base.Start();
-			Populate();
+
+			if (game != null)
+			{
+				game.onPlayerChanged += Populate;
+				Populate();
+			}
 		}
 
 		/// <summary>
@@ -52,25 +60,39 @@ namespace DiceRoller
 		protected override void OnDestroy()
 		{
 			base.OnDestroy();
+
+			if (game != null)
+			{
+				game.onPlayerChanged -= Populate;
+			}
 		}
 
 		// ========================================================= Behaviour =========================================================
 
 		protected void Populate()
 		{
-			// clear previous ui dice
+			// only re populate if player is changed
+			if (game.CurrentPlayer == inspectingPlayer)
+				return;
+			inspectingPlayer = game.CurrentPlayer;
+
+			// clear previous ui unit
 			for (int i = uiUnits.Count - 1; i >= 0; i--)
 			{
 				Destroy(uiUnits[i].gameObject);
 			}
 			uiUnits.Clear();
 
-			// populate a new set of dui ice
-			for (int i = 0; i < units.Count; i++)
+			// check if player exist
+			if (inspectingPlayer == null)
+				return;
+
+			// populate a new set of ui dice
+			for (int i = 0; i < inspectingPlayer.units.Count; i++)
 			{
 				UIUnit uiUnit = Instantiate(uiUnitPrefab, uiUnitPrefab.transform.parent).GetComponent<UIUnit>();
 				uiUnit.gameObject.SetActive(true);
-				uiUnit.SetDisplay(units[i]);
+				uiUnit.SetDisplay(inspectingPlayer.units[i]);
 				uiUnit.rectTransform.anchoredPosition = new Vector2(0, i * -uiUnit.rectTransform.rect.height);
 				uiUnits.Add(uiUnit);
 			}

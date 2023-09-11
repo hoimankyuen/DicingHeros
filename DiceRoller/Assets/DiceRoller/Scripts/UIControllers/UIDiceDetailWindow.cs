@@ -4,17 +4,16 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
+
 namespace DiceRoller
 {
-    public class UIUnitDetailWindow : UISideWindow
+    public class UIDiceDetailWindow : UISideWindow
 	{
 		[Header("Components")]
-		public Image unitImage;
-		public UIHealthDisplay healthDisplay;
-		public UIStatDisplay statDisplay;
+		public TextMeshProUGUI titleText;
 
 		// working variables
-		protected Unit unit;
+
 
 		// ========================================================= Monobehaviour Methods =========================================================
 
@@ -64,9 +63,7 @@ namespace DiceRoller
 
 		protected void Populate()
 		{
-			unitImage.sprite = unit != null ? unit.iconSprite : null;
-			healthDisplay.SetDisplay(unit);
-			statDisplay.SetDisplay(unit);
+
 		}
 	}
 }

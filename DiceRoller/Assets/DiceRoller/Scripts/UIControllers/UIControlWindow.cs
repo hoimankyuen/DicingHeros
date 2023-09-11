@@ -1,21 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
-using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace DiceRoller
 {
-    public class UIUnitDetailWindow : UISideWindow
-	{
-		[Header("Components")]
-		public Image unitImage;
-		public UIHealthDisplay healthDisplay;
-		public UIStatDisplay statDisplay;
-
-		// working variables
-		protected Unit unit;
-
+    public class UIControlWindow : UISideWindow
+    {
 		// ========================================================= Monobehaviour Methods =========================================================
 
 		/// <summary>
@@ -33,7 +23,6 @@ namespace DiceRoller
 		protected override void Start()
 		{
 			base.Start();
-			Populate();
 		}
 
 		/// <summary>
@@ -50,23 +39,6 @@ namespace DiceRoller
 		protected override void OnDestroy()
 		{
 			base.OnDestroy();
-		}
-
-		/// <summary>
-		/// OnValidate is called when values where changed in the inspector.
-		/// </summary>
-		protected override void OnValidate()
-		{
-			base.OnValidate();
-		}
-
-		// ========================================================= Behaviour =========================================================
-
-		protected void Populate()
-		{
-			unitImage.sprite = unit != null ? unit.iconSprite : null;
-			healthDisplay.SetDisplay(unit);
-			statDisplay.SetDisplay(unit);
 		}
 	}
 }

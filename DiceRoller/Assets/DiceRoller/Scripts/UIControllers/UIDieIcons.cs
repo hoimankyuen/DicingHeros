@@ -13,6 +13,7 @@ namespace DiceRoller
             public Die.Type type;
             public Sprite icon;
             public Sprite outline;
+            public Sprite overlay;
         }
 
         [SerializeField]
@@ -21,6 +22,8 @@ namespace DiceRoller
         public Dictionary<Die.Type, Sprite> dieIcons = new Dictionary<Die.Type, Sprite>();
         [HideInInspector]
         public Dictionary<Die.Type, Sprite> dieOutlines = new Dictionary<Die.Type, Sprite>();
+        [HideInInspector]
+        public Dictionary<Die.Type, Sprite> dieOverlays = new Dictionary<Die.Type, Sprite>();
 
         protected void OnEnable()
         {
@@ -29,6 +32,7 @@ namespace DiceRoller
             {
                 dieIcons[entry.type] = entry.icon;
                 dieOutlines[entry.type] = entry.outline;
+                dieOverlays[entry.type] = entry.overlay;
             }
         }
     }

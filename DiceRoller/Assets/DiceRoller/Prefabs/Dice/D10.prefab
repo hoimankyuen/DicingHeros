@@ -60,6 +60,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: -8638276859388531639, guid: 1e3c56116a41d5541b60f01cfc9d91e0, type: 3}
     - target: {fileID: 2142673084969192714, guid: 5b090d167a8fb2a408e7b811e8fb564d, type: 3}
+      propertyPath: overlaySprite
+      value: 
+      objectReference: {fileID: -2370928024705104750, guid: 201c0a54e26bfa249836998c1f9cb26b, type: 3}
+    - target: {fileID: 2142673084969192714, guid: 5b090d167a8fb2a408e7b811e8fb564d, type: 3}
       propertyPath: faces.Array.size
       value: 10
       objectReference: {fileID: 0}

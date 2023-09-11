@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,16 +24,18 @@ namespace DiceRoller
 		protected GameController game { get { return GameController.current; } }
 		protected StateMachine stateMachine { get { return StateMachine.current; } }
 
-
-		// working variables   
-		protected List<Die> dice = new List<Die>();
-		protected Plane throwDragPlane = new Plane();
-		protected bool thrown = false;
-
+		// properties
+		public int RemainingThrow { get; protected set; } = 0;
 		public bool ThrowDragging { get; protected set; } = false;
 		public Vector3 ThrowDragPosition { get; protected set; } = Vector3.zero;
 		public Vector3 ThrowDirection { get; protected set; } = Vector3.zero;
 		public float ThrowPower { get; protected set; } = 0;
+
+		// events
+		public Action onRemainingThrowChanged = () => { };
+
+		// working variables   
+		protected Plane throwDragPlane = new Plane();
 
 		// ========================================================= Monobehaviour Methods =========================================================
 
@@ -40,48 +43,79 @@ namespace DiceRoller
 		/// Awake is called when the game object was created. It is always called before start and is 
 		/// independent of if the game object is active or not.
 		/// </summary>
-		void Awake()
+		protected void Awake()
 		{
 			current = this;
-			dice.AddRange(GameObject.FindObjectsOfType<Die>());
 		}
 
 		/// <summary>
 		/// Start is called before the first frame update and/or the game object is first active.
 		/// </summary>
-		void Start()
+		protected void Start()
 		{
+			RegisterStateBehaviours();
 		}
 
 		/// <summary>
 		/// Update is called once per frame.
 		/// </summary>
-		void Update()
+		protected void Update()
 		{
-			if (stateMachine.Current == State.Navigation)
-			{
-				DetectThrow();
-			}
-			//GetTotalValue();
 		}
 
 		/// <summary>
 		/// OnDestroy is called when an game object is destroyed.
 		/// </summary>
-		private void OnDestroy()
+		protected void OnDestroy()
 		{
+			DeregisterStateBehaviours();
 			current = null;
 		}
 
-		// ========================================================= Throw Dice =========================================================
+		// ========================================================= Throw Count Behaviours =========================================================
 
 		/// <summary>
-		/// Detect and perform a throw action by the player.
+		/// Reset the remaining throw to a specific number.
 		/// </summary>
-		void DetectThrow()
+		public void ResetRemainingThrow(int count)
 		{
+			RemainingThrow = (count > 0) ? count : 0;
+			onRemainingThrowChanged.Invoke();
+		}
+
+		/// <summary>
+		/// Add or remove throws to the remaining throw.
+		/// </summary>
+		public void ModifyRemainingThrow(int delta)
+		{
+			RemainingThrow = (RemainingThrow + delta > 0) ? (RemainingThrow + delta) : 0;
+			onRemainingThrowChanged.Invoke();
+		}
+
+		// ========================================================= Throw Dice Behaviours =========================================================
+
+		protected enum DetectThrowResult
+		{ 
+			None,
+			Thrown,
+			Aborted,
+		}
+
+		/// <summary>
+		/// Detect and perform a throw action by the player. Return true if thrown.
+		/// </summary>
+		protected DetectThrowResult DetectThrow(IReadOnlyCollection<Die> dice)
+		{
+			// do not throw if no throw remaining
+			if (RemainingThrow <= 0)
+			{
+				ThrowDragging = false;
+				return DetectThrowResult.None;
+			}
+
 			if (!ThrowDragging)
 			{
+				// detect start dragging by checking mouse button is pressed on a floor
 				if (Input.GetMouseButtonDown(0))
 				{
 					if (!EventSystem.current.IsPointerOverGameObject())
@@ -97,11 +131,17 @@ namespace DiceRoller
 						}
 					}
 				}
+
+				// detect abort bu checking left mouse button click
+				if (Input.GetMouseButtonUp(1))
+				{
+					return DetectThrowResult.Aborted;
+				}
 			}
 			else if (ThrowDragging)
 			{
 				Ray mouseRay = Camera.main.ScreenPointToRay(Input.mousePosition);
-				
+
 				// get the current throw parameters
 				if (throwDragPlane.Raycast(mouseRay, out float enter))
 				{
@@ -113,6 +153,8 @@ namespace DiceRoller
 				// initiate throw if mouse button is released
 				if (Input.GetMouseButtonUp(0))
 				{
+					ThrowDragging = false;
+
 					if (ThrowPower != -1f)
 					{
 						// calculate all essential variable for dice throwing
@@ -122,15 +164,15 @@ namespace DiceRoller
 
 						// select all do
 						List<Die> throwingDice = new List<Die>();
-						throwingDice.AddRange(dice.Where(x => x.team == stateMachine.Params.team));
+						throwingDice.AddRange(dice);
 
 						// shuffle the list of throwing dices
 						if (throwingDice.Count > 0)
 						{
 							for (int i = 0; i < throwingDice.Count; i++)
 							{
-								int from = Random.Range(0, throwingDice.Count);
-								int to = Random.Range(0, throwingDice.Count);
+								int from = UnityEngine.Random.Range(0, throwingDice.Count);
+								int to = UnityEngine.Random.Range(0, throwingDice.Count);
 								Die temp = throwingDice[from];
 								throwingDice[from] = throwingDice[to];
 								throwingDice[to] = temp;
@@ -154,12 +196,12 @@ namespace DiceRoller
 									right * (i % castSize - (float)(castSize - 1) / 2f) +
 									forward * (i / castSize - (float)(castSize - 1) / 2f);
 								Quaternion randomDirection =
-									Quaternion.AngleAxis(Random.Range(-5, 5) + Random.Range(-5, 5) * ThrowPower, up) *
-									Quaternion.AngleAxis(Random.Range(-5, 5) + Random.Range(-5, 5) * ThrowPower, right);
+									Quaternion.AngleAxis(UnityEngine.Random.Range(-5, 5) + UnityEngine.Random.Range(-5, 5) * ThrowPower, up) *
+									Quaternion.AngleAxis(UnityEngine.Random.Range(-5, 5) + UnityEngine.Random.Range(-5, 5) * ThrowPower, right);
 								Vector3 randomTorque = new Vector3(
-										Random.Range(-rollTorque * 0.5f, rollTorque * 0.5f),
-										Random.Range(-rollTorque * 0.5f, rollTorque * 0.5f),
-										Random.Range(-rollTorque * 0.5f, rollTorque * 0.5f));
+										UnityEngine.Random.Range(-rollTorque * 0.5f, rollTorque * 0.5f),
+										UnityEngine.Random.Range(-rollTorque * 0.5f, rollTorque * 0.5f),
+										UnityEngine.Random.Range(-rollTorque * 0.5f, rollTorque * 0.5f));
 
 								throwingDice[i].Throw(
 										position + castOffset * 0.3f,
@@ -170,11 +212,143 @@ namespace DiceRoller
 							}
 						}
 
-						thrown = true;
-					}
+						// decrease remaining throws
+						RemainingThrow--;
+						onRemainingThrowChanged.Invoke();
 
-					ThrowDragging = false;
+						return DetectThrowResult.Thrown;
+					}
 				}
+			}
+			return DetectThrowResult.None;
+		}
+
+		// ========================================================= State Machine Behaviour =========================================================
+
+		/// <summary>
+		/// Register all state behaviour to the centralized state machine.
+		/// </summary>
+		protected void RegisterStateBehaviours()
+		{
+			stateMachine.Register(this, State.DiceActionSelect, new DiceActionSelectSB(this));
+			stateMachine.Register(this, State.DiceThrow, new DiceThrowSB(this));
+		}
+
+		/// <summary>
+		/// Deregister all state behaviours to the centralized state machine.
+		/// </summary>
+		protected void DeregisterStateBehaviours()
+		{
+			if (stateMachine != null)
+				stateMachine.DeregisterAll(this);
+		}
+
+		// ========================================================= Dice Action State =========================================================
+		protected class DiceActionSelectSB : StateBehaviour
+		{
+			protected readonly DiceThrower self = null;
+
+			protected Vector2 pressedPosition1 = Vector2.negativeInfinity;
+
+			/// <summary>
+			/// Constructor.
+			/// </summary>
+			public DiceActionSelectSB(DiceThrower self)
+			{
+				this.self = self;
+			}
+
+			/// <summary>
+			/// OnStateEnter is called when the centralized state machine is entering the current state.
+			/// </summary>
+			public override void OnStateEnter()
+			{
+			}
+
+			/// <summary>
+			/// OnStateUpdate is called each frame when the centralized state machine is in the current state.
+			/// </summary>
+			public override void OnStateUpdate()
+			{
+				// detect abort bu checking left mouse button click
+				if (Input.GetMouseButtonDown(1))
+				{
+					pressedPosition1 = Input.mousePosition;
+				}
+				if (Input.GetMouseButtonUp(1) && pressedPosition1 != Vector2.negativeInfinity)
+				{
+					if (Vector2.Distance(pressedPosition1, Input.mousePosition) < 2f)
+					{
+						stateMachine.ChangeState(State.Navigation, new StateParams
+						{
+							player = stateMachine.Params.player
+						});
+					}
+					pressedPosition1 = Vector2.negativeInfinity;
+				}
+
+				// change to dice throw state if a throw is detected
+				DetectThrowResult result = self.DetectThrow(stateMachine.Params.dice);
+				if (result == DetectThrowResult.Thrown)
+				{
+					stateMachine.ChangeState(State.DiceThrow, new StateParams
+					{
+						player = stateMachine.Params.player,
+						dice = stateMachine.Params.dice
+					});
+				}
+			}
+
+			/// <summary>
+			/// OnStateExit is called when the centralized state machine is leaving the current state.
+			/// </summary>
+			public override void OnStateExit()
+			{
+				pressedPosition1 = Vector2.negativeInfinity;
+			}
+		}
+
+		// ========================================================= Dice Action State =========================================================
+		protected class DiceThrowSB : StateBehaviour
+		{
+			protected readonly DiceThrower self = null;
+
+			/// <summary>
+			/// Constructor.
+			/// </summary>
+			public DiceThrowSB(DiceThrower self)
+			{
+				this.self = self;
+			}
+
+			/// <summary>
+			/// OnStateEnter is called when the centralized state machine is entering the current state.
+			/// </summary>
+			public override void OnStateEnter()
+			{
+			}
+
+			/// <summary>
+			/// OnStateUpdate is called each frame when the centralized state machine is in the current state.
+			/// </summary>
+			public override void OnStateUpdate()
+			{
+				// change to navigation state if dice throw is completed
+				if (stateMachine.Params.dice.All(x => x.Value != -1))
+				{
+					stateMachine.ChangeState(State.Navigation, new StateParams 
+					{ 
+						player = stateMachine.Params.player
+					});
+				}
+			}
+
+			/// <summary>
+			/// OnStateExit is called when the centralized state machine is leaving the current state.
+			/// </summary>
+			public override void OnStateExit()
+			{
+
 			}
 		}
 	}

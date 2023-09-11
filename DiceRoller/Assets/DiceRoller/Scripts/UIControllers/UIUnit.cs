@@ -9,9 +9,14 @@ namespace DiceRoller
 {
     public class UIUnit : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
     {
+        [Header("Data")]
+        public UIItemStateIcons itemStateIcons;
+
         [Header("Components")]
         public Image iconImage;
         public Image outlineImage;
+        public Image overlayImage;
+        public Image stateImage;
         public TextMeshProUGUI nameText;
         public UIHealthDisplay healthDisplay;
 
@@ -27,11 +32,6 @@ namespace DiceRoller
 		/// </summary>
 		protected void Start()
         {
-            if (unit != null)
-            {
-                unit.onHealthChanged += RefreshDisplay;
-                unit.onInspectionChanged += RefreshDisplay;
-            }
         }
 
         /// <summary>
@@ -43,6 +43,7 @@ namespace DiceRoller
             if (unit != null)
             {
                 unit.onHealthChanged -= RefreshDisplay;
+                unit.onStateChanged -= RefreshDisplay;
                 unit.onInspectionChanged -= RefreshDisplay;
             }
         }
@@ -83,15 +84,21 @@ namespace DiceRoller
         /// </summary>
         public void SetDisplay(Unit unit)
         {
+            // prevent excessive calls
+            if (this.unit == unit)
+                return;
+
             // register and deregister callbacks
             if (this.unit != null)
             {
                 this.unit.onHealthChanged -= RefreshDisplay;
+                this.unit.onStateChanged -= RefreshDisplay;
                 this.unit.onInspectionChanged -= RefreshDisplay;
             }
             if (unit != null)
             {
                 unit.onHealthChanged += RefreshDisplay;
+                unit.onStateChanged += RefreshDisplay;
                 unit.onInspectionChanged += RefreshDisplay;
             }
 
@@ -101,7 +108,7 @@ namespace DiceRoller
             RefreshDisplay();
         }
 
-        /// <summary>
+        /// <summary>89
 		/// Change the current display of this ui element to either match the information of the inspecting object.
 		/// </summary>
 		protected void RefreshDisplay()
@@ -111,10 +118,16 @@ namespace DiceRoller
                 // change die icon
                 iconImage.sprite = unit.iconSprite;
                 outlineImage.sprite = unit.outlineSprite;
-                outlineImage.enabled = Unit.InspectingUnit.Contains(unit);
+                outlineImage.enabled = unit.IsSelected;
+                overlayImage.sprite = unit.overlaySprite;
+                overlayImage.enabled = unit.IsInspected;
 
                 // change name text
                 nameText.text = unit.name;
+
+                // change state icon
+                stateImage.enabled = unit.ActionDepleted;
+                stateImage.sprite = itemStateIcons.stateIcons[Die.DieState.Done];
             }
         }
     }

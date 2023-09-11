@@ -1,5 +1,7 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace DiceRoller
@@ -9,12 +11,18 @@ namespace DiceRoller
 		public enum DisplayType
 		{
 			Normal,
-			Position,
-			Attack,
-			AttackTarget,
+
 			Move,
+			Attack,
+
 			MoveTarget,
-		}
+			AttackTarget,
+
+			EnemyPosition,
+			FriendPosition,
+			SelfPosition,
+		} // order of enum denotes display priority, where larger means higher priority
+		public static readonly int DisplayTypeCount = 8;
 
 		public enum PathDirection
 		{
@@ -71,12 +79,7 @@ namespace DiceRoller
 		protected new Collider collider = null;
 
 		// working variables
-		protected HashSet<object> registeredPositionDisplay = new HashSet<object>();
-		protected HashSet<object> registeredMoveDisplay = new HashSet<object>();
-		protected HashSet<object> registeredMoveTargetDisplay = new HashSet<object>();
-		protected HashSet<object> registeredAttackDisplay = new HashSet<object>();
-		protected HashSet<object> registeredAttackTargetDisplay = new HashSet<object>();
-
+		protected Dictionary<DisplayType, HashSet<object>> registeredDisplay = new Dictionary<DisplayType, HashSet<object>>();
 		protected bool isHovering = false;
 
 		// ========================================================= Monobehaviour Methods =========================================================
@@ -90,6 +93,11 @@ namespace DiceRoller
 			displaySpriteRenderer = transform.Find("Model/DisplaySprite").GetComponent<SpriteRenderer>();
 			pathSpriteRenderer = transform.Find("Model/PathSprite").GetComponent<SpriteRenderer>();
 			collider = transform.Find("Collider").GetComponent<Collider>();
+
+			for (int i = 0; i < DisplayTypeCount; i++)
+			{
+				registeredDisplay[(DisplayType)i] = new HashSet<object>();
+			}
 		}
 
 		/// <summary>
@@ -168,24 +176,7 @@ namespace DiceRoller
 		/// </summary>
 		public void AddDisplay(object o, DisplayType displayType)
 		{
-			switch (displayType)
-			{
-				case DisplayType.Position:
-					registeredPositionDisplay.Add(o);
-					break;
-				case DisplayType.Attack:
-					registeredAttackDisplay.Add(o);
-					break;
-				case DisplayType.AttackTarget:
-					registeredAttackTargetDisplay.Add(o);
-					break;
-				case DisplayType.Move:
-					registeredMoveDisplay.Add(o);
-					break;
-				case DisplayType.MoveTarget:
-					registeredMoveTargetDisplay.Add(o);
-					break;
-			}
+			registeredDisplay[displayType].Add(o);
 			ResolveDisplay();
 		}
 
@@ -194,24 +185,7 @@ namespace DiceRoller
 		/// </summary>
 		public void RemoveDisplay(object o, DisplayType displayType)
 		{
-			switch (displayType)
-			{
-				case DisplayType.Position:
-					registeredPositionDisplay.Remove(o);
-					break;
-				case DisplayType.Attack:
-					registeredAttackDisplay.Remove(o);
-					break;
-				case DisplayType.AttackTarget:
-					registeredAttackTargetDisplay.Remove(o);
-					break;
-				case DisplayType.Move:
-					registeredMoveDisplay.Remove(o);
-					break;
-				case DisplayType.MoveTarget:
-					registeredMoveTargetDisplay.Remove(o);
-					break;
-			}
+			registeredDisplay[displayType].Remove(o);
 			ResolveDisplay();
 		}
 
@@ -220,23 +194,15 @@ namespace DiceRoller
 		/// </summary>
 		protected void ResolveDisplay()
 		{
-			if (registeredPositionDisplay.Count > 0)
-				displaySpriteRenderer.sprite = style.visualSprites[DisplayType.Position];
-
-			else if (registeredAttackTargetDisplay.Count > 0)
-				displaySpriteRenderer.sprite = style.visualSprites[DisplayType.AttackTarget];
-
-			else if (registeredAttackDisplay.Count > 0)
-				displaySpriteRenderer.sprite = style.visualSprites[DisplayType.Attack];
-
-			else if (registeredMoveTargetDisplay.Count > 0)
-				displaySpriteRenderer.sprite = style.visualSprites[DisplayType.MoveTarget];
-
-			else if (registeredMoveDisplay.Count > 0)
-				displaySpriteRenderer.sprite = style.visualSprites[DisplayType.Move];
-
-			else
-				displaySpriteRenderer.sprite = style.visualSprites[DisplayType.Normal];
+			for (int i = DisplayTypeCount - 1; i >= 0; i--)
+			{
+				DisplayType displayType = (DisplayType)i;
+				if (registeredDisplay[displayType].Count > 0 || displayType == DisplayType.Normal)
+				{
+					displaySpriteRenderer.sprite = style.visualSprites[displayType];
+					break;
+				}
+			}
 		}
 
 		/// <summary>

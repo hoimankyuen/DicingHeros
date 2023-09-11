@@ -1,3 +1,5 @@
+using QuickerEffects;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,38 +8,59 @@ namespace DiceRoller
 {
 	public class Item : MonoBehaviour
 	{
+		[System.Serializable]
+		public enum StatusType
+		{
+			Depleted,
+			SelectedEnemy,
+			SelectedSelf,
+			InspectingEnemy,
+			InspectingSelf,
+		}
+
 		// parameters
 		[Header("Basic Information")]
 		public new string name = "";
 		public Sprite iconSprite = null;
 		public Sprite outlineSprite = null;
+		public Sprite overlaySprite = null;
 		public float size = 1f;
-		public int team = 0;
+		public int playerId = 0;
+
+		[Header("Data")]
+		public ItemEffectStyle effectStyle = null;
 
 		// reference
-		protected GameController game { get { return GameController.current; } }
-		protected StateMachine stateMachine { get { return StateMachine.current; } }
-		protected Board board { get { return Board.current; } }
+		protected GameController game => GameController.current;
+		protected StateMachine stateMachine => StateMachine.current;
+		protected Board board => Board.current;
 
 		// component
 		protected Rigidbody rigidBody = null;
+		protected Outline outline = null;
+		protected Overlay overlay = null;
 
 		// working variables
+		protected bool isHovering = false;
 		protected bool isSelfHovering = false;
 		protected bool isUIHovering = false;
-		protected bool isHovering = false;
 
+		protected bool isPressed = false;
 		protected bool initiatedSelfPress = false;
 		protected bool completedSelfPress = false;
 		protected bool isUIPressed = false;
-		protected bool isPressed = false;
 
-		public bool IsMoving { get; protected set; }
+		protected HashSet<StatusType> statusList = new HashSet<StatusType>();
+
+		// properties
+		public bool IsFallen { get; protected set; } = false;
+
+		public bool IsMoving { get; protected set; } = false;
 		protected float lastMovingTime = 0;
 
 		public List<Tile> OccupiedTiles
 		{
-			get 
+			get
 			{
 				if (Vector3.Distance(transform.position, lastOccupiedPosition) > 0.0001f)
 				{
@@ -51,6 +74,9 @@ namespace DiceRoller
 		protected Vector3 lastOccupiedPosition = Vector3.zero;
 		protected List<Tile> lastOccupiedTiles = new List<Tile>();
 
+		// events
+		public Action onStatusChanged = () => { }; 
+
 		// ========================================================= Monobehaviour Methods =========================================================
 
 		/// <summary>
@@ -60,8 +86,9 @@ namespace DiceRoller
 		protected virtual void Awake()
 		{
 			rigidBody = GetComponent<Rigidbody>();
+			outline = GetComponent<Outline>();
+			overlay = GetComponent<Overlay>();		
 		}
-
 
 		/// <summary>
 		/// Start is called before the first frame update and/or the game object is first active.
@@ -166,6 +193,14 @@ namespace DiceRoller
 		}
 
 		/// <summary>
+		/// Detect if fallen through and update flag accordingly.
+		/// </summary>
+		protected void DetectFallen()
+		{
+			IsFallen = transform.position.y < -10;
+		}
+
+		/// <summary>
 		/// Detect hover events.
 		/// </summary>
 		protected void DetectHover()
@@ -173,7 +208,9 @@ namespace DiceRoller
 			isHovering = isSelfHovering || isUIHovering;
 		}
 
-		// Detect press event and trim to a single frame flag.
+		/// <summary>
+		/// Detect press event and trim to a single frame flag.
+		/// </summary>
 		protected void DetectPress()
 		{
 			isPressed = false;
@@ -184,6 +221,50 @@ namespace DiceRoller
 
 				isPressed = true;
 			}
+		}
+
+		// ========================================================= Effects =========================================================
+		
+		/// <summary>
+		/// Add a new item effect to be shown.
+		/// </summary>
+		protected void AddEffect(StatusType effectType)
+		{
+			statusList.Add(effectType);
+			effectStyle.ResolveEffect(statusList, out Color outlineColor, out Color overlayColor);
+
+			if (outline.Color != outlineColor)
+			{
+				outline.Color = outlineColor;
+			}
+
+			if (overlay.Color != overlayColor)
+			{
+				overlay.Color = overlayColor;
+			}
+
+			onStatusChanged.Invoke();
+		}
+
+		/// <summary>
+		/// Remove an existing item effect to be shown. 
+		/// </summary>
+		protected void RemoveEffect(StatusType effectType)
+		{
+			statusList.Remove(effectType);
+			effectStyle.ResolveEffect(statusList, out Color outlineColor, out Color overlayColor);
+
+			if (outline.Color != outlineColor)
+			{
+				outline.Color = outlineColor;
+			}
+
+			if (overlay.Color != overlayColor)
+			{
+				overlay.Color = overlayColor;
+			}
+
+			onStatusChanged.Invoke();
 		}
 	}
 }

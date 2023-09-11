@@ -5,8 +5,8 @@ using UnityEngine;
 
 namespace DiceRoller
 {
-    public abstract class StateBehaviour
-    {
+	public abstract class StateBehaviour
+	{
 		// references
 		protected GameController game { get { return GameController.current; } }
 		protected StateMachine stateMachine { get { return StateMachine.current; } }
@@ -16,32 +16,10 @@ namespace DiceRoller
 		public abstract void OnStateEnter();
 		public abstract void OnStateUpdate();
 		public abstract void OnStateExit();
-    }
-
-    public enum State
-    {
-        None, // params: None
-		StartTurn, // params: team
-        Navigation, // params: team
-        DiceThrow, // parms: ?
-        UnitActionSelect, // params: team, unit
-        UnitMovement, // params: team, unit, startingTiles, path
-        DiceAttackSelect, // params: ?
-        DiceAttack, // params: ?
-    }
-
-	public struct StateParams
-	{
-		public int team;
-		public Unit unit;
-		public List<Tile> startingTiles;
-		public List<Tile> path;
-		public Die dice;
-		public Unit diceTarget;
 	}
 
 	public class StateMachine : MonoBehaviour
-    {
+	{
 		protected struct HostBehaviour
 		{
 			public MonoBehaviour host;
@@ -53,11 +31,11 @@ namespace DiceRoller
 
 		// working variables
 		protected Dictionary<State, List<HostBehaviour>> stateBehaviours = new Dictionary<State, List<HostBehaviour>>();
-        protected State nexState = State.None;
-        protected StateParams nextStateParams;
+		protected State nextState = State.None;
+		protected StateParams nextStateParams;
 
-        public State Current { get; protected set; } = State.None;
-        public StateParams Params { get; protected set; }
+		public State Current { get; protected set; } = State.None;
+		public StateParams Params { get; protected set; }
 
 		// ========================================================= Monobehaviour Methods =========================================================
 
@@ -75,7 +53,7 @@ namespace DiceRoller
 		/// </summary>
 		protected void Start()
 		{
-			
+
 		}
 
 		/// <summary>
@@ -99,7 +77,7 @@ namespace DiceRoller
 		/// <summary>
 		/// Register a state machine behaviour to the game controller.
 		/// </summary>
-		public void RegisterStateBehaviour(MonoBehaviour host, State state, StateBehaviour stateBehaviour)
+		public void Register(MonoBehaviour host, State state, StateBehaviour stateBehaviour)
 		{
 			if (!stateBehaviours.ContainsKey(state))
 				stateBehaviours[state] = new List<HostBehaviour>();
@@ -109,7 +87,7 @@ namespace DiceRoller
 		/// <summary>
 		/// Deregister a state machine behaviour from the game controller.
 		/// </summary>
-		public void DeregisterStateBehaviour(MonoBehaviour host)
+		public void DeregisterAll(MonoBehaviour host)
 		{
 			foreach (KeyValuePair<State, List<HostBehaviour>> kvp in stateBehaviours)
 			{
@@ -123,7 +101,7 @@ namespace DiceRoller
 		/// </summary>
 		public void ChangeState(State state, StateParams stateParams)
 		{
-			nexState = state;
+			nextState = state;
 			nextStateParams = stateParams;
 		}
 
@@ -133,25 +111,28 @@ namespace DiceRoller
 		protected void RunStateMachine()
 		{
 			// state transition
-			if (nexState != Current)
+			if (nextState != State.None)
 			{
 				// invoke all OnStateExit on all registered
 				if (stateBehaviours.ContainsKey(Current))
 				{
-					stateBehaviours[Current].ForEach(x => {
+					stateBehaviours[Current].ForEach(x =>
+					{
 						if (x.host.gameObject != null && x.host.gameObject.activeInHierarchy)
 							x.stateBehaviour.OnStateExit();
 					});
 				}
 
-				// change the current state and update params
-				Current = nexState;
+				// change the current state and update params, reset flag
+				Current = nextState;
 				Params = nextStateParams;
+				nextState = State.None;
 
 				// invoke all OnStateEnter on all registered
 				if (stateBehaviours.ContainsKey(Current))
 				{
-					stateBehaviours[Current].ForEach(x => {
+					stateBehaviours[Current].ForEach(x =>
+					{
 						if (x.host.gameObject != null && x.host.gameObject.activeInHierarchy)
 							x.stateBehaviour.OnStateEnter();
 					});
@@ -161,7 +142,8 @@ namespace DiceRoller
 			// state update
 			if (stateBehaviours.ContainsKey(Current))
 			{
-				stateBehaviours[Current].ForEach(x => {
+				stateBehaviours[Current].ForEach(x =>
+				{
 					if (x.host.gameObject != null && x.host.gameObject.activeInHierarchy)
 						x.stateBehaviour.OnStateUpdate();
 				});

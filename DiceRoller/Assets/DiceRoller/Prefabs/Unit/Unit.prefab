@@ -51,8 +51,10 @@ MonoBehaviour:
   name: Simple Unit
   iconSprite: {fileID: 21300000, guid: 70f364a73dd8dd24693a4260c57ed0e5, type: 3}
   outlineSprite: {fileID: 21300000, guid: 7db0928e898551a4fba1d69713871f8b, type: 3}
+  overlaySprite: {fileID: 21300000, guid: e36f969212adaac438c78d1685ca6e7c, type: 3}
   size: 0.19
-  team: 0
+  playerId: 0
+  effectStyle: {fileID: 11400000, guid: a259e5d099e63654e82a558feaab5487, type: 2}
   maxHealth: 20
   baseMelee: 3
   baseDefence: 4
@@ -88,9 +90,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   outlineMode: 3
-  color: {r: 0.104001164, g: 1, b: 0, a: 1}
+  color: {r: 0, g: 0, b: 0, a: 0}
   width: 3
-  show: 0
+  show: 1
   smoothNormals: 1
   precomputeOutline: 0
   bakeKeys: []
@@ -107,8 +109,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 62df72655532bf84a954f4f3fc49e5ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  color: {r: 0, g: 0, b: 0, a: 0.7490196}
-  show: 0
+  color: {r: 0, g: 0, b: 0, a: 0}
+  show: 1
 --- !u!1 &2668837176219197393
 GameObject:
   m_ObjectHideFlags: 0

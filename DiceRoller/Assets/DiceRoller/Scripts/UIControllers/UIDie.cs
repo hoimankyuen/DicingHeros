@@ -16,6 +16,7 @@ namespace DiceRoller
 		[Header("Components")]
 		public Image iconImage;
 		public Image outlineImage;
+		public Image overlayImage;
 		public Image stateImage;
 		public Image rollingImage;
 		public TextMeshProUGUI valueText;
@@ -44,13 +45,6 @@ namespace DiceRoller
 		/// </summary>
 		protected void Start()
 		{
-			if (die != null)
-			{
-				die.onValueChanged += RefreshDisplay;
-				die.onDiceStateChanged += RefreshDisplay;
-				die.onInspectionChanged += RefreshDisplay;
-				die.onSelectionChanged += RefreshDisplay;
-			}
 		}
 
 		/// <summary>
@@ -63,8 +57,7 @@ namespace DiceRoller
 			{
 				die.onValueChanged -= RefreshDisplay;
 				die.onDiceStateChanged -= RefreshDisplay;
-				die.onInspectionChanged -= RefreshDisplay;
-				die.onSelectionChanged -= RefreshDisplay;
+				die.onStatusChanged -= RefreshDisplay;
 			}
 
 			// stop running animations
@@ -118,20 +111,22 @@ namespace DiceRoller
 		/// </summary>
 		public void SetDisplay(Die die)
 		{
+			// prevent excessive calls
+			if (this.die == die)
+				return;
+
 			// register and deregister callbacks
 			if (this.die != null)
 			{
 				this.die.onValueChanged -= RefreshDisplay;
 				this.die.onDiceStateChanged -= RefreshDisplay;
-				this.die.onInspectionChanged -= RefreshDisplay;
-				this.die.onSelectionChanged -= RefreshDisplay;
+				this.die.onStatusChanged -= RefreshDisplay;
 			}
 			if (die != null)
 			{
 				die.onValueChanged += RefreshDisplay;
 				die.onDiceStateChanged += RefreshDisplay;
-				die.onInspectionChanged += RefreshDisplay;
-				die.onSelectionChanged += RefreshDisplay;
+				die.onStatusChanged += RefreshDisplay;
 			}
 
 			// stop running animations
@@ -152,8 +147,7 @@ namespace DiceRoller
 			{
 				die.onValueChanged -= RefreshDisplay;
 				die.onDiceStateChanged -= RefreshDisplay;
-				die.onInspectionChanged -= RefreshDisplay;
-				die.onSelectionChanged -= RefreshDisplay;
+				die.onStatusChanged -= RefreshDisplay;
 			}
 
 			// stop running animations
@@ -176,7 +170,9 @@ namespace DiceRoller
 				// change die icon
 				iconImage.sprite = die.iconSprite;
 				outlineImage.sprite = die.outlineSprite;
-				outlineImage.enabled = displayStatus && Die.InspectingDice.Contains(die);
+				outlineImage.enabled = displayStatus && die.IsSelected;
+				overlayImage.sprite = die.overlaySprite;
+				overlayImage.enabled = displayStatus && die.IsInspecting;
 
 				// change value text
 				valueText.text = die.Value == -1 ? "?" : die.Value.ToString();
@@ -209,8 +205,10 @@ namespace DiceRoller
 				{
 					iconImage.sprite = defaultDieIcons.dieIcons[type];
 					outlineImage.sprite = defaultDieIcons.dieOutlines[type];
+					overlayImage.sprite = defaultDieIcons.dieOverlays[type];
 				}
 				outlineImage.enabled = false;
+				overlayImage.enabled = false;
 
 				valueText.text = value == -1 ? "?" : value.ToString();
 				

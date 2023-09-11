@@ -4,17 +4,16 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
+
 namespace DiceRoller
 {
-    public class UIUnitDetailWindow : UISideWindow
-	{
+    public class UIInspectedItemWindow : UISideWindow
+    {
 		[Header("Components")]
+		public UIDie dieDisplay;
 		public Image unitImage;
 		public UIHealthDisplay healthDisplay;
 		public UIStatDisplay statDisplay;
-
-		// working variables
-		protected Unit unit;
 
 		// ========================================================= Monobehaviour Methods =========================================================
 
@@ -33,7 +32,6 @@ namespace DiceRoller
 		protected override void Start()
 		{
 			base.Start();
-			Populate();
 		}
 
 		/// <summary>
@@ -42,6 +40,7 @@ namespace DiceRoller
 		protected override void Update()
 		{
 			base.Update();
+			Populate();
 		}
 
 		/// <summary>
@@ -64,9 +63,40 @@ namespace DiceRoller
 
 		protected void Populate()
 		{
-			unitImage.sprite = unit != null ? unit.iconSprite : null;
-			healthDisplay.SetDisplay(unit);
-			statDisplay.SetDisplay(unit);
+			// display selectable information
+			if (Unit.InspectingUnits != null && Unit.InspectingUnits.Count > 0)
+			{
+				// show unit information
+				dieDisplay.gameObject.SetActive(false);
+
+				unitImage.gameObject.SetActive(true);
+				unitImage.sprite = Unit.InspectingUnits[0].iconSprite;
+				healthDisplay.gameObject.SetActive(true);
+				healthDisplay.SetDisplay(Unit.InspectingUnits[0]);
+				statDisplay.gameObject.SetActive(true);
+				statDisplay.SetDisplay(Unit.InspectingUnits[0]);
+
+			}
+			else if (Die.InspectingDice != null && Die.InspectingDice.Count > 0 && Die.InspectingDice[0].Value != -1)
+			{
+				// show dice information
+				dieDisplay.gameObject.SetActive(true);
+				dieDisplay.SetDisplay(Die.InspectingDice[0]);
+
+				unitImage.gameObject.SetActive(false);
+				healthDisplay.gameObject.SetActive(false);
+				statDisplay.gameObject.SetActive(false);
+			}
+			else
+			{
+				// show nothing selected
+				dieDisplay.gameObject.SetActive(true);
+				dieDisplay.SetDisplay(Die.Type.Unknown, -1);
+
+				unitImage.gameObject.SetActive(false);
+				healthDisplay.gameObject.SetActive(false);
+				statDisplay.gameObject.SetActive(false);
+			}
 		}
 	}
 }

@@ -16,14 +16,18 @@ MonoBehaviour:
   - type: 0
     sprite: {fileID: 45957242671070978, guid: 827f87b7621b87c4fab35aab8fc67f15, type: 3}
   - type: 1
-    sprite: {fileID: -552630910304684261, guid: 827f87b7621b87c4fab35aab8fc67f15, type: 3}
+    sprite: {fileID: -4904861690540128810, guid: 827f87b7621b87c4fab35aab8fc67f15, type: 3}
   - type: 2
     sprite: {fileID: 4326208813897011473, guid: 827f87b7621b87c4fab35aab8fc67f15, type: 3}
   - type: 3
     sprite: {fileID: -552630910304684261, guid: 827f87b7621b87c4fab35aab8fc67f15, type: 3}
   - type: 4
-    sprite: {fileID: -4904861690540128810, guid: 827f87b7621b87c4fab35aab8fc67f15, type: 3}
+    sprite: {fileID: -552630910304684261, guid: 827f87b7621b87c4fab35aab8fc67f15, type: 3}
   - type: 5
+    sprite: {fileID: 4326208813897011473, guid: 827f87b7621b87c4fab35aab8fc67f15, type: 3}
+  - type: 6
+    sprite: {fileID: -552630910304684261, guid: 827f87b7621b87c4fab35aab8fc67f15, type: 3}
+  - type: 7
     sprite: {fileID: -552630910304684261, guid: 827f87b7621b87c4fab35aab8fc67f15, type: 3}
   pathDirecitonSpriteEntries:
   - directions:

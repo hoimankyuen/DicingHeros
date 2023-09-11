@@ -10,10 +10,9 @@ namespace DiceRoller
 		{
 			Left,
 			Right,
+			Top,
+			Bottom,
 		}
-
-		[Header("Main Frame Components")]
-		public RectTransform frame = null;
 
 		[Header("Main Frame Settings")]
 		[SerializeField]
@@ -47,6 +46,8 @@ namespace DiceRoller
 		protected readonly float showDuration = 0.125f;
 		protected float showInterpolation = 1;
 		protected Coroutine showCoroutine = null;
+
+		protected RectTransform rectTransform => GetComponent<RectTransform>();
 
 
 		// ========================================================= Monobehaviour Methods =========================================================
@@ -97,17 +98,29 @@ namespace DiceRoller
 		protected void DockToSide(Side side)
 		{
 			RectTransform rectTransform = GetComponent<RectTransform>();
-			if (side == Side.Right)
+			if (side == Side.Left)
+			{
+				rectTransform.anchorMin = new Vector2(0, 0);
+				rectTransform.anchorMax = new Vector2(0, 1);
+				rectTransform.pivot = new Vector2(0, 0.5f);
+			}
+			else if (side == Side.Right)
 			{
 				rectTransform.anchorMin = new Vector2(1, 0);
 				rectTransform.anchorMax = new Vector2(1, 1);
 				rectTransform.pivot = new Vector2(1, 0.5f);
 			}
-			else if (side == Side.Left)
+			else if (side == Side.Top)
+			{
+				rectTransform.anchorMin = new Vector2(0, 1);
+				rectTransform.anchorMax = new Vector2(1, 1);
+				rectTransform.pivot = new Vector2(0.5f, 1);
+			}
+			else if (side == Side.Bottom)
 			{
 				rectTransform.anchorMin = new Vector2(0, 0);
-				rectTransform.anchorMax = new Vector2(0, 1);
-				rectTransform.pivot = new Vector2(0, 0.5f);
+				rectTransform.anchorMax = new Vector2(1, 0);
+				rectTransform.pivot = new Vector2(0.5f, 0);
 			}
 			dockedSide = side;
 		}
@@ -121,8 +134,7 @@ namespace DiceRoller
 			if (immediate)
 			{
 				// directly set, used in editor
-				frame.gameObject.SetActive(show);
-				rectTransform.anchoredPosition = new Vector2(show ? 0 : frame.rect.width * (dockedSide == Side.Right ? 1 : -1), 0);
+				rectTransform.anchoredPosition = show ? GetShownPosition() : GetHiddenPosition();
 				showInterpolation = show ? 1 : 0;
 				this.show = show;
 			}
@@ -145,25 +157,19 @@ namespace DiceRoller
 			RectTransform rectTransform = GetComponent<RectTransform>();
 
 			// initialize apparences
-			frame.gameObject.SetActive(true);
-
 			if (show)
 			{
 				// animation
 				while (showInterpolation < 1)
 				{
 					showInterpolation += 1f / showDuration * Time.deltaTime;
-					rectTransform.anchoredPosition = Vector2.Lerp(
-						new Vector2(frame.rect.width * (dockedSide == Side.Right ? 1 : -1), 0),
-						Vector2.zero,
-						showInterpolation);
+					rectTransform.anchoredPosition = Vector2.Lerp(GetHiddenPosition(), GetShownPosition(), showInterpolation);
 					yield return null;
 				}
 
 				// finalize apparences
 				showInterpolation = 1;
-				rectTransform.anchoredPosition = new Vector2(0, 0);
-				frame.gameObject.SetActive(true);
+				rectTransform.anchoredPosition = GetShownPosition();
 			}
 			else
 			{
@@ -171,22 +177,58 @@ namespace DiceRoller
 				while (showInterpolation > 0)
 				{
 					showInterpolation -= 1f / showDuration * Time.deltaTime;
-					rectTransform.anchoredPosition = Vector2.Lerp(
-						new Vector2(frame.rect.width * (dockedSide == Side.Right ? 1 : -1), 0),
-						Vector2.zero,
-						showInterpolation);
+					rectTransform.anchoredPosition = Vector2.Lerp(GetHiddenPosition(), GetShownPosition(), showInterpolation);
 					yield return null;
 				}
 
 				// finalize apparences
 				showInterpolation = 0;
-				rectTransform.anchoredPosition = new Vector2(frame.rect.width * (dockedSide == Side.Right ? 1 : -1), 0);
-				frame.gameObject.SetActive(false);
+				rectTransform.anchoredPosition = GetHiddenPosition();
 			}
 
 			// finalize values
 			this.show = show;
 			showCoroutine = null;
+		}
+
+		/// <summary>
+		/// Retrieve the position of the window when it is not showing.
+		/// </summary>
+		protected Vector2 GetHiddenPosition()
+		{
+			switch (dockedSide)
+			{
+				case Side.Left:
+					return new Vector2(rectTransform.rect.width * -1, rectTransform.anchoredPosition.y);
+				case Side.Right:
+					return new Vector2(rectTransform.rect.width, rectTransform.anchoredPosition.y);
+				case Side.Top:
+					return new Vector2(rectTransform.anchoredPosition.x, rectTransform.rect.height);
+				case Side.Bottom:
+					return new Vector2(rectTransform.anchoredPosition.x, rectTransform.rect.height * -1f);
+				default:
+					return Vector2.zero;
+			}
+		}
+
+		/// <summary>
+		/// Retrieve the position of the window when it is showing.
+		/// </summary>
+		protected Vector2 GetShownPosition()
+		{
+			switch (dockedSide)
+			{
+				case Side.Left:
+					return new Vector2(0, rectTransform.anchoredPosition.y);
+				case Side.Right:
+					return new Vector2(0, rectTransform.anchoredPosition.y);
+				case Side.Top:
+					return new Vector2(rectTransform.anchoredPosition.x, 0);
+				case Side.Bottom:
+					return new Vector2(rectTransform.anchoredPosition.x, 0);
+				default:
+					return Vector2.zero;
+			}
 		}
 	}
 }

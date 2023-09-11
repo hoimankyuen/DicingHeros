@@ -324,8 +324,10 @@ MonoBehaviour:
   name: 
   iconSprite: {fileID: 0}
   outlineSprite: {fileID: 0}
+  overlaySprite: {fileID: 0}
   size: 0.14
-  team: 0
+  playerId: 0
+  effectStyle: {fileID: 11400000, guid: a259e5d099e63654e82a558feaab5487, type: 2}
   type: 0
   faces: []
   connectedUnit: {fileID: 0}
@@ -358,9 +360,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   outlineMode: 3
-  color: {r: 0.104001164, g: 1, b: 0, a: 1}
+  color: {r: 0, g: 0, b: 0, a: 0}
   width: 3
-  show: 0
+  show: 1
   smoothNormals: 1
   precomputeOutline: 0
   bakeKeys: []
@@ -377,5 +379,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 62df72655532bf84a954f4f3fc49e5ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  color: {r: 0, g: 0, b: 0, a: 0.7490196}
-  show: 0
+  color: {r: 0, g: 0, b: 0, a: 0}
+  show: 1
