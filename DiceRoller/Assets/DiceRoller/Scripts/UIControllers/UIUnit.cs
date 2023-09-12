@@ -43,8 +43,7 @@ namespace DiceRoller
             if (unit != null)
             {
                 unit.onHealthChanged -= RefreshDisplay;
-                unit.onStateChanged -= RefreshDisplay;
-                unit.onInspectionChanged -= RefreshDisplay;
+                unit.onStatusChanged -= RefreshDisplay;
             }
         }
 
@@ -92,14 +91,12 @@ namespace DiceRoller
             if (this.unit != null)
             {
                 this.unit.onHealthChanged -= RefreshDisplay;
-                this.unit.onStateChanged -= RefreshDisplay;
-                this.unit.onInspectionChanged -= RefreshDisplay;
+                this.unit.onStatusChanged -= RefreshDisplay;
             }
             if (unit != null)
             {
                 unit.onHealthChanged += RefreshDisplay;
-                unit.onStateChanged += RefreshDisplay;
-                unit.onInspectionChanged += RefreshDisplay;
+                unit.onStatusChanged += RefreshDisplay;
             }
 
             // set values
@@ -120,7 +117,7 @@ namespace DiceRoller
                 outlineImage.sprite = unit.outlineSprite;
                 outlineImage.enabled = unit.IsSelected;
                 overlayImage.sprite = unit.overlaySprite;
-                overlayImage.enabled = unit.IsInspected;
+                overlayImage.enabled = unit.IsInspecting;
 
                 // change name text
                 nameText.text = unit.name;

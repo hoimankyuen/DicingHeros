@@ -49,9 +49,6 @@ namespace DiceRoller
 		// events
 		public Action onHealthChanged = () => { };
 		public Action onStatChanged = () => { };
-		public Action onStateChanged = () => { };
-		public Action onInspectionChanged = () => { };
-		public Action onSelectionChanged = () => { };
 
 
 		// ========================================================= Monobehaviour Methods =========================================================
@@ -298,7 +295,6 @@ namespace DiceRoller
 				if (self.ActionDepleted)
 				{
 					self.AddEffect(StatusType.Depleted);
-					self.onStateChanged.Invoke();
 				}
 			}
 
@@ -311,11 +307,11 @@ namespace DiceRoller
 				List<Tile> tiles = self.isHovering ? self.OccupiedTiles : Tile.EmptyTiles;
 				foreach (Tile tile in tiles.Except(lastOccupiedTiles))
 				{
-					tile.AddDisplay(self, Tile.DisplayType.SelfPosition);
+					tile.AddDisplay(self, self.playerId == stateMachine.Params.player.id ? Tile.DisplayType.SelfPosition : Tile.DisplayType.EnemyPosition);
 				}
 				foreach (Tile tile in lastOccupiedTiles.Except(tiles))
 				{
-					tile.RemoveDisplay(self, Tile.DisplayType.SelfPosition);
+					tile.RemoveDisplay(self, self.playerId == stateMachine.Params.player.id ? Tile.DisplayType.SelfPosition : Tile.DisplayType.EnemyPosition);
 				}
 				lastOccupiedTiles.Clear();
 				lastOccupiedTiles.AddRange(tiles);
@@ -326,14 +322,12 @@ namespace DiceRoller
 					if (self.isHovering)
 					{
 						InspectingUnits.Add(self);
-						self.AddEffect(StatusType.InspectingSelf);
-						self.onInspectionChanged.Invoke();
+						self.AddEffect(self.playerId == stateMachine.Params.player.id ? StatusType.InspectingSelf : StatusType.InspectingEnemy);
 					}
 					else
 					{
 						InspectingUnits.Remove(self);
-						self.RemoveEffect(StatusType.InspectingSelf);
-						self.onInspectionChanged.Invoke();
+						self.RemoveEffect(self.playerId == stateMachine.Params.player.id ? StatusType.InspectingSelf : StatusType.InspectingEnemy);
 					}
 				}
 				lastIsHovering = self.isHovering;
@@ -358,21 +352,22 @@ namespace DiceRoller
 				// hide action depleted effect
 				if (self.ActionDepleted)
 				{
-					self.AddEffect(StatusType.Depleted);
-					self.onStateChanged.Invoke();
+					self.RemoveEffect(StatusType.Depleted);
 				}
 
 				// hide occupied tiles on board
 				foreach (Tile tile in lastOccupiedTiles)
 				{
-					tile.RemoveDisplay(self, Tile.DisplayType.SelfPosition);
+					tile.RemoveDisplay(self, self.playerId == stateMachine.Params.player.id ? Tile.DisplayType.SelfPosition : Tile.DisplayType.EnemyPosition);
 				}
 				lastOccupiedTiles.Clear();
 
 				// hide unit info on ui
-				self.RemoveEffect(StatusType.InspectingSelf);
-				InspectingUnits.Remove(self);
-				self.onInspectionChanged.Invoke();
+				if (self.isHovering)
+				{
+					InspectingUnits.Remove(self);
+					self.RemoveEffect(self.playerId == stateMachine.Params.player.id ? StatusType.InspectingSelf : StatusType.InspectingEnemy);
+				}
 				lastIsHovering = false;
 			}
 		}
@@ -557,57 +552,42 @@ namespace DiceRoller
 					}
 
 					// detect path selection by left mouse pressing
-					if (Input.GetMouseButtonDown(0))
+					if (InputUtils.GetMousePress(0, ref pressedPosition0))
 					{
-						pressedPosition0 = Input.mousePosition;
-					}
-					if (Input.GetMouseButtonUp(0) && pressedPosition0 != Vector2.negativeInfinity)
-					{
-						if (Vector2.Distance(pressedPosition0, Input.mousePosition) < 2f)
+						if (reachable)
 						{
-							if (reachable)
-							{
-								// pressed on a valid tile, initiate movement
-								stateMachine.ChangeState(State.UnitMove,
-									new StateParams()
-									{
-										player = stateMachine.Params.player,
-										unit = self,
-										startingTiles = new List<Tile>(self.OccupiedTiles),
-										path = new List<Tile>(lastPath)
-									});
-							}
-							else
-							{
-								// return to navigation otherwise
-								stateMachine.ChangeState(State.Navigation,
-									new StateParams()
-									{
-										player = stateMachine.Params.player
-									});
-							}
+							// pressed on a valid tile, initiate movement
+							stateMachine.ChangeState(State.UnitMove,
+								new StateParams()
+								{
+									player = stateMachine.Params.player,
+									unit = self,
+									startingTiles = new List<Tile>(self.OccupiedTiles),
+									path = new List<Tile>(lastPath)
+								});
 						}
-						pressedPosition0 = Vector2.negativeInfinity;
-					}
-
-					// detect return to navitation by right mouse pressing
-					if (Input.GetMouseButtonDown(1))
-					{
-						pressedPosition1 = Input.mousePosition;
-					}
-					if (Input.GetMouseButtonUp(1) && pressedPosition1 != Vector2.negativeInfinity)
-					{
-						if (Vector2.Distance(pressedPosition1, Input.mousePosition) < 2f)
+						else
 						{
 							// return to navigation otherwise
 							stateMachine.ChangeState(State.Navigation,
-							new StateParams()
-							{
-								player = stateMachine.Params.player
-							});
+								new StateParams()
+								{
+									player = stateMachine.Params.player
+								});
 						}
-						pressedPosition1 = Vector2.negativeInfinity;
 					}
+
+					// detect return to navitation by right mouse pressing
+					if (InputUtils.GetMousePress(1, ref pressedPosition1))
+					{	
+						// return to navigation otherwise
+						stateMachine.ChangeState(State.Navigation,
+						new StateParams()
+						{
+							player = stateMachine.Params.player
+						});
+					}
+					pressedPosition1 = Vector2.negativeInfinity;
 				}
 			}
 
@@ -665,8 +645,8 @@ namespace DiceRoller
 					InspectingUnits.Remove(self);
 
 					// clear flags
-					pressedPosition0 = Vector2.negativeInfinity;
-					pressedPosition1 = Vector2.negativeInfinity;
+					InputUtils.ResetPressCache(ref pressedPosition0);
+					InputUtils.ResetPressCache(ref pressedPosition1);
 				}
 			}
 
@@ -804,7 +784,6 @@ namespace DiceRoller
 				if (self.ActionDepleted)
 				{
 					self.AddEffect(StatusType.Depleted);
-					self.onStateChanged.Invoke();
 				}
 			}
 
@@ -823,7 +802,6 @@ namespace DiceRoller
 				if (self.ActionDepleted)
 				{
 					self.RemoveEffect(StatusType.Depleted);
-					self.onStateChanged.Invoke();
 				}
 			}
 		}
@@ -851,7 +829,6 @@ namespace DiceRoller
 				{
 					self.ActionDepleted = false;
 					self.RemoveEffect(StatusType.Depleted);
-					self.onStateChanged.Invoke();
 				}
 			}
 

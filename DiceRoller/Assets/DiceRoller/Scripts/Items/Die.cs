@@ -116,6 +116,7 @@ namespace DiceRoller
 
 			DetectValue();
 
+			// temporary here only
 			effectTransform.rotation = Quaternion.identity;
 			if (connectedUnit != null)
 			{
@@ -326,21 +327,6 @@ namespace DiceRoller
 			/// </summary>
 			public override void OnStateUpdate()
 			{
-				// show occupied tiles on the board
-				/*
-				List<Tile> tiles = self.isHovering ? self.OccupiedTiles : Tile.EmptyTiles;
-				foreach (Tile tile in tiles.Except(lastOccupiedTiles))
-				{
-					tile.AddDisplay(this, Tile.DisplayType.Position);
-				}
-				foreach (Tile tile in lastOccupiedTiles.Except(tiles))
-				{
-					tile.RemoveDisplay(this, Tile.DisplayType.Position);
-				}
-				lastOccupiedTiles.Clear();
-				lastOccupiedTiles.AddRange(tiles);
-				*/
-
 				// show dice info on ui
 				if (self.isHovering != lastIsHovering)
 				{
@@ -435,21 +421,6 @@ namespace DiceRoller
 				// execute only if the selected unit is this unit
 				if (stateMachine.Params.player.id == self.playerId)
 				{
-					// show occupied tiles on the board
-					/*
-					List<Tile> tiles = (self.isHovering || stateMachine.Params.dice.Contains(self)) ? self.OccupiedTiles : Tile.EmptyTiles;
-					foreach (Tile tile in tiles.Except(lastOccupiedTiles))
-					{
-						tile.AddDisplay(this, Tile.DisplayType.Position);
-					}
-					foreach (Tile tile in lastOccupiedTiles.Except(tiles))
-					{
-						tile.RemoveDisplay(this, Tile.DisplayType.Position);
-					}
-					lastOccupiedTiles.Clear();
-					lastOccupiedTiles.AddRange(tiles);
-					*/
-
 					// show dice info on ui
 					if (self.isHovering != lastIsHovering)
 					{
@@ -528,15 +499,6 @@ namespace DiceRoller
 					InspectingDice.Remove(self);
 					self.RemoveEffect(StatusType.InspectingSelf);
 				}
-
-				// hide occupied tiles on board
-				/*
-				foreach (Tile tile in lastOccupiedTiles)
-				{
-					tile.RemoveDisplay(this, Tile.DisplayType.Position);
-				}
-				lastOccupiedTiles.Clear();
-				*/
 
 				lastIsHovering = false;
 			}
