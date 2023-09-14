@@ -22,6 +22,8 @@ namespace DiceRoller
 		// working variables
 
 		// events
+		public Action onInspectionChanged = () => { };
+		public Action onSelectionChanged = () => { };
 		public Action onHealthChanged = () => { };
 		public Action onStatChanged = () => { };
 
@@ -167,15 +169,12 @@ namespace DiceRoller
 		/// </summary>
 		public List<Tile> MovementSelectedPath { get; private set; } = new List<Tile>();
 
-
-
-
-		// ========================================================= Inquiries =========================================================
+		// ========================================================= Inspection and Selection =========================================================
 
 		/// <summary>
 		/// Retrieve the first unit being currently inspected, return null if none is being inspected.
 		/// </summary>
-		public static Unit GetFirstInspectingUnit()
+		public static Unit GetFirstBeingInspected()
 		{
 			return inspectingUnits.Count > 0 ? inspectingUnits[0] : null;
 		}
@@ -183,9 +182,76 @@ namespace DiceRoller
 		/// <summary>
 		/// Retrieve the first currently selected unit, return null if none is selected.
 		/// </summary>
-		public static Unit GetFirstSelectedUnit()
+		public static Unit GetFirstSelected()
 		{
 			return selectedUnits.Count > 0 ? selectedUnits[0] : null;
+		}
+
+		/// <summary>
+		/// Retrieve all currently selected unit.
+		/// </summary>
+		public static IReadOnlyCollection<Unit> GetAllSelected()
+		{
+			return selectedUnits.AsReadOnly();
+		}
+
+		/// <summary>
+		/// Clear the list of selected unit. 
+		/// /// </summary>
+		public static void ClearSelectedUnits()
+		{
+			for (int i = selectedUnits.Count - 1; i >= 0; i--)
+			{
+				selectedUnits[i].RemoveFromSelection();
+			}
+		}
+
+		/// <summary>
+		/// Add this unit to as being inspecting.
+		/// </summary>
+		private void AddToInspection()
+		{
+			if (!inspectingUnits.Contains(this))
+			{
+				inspectingUnits.Add(this);
+				onInspectionChanged.Invoke();
+			}
+		}
+
+		/// <summary>
+		/// Remove this unit from as being inspecting.
+		/// </summary>
+		private void RemoveFromInspection()
+		{
+			if (inspectingUnits.Contains(this))
+			{
+				inspectingUnits.Remove(this);
+				onInspectionChanged.Invoke();
+			}
+		}
+
+		/// <summary>
+		/// Add this unit to as selected.
+		/// </summary>
+		private void AddToSelection()
+		{
+			if (!selectedUnits.Contains(this))
+			{
+				selectedUnits.Add(this);
+				onSelectionChanged.Invoke();
+			}
+		}
+
+		/// <summary>
+		/// Remove this unit from as selected.
+		/// </summary>
+		private void RemoveFromSelection()
+		{
+			if (selectedUnits.Contains(this))
+			{
+				selectedUnits.Remove(this);
+				onSelectionChanged.Invoke();
+			}
 		}
 
 		// ========================================================= Monobehaviour Methods =========================================================
@@ -325,7 +391,6 @@ namespace DiceRoller
 		/// </summary>
 		protected void RegisterStateBehaviours()
 		{
-			stateMachine.Register(this, State.StartTurn, new StartTurnSB(this));
 			stateMachine.Register(this, State.Navigation, new NavigationSB(this));
 			stateMachine.Register(this, State.UnitActionSelect, new UnitActionSelectSB(this));
 			stateMachine.Register(this, State.UnitMove, new UnitMoveSB(this));
@@ -345,43 +410,6 @@ namespace DiceRoller
 			}
 		}
 
-
-		// ========================================================= Start Turn State =========================================================
-
-		protected class StartTurnSB : StateBehaviour
-		{
-			// host reference
-			private readonly Unit self = null;
-
-			/// <summary>
-			/// Constructor.
-			/// </summary>
-			public StartTurnSB(Unit self)
-			{
-				this.self = self;
-			}
-
-			/// <summary>
-			/// OnStateEnter is called when the centralized state machine is entering the current state.
-			/// </summary>
-			public override void OnStateEnter()
-			{
-			}
-
-			/// <summary>
-			/// OnStateUpdate is called each frame when the centralized state machine is in the current state.
-			/// </summary>
-			public override void OnStateUpdate()
-			{
-			}
-
-			/// <summary>
-			/// OnStateExit is called when the centralized state machine is leaving the current state.
-			/// </summary>
-			public override void OnStateExit()
-			{
-			}
-		}
 
 		// ========================================================= Navigation State =========================================================
 
@@ -440,12 +468,12 @@ namespace DiceRoller
 				{
 					if (self.IsUserHovering)
 					{
-						inspectingUnits.Add(self);
+						self.AddToInspection();
 						self.AddEffect(self.Player == game.CurrentPlayer ? StatusType.InspectingSelf : StatusType.InspectingEnemy);
 					}
 					else
 					{
-						inspectingUnits.Remove(self);
+						self.RemoveFromInspection();
 						self.RemoveEffect(self.Player == game.CurrentPlayer ? StatusType.InspectingSelf : StatusType.InspectingEnemy);
 					}
 				}
@@ -453,7 +481,7 @@ namespace DiceRoller
 				// go to unit movement selection state when this unit is pressed
 				if (self.Player == game.CurrentPlayer && self.IsUserPressed && !self.ActionDepleted && self.OccupiedTiles.Count > 0)
 				{
-					selectedUnits.Add(self);
+					self.AddToSelection();
 					stateMachine.ChangeState(State.UnitActionSelect);
 				}
 			}
@@ -478,7 +506,7 @@ namespace DiceRoller
 				// hide unit info on ui
 				if (self.IsUserHovering)
 				{
-					inspectingUnits.Remove(self);
+					self.RemoveFromInspection();
 					self.RemoveEffect(self.Player == game.CurrentPlayer ? StatusType.InspectingSelf : StatusType.InspectingEnemy);
 				}
 
@@ -524,6 +552,12 @@ namespace DiceRoller
 			/// </summary>
 			public override void OnStateEnter()
 			{
+				// show action depleted effect
+				if (self.ActionDepleted)
+				{
+					self.AddEffect(StatusType.Depleted);
+				}
+
 				// execute only if the selected unit is this unit
 				if (self.IsSelected)
 				{
@@ -558,9 +592,6 @@ namespace DiceRoller
 					{
 						tile.AddDisplay(self, Tile.DisplayType.Move);
 					}
-
-					// shwo unit info on ui  
-					inspectingUnits.Add(self);
 				}
 			}
 
@@ -689,7 +720,7 @@ namespace DiceRoller
 						else
 						{
 							// return to navigation otherwise
-							selectedUnits.Remove(self);
+							self.RemoveFromSelection();
 							stateMachine.ChangeState(State.Navigation);
 						}
 					}
@@ -698,7 +729,7 @@ namespace DiceRoller
 					if (InputUtils.GetMousePress(1, ref pressedPosition1))
 					{
 						// return to navigation otherwise
-						selectedUnits.Remove(self);
+						self.RemoveFromSelection();
 						stateMachine.ChangeState(State.Navigation);
 					}
 				}
@@ -709,6 +740,12 @@ namespace DiceRoller
 			/// </summary>
 			public override void OnStateExit()
 			{
+				// hide depleted effect
+				if (self.ActionDepleted)
+				{
+					self.RemoveEffect(StatusType.Depleted);
+				}
+
 				// execute only if the selected unit is this unit
 				if (isSelectedAtStateEnter)
 				{
@@ -754,9 +791,6 @@ namespace DiceRoller
 					lastTargetTile = null;
 					lastReachable = true;
 
-					// hide unit info on ui
-					inspectingUnits.Remove(self);
-
 					// clear flags
 					InputUtils.ResetPressCache(ref pressedPosition0);
 					InputUtils.ResetPressCache(ref pressedPosition1);
@@ -784,6 +818,12 @@ namespace DiceRoller
 			/// </summary>
 			public override void OnStateEnter()
 			{
+				// show depleted effect
+				if (self.ActionDepleted)
+				{
+					self.AddEffect(StatusType.Depleted);
+				}
+
 				// execute only if the moving unit is this unit
 				if (self.IsSelected)
 				{
@@ -805,8 +845,6 @@ namespace DiceRoller
 				path[path.Count - 1].AddDisplay(self, Tile.DisplayType.MoveTarget);
 
 				// show unit info on ui
-				inspectingUnits.Add(self);
-
 				float startTime = 0;
 				float duration = 0;
 
@@ -849,14 +887,12 @@ namespace DiceRoller
 				path.ForEach(x => { x.RemoveDisplay(self, Tile.DisplayType.Move); x.HidePath(); });
 				path[path.Count - 1].RemoveDisplay(self, Tile.DisplayType.MoveTarget);
 
-				// hide unit info on ui
-				inspectingUnits.Remove(self);
-
 				// set flag
 				self.ActionDepleted = true;
+				self.AddEffect(StatusType.Depleted);
 
 				// clear information
-				selectedUnits.Remove(self);
+				self.RemoveFromSelection();
 				self.MovementStartingTiles.Clear();
 				self.MovementSelectedPath.Clear();
 				
@@ -876,6 +912,11 @@ namespace DiceRoller
 			/// </summary>
 			public override void OnStateExit()
 			{
+				// hide depleted effect
+				if (self.ActionDepleted)
+				{
+					self.RemoveEffect(StatusType.Depleted);
+				}
 			}
 		}
 
@@ -898,6 +939,7 @@ namespace DiceRoller
 			/// </summary>
 			public override void OnStateEnter()
 			{
+				// show depleted effect
 				if (self.ActionDepleted)
 				{
 					self.AddEffect(StatusType.Depleted);
@@ -916,6 +958,7 @@ namespace DiceRoller
 			/// </summary>
 			public override void OnStateExit()
 			{
+				// hide depleted effect
 				if (self.ActionDepleted)
 				{
 					self.RemoveEffect(StatusType.Depleted);

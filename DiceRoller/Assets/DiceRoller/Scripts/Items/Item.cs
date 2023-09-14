@@ -216,7 +216,7 @@ namespace DiceRoller
 		{
 			if (Vector3.Distance(transform.position, lastOccupiedPosition) > 0.0001f)
 			{
-				Board.current.GetCurrentTiles(transform.position, size, in occupiedTiles);
+				Board.current.GetCurrentTiles(transform.position, size, ref occupiedTiles);
 				lastOccupiedPosition = transform.position;
 			}
 		}

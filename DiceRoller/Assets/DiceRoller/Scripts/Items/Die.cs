@@ -56,6 +56,8 @@ namespace DiceRoller
 		private LineRenderer lineRenderer = null;
 
 		// events
+		public Action onInspectionChanged = () => { };
+		public Action onSelectionChanged = () => { };
 		public Action onValueChanged = () => { };
 		public Action onDieStateChanged = () => { };
 
@@ -128,12 +130,12 @@ namespace DiceRoller
 		}
 		private DieState _state = DieState.Normal;
 
-		// ========================================================= Inquiries =========================================================
+		// ========================================================= Inspection and Selection =========================================================
 
 		/// <summary>
 		/// Retrieve the first die being currently inspected, return null if none is being inspected.
 		/// </summary>
-		public static Die GetFirstInspectingDie()
+		public static Die GetFirstBeingInspected()
 		{
 			return inspectingDice.Count > 0 ? inspectingDice[0] : null;
 		}
@@ -141,25 +143,76 @@ namespace DiceRoller
 		/// <summary>
 		/// Retrieve the first currently selected die, return null if none is selected.
 		/// </summary>
-		public static Die GetFirstSelectedDie()
+		public static Die GetFirstSelected()
 		{
 			return selectedDice.Count > 0 ? selectedDice[0] : null;
 		}
 
 		/// <summary>
-		/// Retrieve all currently selected die. Should only be called by DiceThrower.
+		/// Retrieve all currently selected die.
 		/// </summary>
-		public static IReadOnlyCollection<Die> GetAllSelectedDice()
+		public static IReadOnlyCollection<Die> GetAllSelected()
 		{
 			return selectedDice.AsReadOnly();
 		}
 
 		/// <summary>
-		/// Clear the list of selected die. Should only be called by DiceThrower.
-		/// </summary>
-		public static void ClearSelectedDice()
+		/// Clear the list of selected die. 
+		/// /// </summary>
+		public static void ClearSelected()
 		{
-			selectedDice.Clear();
+			for (int i = selectedDice.Count - 1; i >= 0; i--)
+			{
+				selectedDice[i].RemoveFromSelection();
+			}
+		}
+
+		/// <summary>
+		/// Add this die to as being inspecting.
+		/// </summary>
+		private void AddToInspection()
+		{
+			if (!inspectingDice.Contains(this))
+			{
+				inspectingDice.Add(this);
+				onInspectionChanged.Invoke();
+			} 
+		}
+
+		/// <summary>
+		/// Remove this die from as being inspecting.
+		/// </summary>
+		private void RemoveFromInspection()
+		{
+			if (inspectingDice.Contains(this))
+			{
+				inspectingDice.Remove(this);
+				onInspectionChanged.Invoke();
+			}
+		}
+
+		/// <summary>
+		/// Add this die to as selected.
+		/// </summary>
+		private void AddToSelection()
+		{
+			if (!selectedDice.Contains(this))
+			{
+				selectedDice.Add(this);
+				onSelectionChanged.Invoke();
+			}
+		}
+
+		/// <summary>
+		/// Remove this die from as selected.
+		/// </summary>
+		private void RemoveFromSelection()
+		{
+			if (selectedDice.Contains(this))
+			{
+				selectedDice.Remove(this);
+				onSelectionChanged.Invoke();
+			}
 		}
 
 		// ========================================================= Monobehaviour Methods =========================================================
@@ -395,20 +448,20 @@ namespace DiceRoller
 				{
 					if (self.IsUserHovering)
 					{
-						inspectingDice.Add(self);
-						self.AddEffect(StatusType.InspectingSelf);
+						self.AddToInspection();
+						self.AddEffect(self.Player == game.CurrentPlayer ? StatusType.InspectingSelf : StatusType.InspectingEnemy);
 					}
 					else
 					{
-						inspectingDice.Remove(self);
-						self.RemoveEffect(StatusType.InspectingSelf);
+						self.RemoveFromInspection();
+						self.RemoveEffect(self.Player == game.CurrentPlayer ? StatusType.InspectingSelf : StatusType.InspectingEnemy);
 					}
 				}
 
 				// go to dice action selection state when this dice is pressed
 				if (game.CurrentPlayer == self.Player && self.IsUserPressed)
 				{
-					selectedDice.Add(self);
+					self.AddToSelection();
 					stateMachine.ChangeState(DiceRoller.State.DiceActionSelect);
 				}
 			}
@@ -421,8 +474,8 @@ namespace DiceRoller
 				// hide dice info on ui
 				if (self.IsBeingInspected)
 				{
-					inspectingDice.Remove(self);
-					self.RemoveEffect(StatusType.InspectingSelf);
+					self.RemoveFromInspection();
+					self.RemoveEffect(self.Player == game.CurrentPlayer ? StatusType.InspectingSelf : StatusType.InspectingEnemy);
 				}
 
 				// reset caches
@@ -475,12 +528,12 @@ namespace DiceRoller
 					{
 						if (self.IsUserHovering)
 						{
-							inspectingDice.Add(self);
+							self.AddToInspection();
 							self.AddEffect(StatusType.InspectingSelf);
 						}
 						else
 						{
-							inspectingDice.Remove(self);
+							self.RemoveFromInspection();
 							self.RemoveEffect(StatusType.InspectingSelf);
 						}
 					}
@@ -490,14 +543,14 @@ namespace DiceRoller
 					{
 						if (self.IsSelected)
 						{
-							selectedDice.Remove(self);
+							self.RemoveFromSelection();
 						}
 						else
 						{
-							selectedDice.Add(self);
+							self.AddToSelection();
 						}
 
-						if (selectedDice.Count > 0)
+						if (GetFirstSelected() != null)
 						{
 							stateMachine.ChangeState(DiceRoller.State.DiceActionSelect);
 						}
@@ -524,7 +577,7 @@ namespace DiceRoller
 				// revert display as inspecting
 				if (self.IsBeingInspected)
 				{
-					inspectingDice.Remove(self);
+					self.RemoveFromInspection();
 					self.RemoveEffect(StatusType.InspectingSelf);
 				}
 

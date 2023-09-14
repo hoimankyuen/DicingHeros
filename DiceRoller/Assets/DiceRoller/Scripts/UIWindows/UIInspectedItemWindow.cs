@@ -63,14 +63,14 @@ namespace DiceRoller
 
 		protected void Populate()
 		{
-			Unit targetUnit = Unit.GetFirstInspectingUnit();
-			Die targetDie = Die.GetFirstInspectingDie();
+			Unit targetUnit = Unit.GetFirstBeingInspected();
+			Die targetDie = Die.GetFirstBeingInspected();
 
 			// display selectable information
 			if (targetUnit != null)
 			{
 				// show unit information
-				Unit target = Unit.GetFirstInspectingUnit();
+				Unit target = Unit.GetFirstBeingInspected();
 				
 				dieDisplay.gameObject.SetActive(false);
 

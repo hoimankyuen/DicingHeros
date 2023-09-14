@@ -103,7 +103,9 @@ namespace DiceRoller
 				tileGrid.Add(new List<Tile>());
 				for (int j = 0; j < boardSizeZ; j++)
 				{
-					GameObject go = Instantiate(tilePrefab, BoardPosToWorldPos(new Int2(i, j)), Quaternion.identity, transform);
+					GameObject go = UnityEditor.PrefabUtility.InstantiatePrefab(tilePrefab, transform) as GameObject;
+					go.transform.position = BoardPosToWorldPos(new Int2(i, j));
+					go.transform.rotation = Quaternion.identity;
 					Tile tile = go.GetComponent<Tile>();
 					tile.tileSize = tileSize;
 					tile.boardPos = new Int2(i, j);
@@ -136,9 +138,9 @@ namespace DiceRoller
 		protected Vector3 BoardPosToWorldPos(Int2 boardPos)
 		{
 			return new Vector3(
-				(-(float)(boardSizeX - 1) / 2 + boardPos.x) * tileSize,
+				(boardPos.x - (float)(boardSizeX - 1) / 2) * tileSize,
 				0.001f,
-				(-(float)(boardSizeZ - 1) / 2 + boardPos.z) * tileSize);
+				(boardPos.z - (float)(boardSizeZ - 1) / 2) * tileSize);
 		}
 
 		/// <summary>
@@ -156,16 +158,16 @@ namespace DiceRoller
 		/// <summary>
 		/// Get all tiles that an object is in.
 		/// </summary>
-		public void GetCurrentTiles(Vector3 position, float size, in List<Tile> result)
+		public void GetCurrentTiles(Vector3 position, float size, ref List<Tile> result)
 		{
 			result.Clear();
 
-			Int2 minBoardPos = WorldPosToBoardPos(position) - Int2.one * Mathf.CeilToInt(size) * 2;
-			Int2 maxBoardPos = WorldPosToBoardPos(position) + Int2.one * Mathf.CeilToInt(size) * 2;
+			Int2 minBoardPos = WorldPosToBoardPos(position) - Int2.one * Mathf.CeilToInt(size / tileSize);
+			Int2 maxBoardPos = WorldPosToBoardPos(position) + Int2.one * Mathf.CeilToInt(size / tileSize);
 
 			for (int i = minBoardPos.x; i <= maxBoardPos.x; i++)
 			{
-				for (int j = minBoardPos.x; j <= maxBoardPos.x; j++)
+				for (int j = minBoardPos.z; j <= maxBoardPos.z; j++)
 				{
 					Int2 boardPos = new Int2(i, j);
 					if (tiles.ContainsKey(boardPos) && tiles[boardPos].IsInTile(position, size))
@@ -246,6 +248,8 @@ namespace DiceRoller
 				{
 					foreach (Tile connectedTile in current.tile.connectedTiles)
 					{
+						if (connectedTile == null)
+							continue;
 						if (!connectedTile.gameObject.activeInHierarchy)
 							continue;
 						if (excludedTiles != null && excludedTiles.Contains(connectedTile))

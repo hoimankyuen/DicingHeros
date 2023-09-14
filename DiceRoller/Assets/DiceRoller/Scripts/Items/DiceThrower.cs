@@ -275,12 +275,12 @@ namespace DiceRoller
 				// detect abort bu checking left mouse button click
 				if (InputUtils.GetMousePress(1, ref pressedPosition1))
 				{
-					Die.ClearSelectedDice();
+					Die.ClearSelected();
 					stateMachine.ChangeState(State.Navigation);
 				}
 
 				// change to dice throw state if a throw is detected
-				DetectThrowResult result = self.DetectThrow(Die.GetAllSelectedDice());
+				DetectThrowResult result = self.DetectThrow(Die.GetAllSelected());
 				if (result == DetectThrowResult.Thrown)
 				{
 					stateMachine.ChangeState(State.DiceThrow);
@@ -322,9 +322,9 @@ namespace DiceRoller
 			public override void OnStateUpdate()
 			{
 				// change to navigation state if dice throw is completed
-				if (Die.GetAllSelectedDice().All(x => !x.IsMoving || x.IsFallen))
+				if (Die.GetAllSelected().All(x => !x.IsMoving || x.IsFallen))
 				{
-					Die.ClearSelectedDice();
+					Die.ClearSelected();
 					stateMachine.ChangeState(State.Navigation);
 				}
 			}

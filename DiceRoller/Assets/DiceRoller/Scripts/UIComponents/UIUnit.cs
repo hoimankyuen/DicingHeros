@@ -44,6 +44,8 @@ namespace DiceRoller
             {
                 unit.onHealthChanged -= RefreshDisplay;
                 unit.onStatusChanged -= RefreshDisplay;
+                unit.onInspectionChanged -= RefreshDisplay;
+                unit.onSelectionChanged -= RefreshDisplay;
             }
         }
 
@@ -92,11 +94,15 @@ namespace DiceRoller
             {
                 this.unit.onHealthChanged -= RefreshDisplay;
                 this.unit.onStatusChanged -= RefreshDisplay;
+                unit.onInspectionChanged -= RefreshDisplay;
+                unit.onSelectionChanged -= RefreshDisplay;
             }
             if (unit != null)
             {
                 unit.onHealthChanged += RefreshDisplay;
                 unit.onStatusChanged += RefreshDisplay;
+                unit.onInspectionChanged += RefreshDisplay;
+                unit.onSelectionChanged += RefreshDisplay;
             }
 
             // set values

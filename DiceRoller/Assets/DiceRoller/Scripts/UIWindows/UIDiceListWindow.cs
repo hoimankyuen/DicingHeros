@@ -70,8 +70,6 @@ namespace DiceRoller
 		
 		protected void Populate()
 		{
-			Debug.Log("here1" + game.CurrentPlayer + ", " + inspectingPlayer);
-
 			// only re populate if player is changed
 			if (game.CurrentPlayer == inspectingPlayer)
 				return;

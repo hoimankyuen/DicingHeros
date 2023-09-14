@@ -58,6 +58,8 @@ namespace DiceRoller
 				die.onValueChanged -= RefreshDisplay;
 				die.onDieStateChanged -= RefreshDisplay;
 				die.onStatusChanged -= RefreshDisplay;
+				die.onInspectionChanged -= RefreshDisplay;
+				die.onSelectionChanged -= RefreshDisplay;
 			}
 
 			// stop running animations
@@ -121,12 +123,16 @@ namespace DiceRoller
 				this.die.onValueChanged -= RefreshDisplay;
 				this.die.onDieStateChanged -= RefreshDisplay;
 				this.die.onStatusChanged -= RefreshDisplay;
+				die.onInspectionChanged -= RefreshDisplay;
+				die.onSelectionChanged -= RefreshDisplay;
 			}
 			if (die != null)
 			{
 				die.onValueChanged += RefreshDisplay;
 				die.onDieStateChanged += RefreshDisplay;
 				die.onStatusChanged += RefreshDisplay;
+				die.onInspectionChanged += RefreshDisplay;
+				die.onSelectionChanged += RefreshDisplay;
 			}
 
 			// stop running animations
@@ -148,6 +154,8 @@ namespace DiceRoller
 				die.onValueChanged -= RefreshDisplay;
 				die.onDieStateChanged -= RefreshDisplay;
 				die.onStatusChanged -= RefreshDisplay;
+				die.onInspectionChanged -= RefreshDisplay;
+				die.onSelectionChanged -= RefreshDisplay;
 			}
 
 			// stop running animations
