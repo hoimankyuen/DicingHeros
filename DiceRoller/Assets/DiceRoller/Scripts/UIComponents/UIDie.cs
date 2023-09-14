@@ -203,8 +203,8 @@ namespace DiceRoller
 				}
 
 				// change state icon
-				stateImage.enabled = displayStatus && !rolling && die.State != Die.DieState.Normal;
-				stateImage.sprite = itemStateIcons.stateIcons[die.State];
+				stateImage.enabled = displayStatus && !rolling && die.CurrentDieState != Die.DieState.Normal;
+				stateImage.sprite = itemStateIcons.stateIcons[die.CurrentDieState];
 			}
 			else
 			{
@@ -251,7 +251,7 @@ namespace DiceRoller
 
 			rollingImage.transform.rotation = Quaternion.identity;
 			rollingImage.enabled = false;
-			stateImage.enabled = displayStatus && die != null && die.State != Die.DieState.Normal;
+			stateImage.enabled = displayStatus && die != null && die.CurrentDieState != Die.DieState.Normal;
 		}
 	}
 }

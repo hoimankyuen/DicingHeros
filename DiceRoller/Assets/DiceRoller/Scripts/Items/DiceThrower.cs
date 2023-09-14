@@ -106,13 +106,6 @@ namespace DiceRoller
 		/// </summary>
 		protected DetectThrowResult DetectThrow(IReadOnlyCollection<Die> dice)
 		{
-			// do not throw if no throw remaining
-			if (RemainingThrow <= 0)
-			{
-				ThrowDragging = false;
-				return DetectThrowResult.None;
-			}
-
 			if (!ThrowDragging)
 			{
 				// detect start dragging by checking mouse button is pressed on a floor
@@ -131,12 +124,6 @@ namespace DiceRoller
 						}
 					}
 				}
-
-				// detect abort bu checking left mouse button click
-				if (Input.GetMouseButtonUp(1))
-				{
-					return DetectThrowResult.Aborted;
-				}
 			}
 			else if (ThrowDragging)
 			{
@@ -150,11 +137,19 @@ namespace DiceRoller
 					ThrowDirection = ThrowDirection.normalized;
 				}
 
-				// initiate throw if mouse button is released
+				// drag completed, determine out come
 				if (Input.GetMouseButtonUp(0))
 				{
 					ThrowDragging = false;
 
+					// do not throw if no throw remaining
+					if (RemainingThrow <= 0)
+					{
+						ThrowDragging = false;
+						return DetectThrowResult.None;
+					}
+
+					//initiate throw
 					if (ThrowPower != -1f)
 					{
 						// calculate all essential variable for dice throwing

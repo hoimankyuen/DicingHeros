@@ -87,6 +87,15 @@ namespace DiceRoller
 		}
 		private static UniqueList<Die> selectedDice = new UniqueList<Die>();
 
+		public bool IsRolling
+		{
+			get
+			{
+				return IsMoving && rollInitiating;
+			}
+		}
+		private bool rollInitiating = false;
+
 		/// <summary>
 		/// The current value of this die, -1 if value is invalid.
 		/// </summary>
@@ -108,27 +117,27 @@ namespace DiceRoller
 		private int _value = -1;
 		private Quaternion lastRotation = Quaternion.identity;
 		private float lastRotatingTime = 0;
-		private bool rollInitiating = false;
+		
 
 		/// <summary>
 		/// The current state of this die.
 		/// </summary>
-		public DieState State 
+		public DieState CurrentDieState 
 		{
 			get
 			{
-				return _state;
+				return _dieState;
 			}
 			private set 
 			{
-				if (_state != value)
+				if (_dieState != value)
 				{
-					_state = value;
+					_dieState = value;
 					onDieStateChanged.Invoke();
 				}
 			}
 		}
-		private DieState _state = DieState.Normal;
+		private DieState _dieState = DieState.Normal;
 
 		// ========================================================= Inspection and Selection =========================================================
 
@@ -353,7 +362,7 @@ namespace DiceRoller
 
 			// determine the value of this die
 			int lastValue = Value;
-			if (IsMoving || rollInitiating || Time.time - lastRotatingTime < 0.25f)
+			if (IsRolling || Time.time - lastRotatingTime < 0.25f)
 			{
 				// die is stiill moving, set value to invalid
 				Value = -1;
@@ -552,11 +561,11 @@ namespace DiceRoller
 
 						if (GetFirstSelected() != null)
 						{
-							stateMachine.ChangeState(DiceRoller.State.DiceActionSelect);
+							stateMachine.ChangeState(State.DiceActionSelect);
 						}
 						else
 						{
-							stateMachine.ChangeState(DiceRoller.State.Navigation);
+							stateMachine.ChangeState(State.Navigation);
 						}
 					}
 				}

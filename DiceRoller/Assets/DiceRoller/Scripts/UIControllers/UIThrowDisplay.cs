@@ -60,7 +60,7 @@ namespace DiceRoller
 				throwTarget.SetActive(true);
 				throwPowerIndicator.SetActive(true);
 				throwPowerIndicator.transform.localRotation = Quaternion.Euler(new Vector3(-90, 0, 0)) * Quaternion.FromToRotation(Vector3.forward, DiceThrower.current.ThrowDirection) * Quaternion.Euler(new Vector3(90, 0, 0));
-				if (DiceThrower.current.ThrowPower != -1f)
+				if (DiceThrower.current.RemainingThrow > 0 && DiceThrower.current.ThrowPower != -1f)
 				{
 					// throw have enough power
 					throwArrow.gameObject.SetActive(true);
@@ -69,7 +69,7 @@ namespace DiceRoller
 				}
 				else
 				{
-					// throw does not have enough power
+					// throw does not have enough power or no throw
 					throwArrow.gameObject.SetActive(false);
 					throwCross.gameObject.SetActive(true);
 					throwPowerIndicatorCutoff.CutoffTo(0);
