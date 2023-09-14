@@ -56,7 +56,7 @@ namespace DiceRoller
 			if (die != null)
 			{
 				die.onValueChanged -= RefreshDisplay;
-				die.onDiceStateChanged -= RefreshDisplay;
+				die.onDieStateChanged -= RefreshDisplay;
 				die.onStatusChanged -= RefreshDisplay;
 			}
 
@@ -119,13 +119,13 @@ namespace DiceRoller
 			if (this.die != null)
 			{
 				this.die.onValueChanged -= RefreshDisplay;
-				this.die.onDiceStateChanged -= RefreshDisplay;
+				this.die.onDieStateChanged -= RefreshDisplay;
 				this.die.onStatusChanged -= RefreshDisplay;
 			}
 			if (die != null)
 			{
 				die.onValueChanged += RefreshDisplay;
-				die.onDiceStateChanged += RefreshDisplay;
+				die.onDieStateChanged += RefreshDisplay;
 				die.onStatusChanged += RefreshDisplay;
 			}
 
@@ -146,7 +146,7 @@ namespace DiceRoller
 			if (die != null)
 			{
 				die.onValueChanged -= RefreshDisplay;
-				die.onDiceStateChanged -= RefreshDisplay;
+				die.onDieStateChanged -= RefreshDisplay;
 				die.onStatusChanged -= RefreshDisplay;
 			}
 
@@ -172,7 +172,7 @@ namespace DiceRoller
 				outlineImage.sprite = die.outlineSprite;
 				outlineImage.enabled = displayStatus && die.IsSelected;
 				overlayImage.sprite = die.overlaySprite;
-				overlayImage.enabled = displayStatus && die.IsInspecting;
+				overlayImage.enabled = displayStatus && die.IsBeingInspected;
 
 				// change value text
 				valueText.text = die.Value == -1 ? "?" : die.Value.ToString();
@@ -195,8 +195,8 @@ namespace DiceRoller
 				}
 
 				// change state icon
-				stateImage.enabled = displayStatus && !rolling && die.CurrentDieState != Die.DieState.Normal;
-				stateImage.sprite = itemStateIcons.stateIcons[die.CurrentDieState];
+				stateImage.enabled = displayStatus && !rolling && die.State != Die.DieState.Normal;
+				stateImage.sprite = itemStateIcons.stateIcons[die.State];
 			}
 			else
 			{
@@ -243,7 +243,7 @@ namespace DiceRoller
 
 			rollingImage.transform.rotation = Quaternion.identity;
 			rollingImage.enabled = false;
-			stateImage.enabled = displayStatus && die != null && die.CurrentDieState != Die.DieState.Normal;
+			stateImage.enabled = displayStatus && die != null && die.State != Die.DieState.Normal;
 		}
 	}
 }

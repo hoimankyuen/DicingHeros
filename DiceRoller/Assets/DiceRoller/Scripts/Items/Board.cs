@@ -31,8 +31,7 @@ namespace DiceRoller
 		public GameObject tilePrefab = null;
 
 		// working variables
-		protected List<Tile> tiles = new List<Tile>();
-		protected Dictionary<Int2, Tile> tilesByBoardPos = new Dictionary<Int2, Tile>();
+		protected Dictionary<Int2, Tile> tiles = new Dictionary<Int2, Tile>();
 
 		// temporary working variables
 		protected List<Tile> tempTiles = new List<Tile>();
@@ -56,8 +55,7 @@ namespace DiceRoller
 					if (transform.GetChild(i).gameObject.activeInHierarchy)
 					{
 						Tile tile = transform.GetChild(i).GetComponent<Tile>();
-						tiles.Add(tile);
-						tilesByBoardPos[tile.boardPos] = tile;
+						tiles[tile.boardPos] = tile;
 					}
 				}
 			}
@@ -105,13 +103,7 @@ namespace DiceRoller
 				tileGrid.Add(new List<Tile>());
 				for (int j = 0; j < boardSizeZ; j++)
 				{
-					GameObject go = Instantiate(tilePrefab,
-						new Vector3(
-							(-(float)(boardSizeX - 1) / 2 + i) * tileSize,
-							0.001f,
-							(-(float)(boardSizeZ - 1) / 2 + j) * tileSize),
-						Quaternion.identity,
-						transform);
+					GameObject go = Instantiate(tilePrefab, BoardPosToWorldPos(new Int2(i, j)), Quaternion.identity, transform);
 					Tile tile = go.GetComponent<Tile>();
 					tile.tileSize = tileSize;
 					tile.boardPos = new Int2(i, j);
@@ -136,6 +128,29 @@ namespace DiceRoller
 			}
 		}
 
+		// ========================================================= Position Conversion =========================================================
+
+		/// <summary>
+		/// Convert any board position to a world position.
+		/// </summary>
+		protected Vector3 BoardPosToWorldPos(Int2 boardPos)
+		{
+			return new Vector3(
+				(-(float)(boardSizeX - 1) / 2 + boardPos.x) * tileSize,
+				0.001f,
+				(-(float)(boardSizeZ - 1) / 2 + boardPos.z) * tileSize);
+		}
+
+		/// <summary>
+		/// Convert any world position to the nearest board position.
+		/// </summary>
+		protected Int2 WorldPosToBoardPos(Vector3 worldPos)
+		{
+			return new Int2(
+				Convert.ToInt32(worldPos.x / tileSize + (float)(boardSizeX - 1) / 2),
+				Convert.ToInt32(worldPos.z / tileSize + (float)(boardSizeZ - 1) / 2));
+		}
+
 		// ========================================================= Inqury =========================================================
 
 		/// <summary>
@@ -144,11 +159,19 @@ namespace DiceRoller
 		public void GetCurrentTiles(Vector3 position, float size, in List<Tile> result)
 		{
 			result.Clear();
-			foreach (Tile tile in tiles)
+
+			Int2 minBoardPos = WorldPosToBoardPos(position) - Int2.one * Mathf.CeilToInt(size) * 2;
+			Int2 maxBoardPos = WorldPosToBoardPos(position) + Int2.one * Mathf.CeilToInt(size) * 2;
+
+			for (int i = minBoardPos.x; i <= maxBoardPos.x; i++)
 			{
-				if (tile.IsInTile(position, size))
+				for (int j = minBoardPos.x; j <= maxBoardPos.x; j++)
 				{
-					result.Add(tile);
+					Int2 boardPos = new Int2(i, j);
+					if (tiles.ContainsKey(boardPos) && tiles[boardPos].IsInTile(position, size))
+					{
+						result.Add(tiles[boardPos]);
+					}
 				}
 			}
 		}
@@ -156,7 +179,7 @@ namespace DiceRoller
 		/// <summary>
 		/// Get all tiles that are within a certain range from the starting tiles regardless of connectivity, and return them in the supplied list.
 		/// </summary>
-		public void GetTilesInRange(List<Tile> startingTiles, int range, in List<Tile> result)
+		public void GetTilesInRange(IReadOnlyCollection<Tile> startingTiles, int range, in List<Tile> result)
 		{
 			// prepare containers
 			result.Clear();
@@ -181,8 +204,8 @@ namespace DiceRoller
 				for (int z = min.z - range; z <= max.z + range; z++)
 				{
 					Int2 pos = new Int2(x, z);
-					if (tilesByBoardPos.ContainsKey(pos) && startingTiles.Any(t => Int2.Distance(pos, t.boardPos) <= range))
-						result.Add(tilesByBoardPos[pos]);
+					if (tiles.ContainsKey(pos) && startingTiles.Any(t => Int2.Distance(pos, t.boardPos) <= range))
+						result.Add(tiles[pos]);
 				}
 			}
 		}
@@ -190,14 +213,14 @@ namespace DiceRoller
 		/// <summary>
 		/// Find all connected tiles within a certain range of this tile, and return them in the supplied list.
 		/// </summary>
-		public void GetConnectedTilesInRange(List<Tile> startingTiles, int range, in List<Tile> result)
+		public void GetConnectedTilesInRange(IReadOnlyCollection<Tile> startingTiles, int range, in List<Tile> result)
 		{
 			GetConnectedTilesInRange(startingTiles, null, range, in result);
 		}
 		/// <summary>
 		/// Find all connected tiles within a certain range of this tile, and return them in the supplied list.
 		/// </summary>
-		public void GetConnectedTilesInRange(List<Tile> startingTiles, List<Tile> excludedTiles, int range, in List<Tile> result)
+		public void GetConnectedTilesInRange(IReadOnlyCollection<Tile> startingTiles, List<Tile> excludedTiles, int range, in List<Tile> result)
 		{
 			// prepare containers
 			List<TileRangePair> open = tempTileRangePairs;
@@ -250,14 +273,14 @@ namespace DiceRoller
 		/// <summary>
 		/// Find the shortest path between a set of starting tile(s) to a specific target tile.
 		/// </summary>
-		public void GetShortestPath(List<Tile> startingTiles, Tile targetTile, int range, in List<Tile> result)
+		public void GetShortestPath(IReadOnlyCollection<Tile> startingTiles, Tile targetTile, int range, in List<Tile> result)
 		{
 			GetShortestPath(startingTiles, null, targetTile, range, in result);
 		}
 		/// <summary>
 		/// Find the shortest path between a set of starting tile(s) to a specific target tile.
 		/// </summary>
-		public void GetShortestPath(Tile startingTile, List<Tile> excludedTiles, Tile targetTile, int range, in List<Tile> result)
+		public void GetShortestPath(Tile startingTile, IReadOnlyCollection<Tile> excludedTiles, Tile targetTile, int range, in List<Tile> result)
 		{
 			tempTiles.Clear();
 			tempTiles.Add(startingTile);
@@ -266,7 +289,7 @@ namespace DiceRoller
 		/// <summary>
 		/// Find the shortest path between a set of starting tile(s) to a specific target tile.
 		/// </summary>
-		public void GetShortestPath(List<Tile> startingTiles, List<Tile> excludedTiles, Tile targetTile, int range, in List<Tile> result)
+		public void GetShortestPath(IReadOnlyCollection<Tile> startingTiles, IReadOnlyCollection<Tile> excludedTiles, Tile targetTile, int range, in List<Tile> result)
 		{
 			// prepare containers
 			List<TilePathRangeHeuristicPair> open = tempTilePathRangeHeuristicPairs1;

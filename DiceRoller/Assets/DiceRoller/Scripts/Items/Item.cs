@@ -2,6 +2,7 @@ using QuickerEffects;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace DiceRoller
@@ -41,41 +42,67 @@ namespace DiceRoller
 		protected Overlay overlay = null;
 
 		// working variables
-		protected bool isHovering = false;
-		protected bool isSelfHovering = false;
-		protected bool isUIHovering = false;
+		private HashSet<StatusType> statusList = new HashSet<StatusType>();
 
-		protected bool isPressed = false;
-		protected bool initiatedSelfPress = false;
-		protected bool completedSelfPress = false;
-		protected bool isUIPressed = false;
+		// events
+		public Action onStatusChanged = () => { };
 
-		protected HashSet<StatusType> statusList = new HashSet<StatusType>();
+		// ========================================================= Properties =========================================================
 
-		// properties
-		public bool IsFallen { get; protected set; } = false;
-
-		public bool IsMoving { get; protected set; } = false;
-		protected float lastMovingTime = 0;
-
-		public List<Tile> OccupiedTiles
+		/// <summary>
+		/// The player that owns this item.
+		/// </summary>
+		public Player Player
 		{
 			get
 			{
-				if (Vector3.Distance(transform.position, lastOccupiedPosition) > 0.0001f)
-				{
-					lastOccupiedTiles.Clear();
-					Board.current.GetCurrentTiles(transform.position, size, in lastOccupiedTiles);
-					lastOccupiedPosition = transform.position;
-				}
-				return lastOccupiedTiles;
+				return _player;
+			}
+			private set
+			{
+				_player = value;
 			}
 		}
-		protected Vector3 lastOccupiedPosition = Vector3.zero;
-		protected List<Tile> lastOccupiedTiles = new List<Tile>();
+		protected Player _player = null;
 
-		// events
-		public Action onStatusChanged = () => { }; 
+		/// <summary>
+		/// Flag for if user is hovering on this item by any means.
+		/// </summary>
+		protected bool IsUserHovering { get; private set; } = false;
+		private bool isSelfHovering = false;
+		private bool isUIHovering = false;
+
+		/// <summary>
+		/// Flag for if user has pressed on this item by any means.
+		/// </summary>
+		protected bool IsUserPressed { get; private set; } = false;
+		private bool initiatedSelfPress = false;
+		private bool completedSelfPress = false;
+		private bool isUIPressed = false;
+
+		/// <summary>
+		/// Flag for if this item is fallen out of the board.
+		/// </summary>
+		public bool IsFallen { get; private set; } = false;
+
+		/// <summary>
+		/// Flog for if this item is still moving.
+		/// </summary>
+		public bool IsMoving { get; private set; } = false;
+		private float lastMovingTime = 0;
+
+		/// <summary>
+		///A read only list of tiles that this item occupies.
+		/// </summary>
+		public IReadOnlyCollection<Tile> OccupiedTiles
+		{
+			get
+			{
+				return occupiedTiles.AsReadOnly();
+			}
+		}
+		private List<Tile> occupiedTiles = new List<Tile>();
+		private Vector3 lastOccupiedPosition = Vector3.zero;
 
 		// ========================================================= Monobehaviour Methods =========================================================
 
@@ -95,6 +122,7 @@ namespace DiceRoller
 		/// </summary>
 		protected virtual void Start()
 		{
+			Player = game.GetPlayerById(playerId);
 		}
 
 		/// <summary>
@@ -102,7 +130,9 @@ namespace DiceRoller
 		/// </summary>
 		protected virtual void Update()
 		{
+			DetectTilesOccupation();
 			DetectMovement();
+			DetectFallen();
 			DetectHover();
 			DetectPress();
 		}
@@ -147,7 +177,6 @@ namespace DiceRoller
 			initiatedSelfPress = true;
 		}
 
-
 		/// <summary>
 		/// OnMouseUp is called when a mouse button is released when pointing to the game object.
 		/// </summary>
@@ -181,9 +210,21 @@ namespace DiceRoller
 		// ========================================================= General Behaviour =========================================================
 
 		/// <summary>
-		/// Detect movement and update the IsMoving flag accordingly.
+		/// Detect tile occupation and update the occupation list.
 		/// </summary>
-		protected void DetectMovement()
+		private void DetectTilesOccupation()
+		{
+			if (Vector3.Distance(transform.position, lastOccupiedPosition) > 0.0001f)
+			{
+				Board.current.GetCurrentTiles(transform.position, size, in occupiedTiles);
+				lastOccupiedPosition = transform.position;
+			}
+		}
+
+		/// <summary>
+		/// Detect movement and update the flags accordingly.
+		/// </summary>
+		private void DetectMovement()
 		{
 			if (rigidBody.velocity.sqrMagnitude > 0.01f || rigidBody.angularVelocity.sqrMagnitude > 0.01f)
 			{
@@ -193,9 +234,9 @@ namespace DiceRoller
 		}
 
 		/// <summary>
-		/// Detect if fallen through and update flag accordingly.
+		/// Detect if fallen through and update flags accordingly.
 		/// </summary>
-		protected void DetectFallen()
+		private void DetectFallen()
 		{
 			IsFallen = transform.position.y < -10;
 		}
@@ -203,23 +244,23 @@ namespace DiceRoller
 		/// <summary>
 		/// Detect hover events.
 		/// </summary>
-		protected void DetectHover()
+		private void DetectHover()
 		{
-			isHovering = isSelfHovering || isUIHovering;
+			IsUserHovering = isSelfHovering || isUIHovering;
 		}
 
 		/// <summary>
 		/// Detect press event and trim to a single frame flag.
 		/// </summary>
-		protected void DetectPress()
+		private void DetectPress()
 		{
-			isPressed = false;
+			IsUserPressed = false;
 			if (completedSelfPress || isUIPressed)
 			{
 				completedSelfPress = false;
 				isUIPressed = false;
 
-				isPressed = true;
+				IsUserPressed = true;
 			}
 		}
 

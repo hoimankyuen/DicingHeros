@@ -45,23 +45,6 @@ namespace DiceRoller
 			}
 		}
 
-		public static UniqueList<Die> InspectingDice { get; protected set; } = new UniqueList<Die>();
-		public bool IsInspecting
-		{
-			get
-			{
-				return InspectingDice.Contains(this);
-			}
-		}
-		public static UniqueList<Die> SelectedDice { get; protected set; } = new UniqueList<Die>();
-		public bool IsSelected
-		{
-			get
-			{
-				return SelectedDice.Contains(this);
-			}
-		}
-
 		// parameters
 		[Header("Die Information")]
 		public Type type = Type.Unknown;
@@ -69,21 +52,115 @@ namespace DiceRoller
 		public Unit connectedUnit = null;
 
 		// components
-		protected Transform effectTransform = null;
-		protected LineRenderer lineRenderer = null;
-
-		// working variables
-		public int Value { get; protected set; } = -1;
-		protected Quaternion lastRotation = Quaternion.identity;
-		protected float lastRotatingTime = 0;
-		protected bool rollInitiating = false;
-
-		// properties
-		public DieState CurrentDieState { get; protected set; } = DieState.Normal;
+		private Transform effectTransform = null;
+		private LineRenderer lineRenderer = null;
 
 		// events
 		public Action onValueChanged = () => { };
-		public Action onDiceStateChanged = () => { };
+		public Action onDieStateChanged = () => { };
+
+		// ========================================================= Properties =========================================================
+
+		/// <summary>
+		/// Flag for if this die is currently being inspected.
+		/// </summary>
+		public bool IsBeingInspected
+		{
+			get
+			{
+				return inspectingDice.Contains(this);
+			}
+		}
+		private static UniqueList<Die> inspectingDice = new UniqueList<Die>();
+
+		/// <summary>
+		/// Flag for if this die is currently selected.
+		/// </summary>
+		public bool IsSelected
+		{
+			get 
+			{
+				return selectedDice.Contains(this);
+			} 
+		}
+		private static UniqueList<Die> selectedDice = new UniqueList<Die>();
+
+		/// <summary>
+		/// The current value of this die, -1 if value is invalid.
+		/// </summary>
+		public int Value
+		{ 
+			get
+			{
+				return _value; 
+			}
+			private set
+			{
+				if (_value != value)
+				{
+					_value = value;
+					onValueChanged.Invoke();
+				}
+			}
+		}
+		private int _value = -1;
+		private Quaternion lastRotation = Quaternion.identity;
+		private float lastRotatingTime = 0;
+		private bool rollInitiating = false;
+
+		/// <summary>
+		/// The current state of this die.
+		/// </summary>
+		public DieState State 
+		{
+			get
+			{
+				return _state;
+			}
+			private set 
+			{
+				if (_state != value)
+				{
+					_state = value;
+					onDieStateChanged.Invoke();
+				}
+			}
+		}
+		private DieState _state = DieState.Normal;
+
+		// ========================================================= Inquiries =========================================================
+
+		/// <summary>
+		/// Retrieve the first die being currently inspected, return null if none is being inspected.
+		/// </summary>
+		public static Die GetFirstInspectingDie()
+		{
+			return inspectingDice.Count > 0 ? inspectingDice[0] : null;
+		}
+
+		/// <summary>
+		/// Retrieve the first currently selected die, return null if none is selected.
+		/// </summary>
+		public static Die GetFirstSelectedDie()
+		{
+			return selectedDice.Count > 0 ? selectedDice[0] : null;
+		}
+
+		/// <summary>
+		/// Retrieve all currently selected die. Should only be called by DiceThrower.
+		/// </summary>
+		public static IReadOnlyCollection<Die> GetAllSelectedDice()
+		{
+			return selectedDice.AsReadOnly();
+		}
+
+		/// <summary>
+		/// Clear the list of selected die. Should only be called by DiceThrower.
+		/// </summary>
+		public static void ClearSelectedDice()
+		{
+			selectedDice.Clear();
+		}
 
 		// ========================================================= Monobehaviour Methods =========================================================
 
@@ -154,6 +231,7 @@ namespace DiceRoller
 		/// </summary>
 		protected void OnDrawGizmos()
 		{
+			// draw size and each face of the die
 			if (Application.isEditor)
 			{
 				for (int i = 0; i < faces.Count; i++)
@@ -171,16 +249,48 @@ namespace DiceRoller
 		/// <summary>
 		/// Retrieve component references for this unit.
 		/// </summary>
-		protected void RetrieveComponentReferences()
+		private void RetrieveComponentReferences()
 		{
 			effectTransform = transform.Find("Effect");
 			lineRenderer = transform.Find("Effect/Line").GetComponent<LineRenderer>();
 		}
 
+		// ========================================================= Team Behaviour =========================================================
+
+		/// <summary>
+		/// Register this unit to a player.
+		/// </summary>
+		private void RegisterToPlayer()
+		{
+			if (game == null)
+				return;
+
+			if (Player != null)
+			{
+				Player.dice.Add(this);
+			}
+		}
+
+		/// <summary>
+		///  Deregister this unit from a player.
+		/// </summary>
+		private void DeregisterFromPlayer()
+		{
+			if (game == null)
+				return;
+
+			if (Player != null)
+			{
+				Player.dice.Remove(this);
+			}
+		}
+
+		// ========================================================= Dice Behaviour =========================================================
+
 		/// <summary>
 		/// Detect the current displayed value of this die.
 		/// </summary>
-		protected void DetectValue()
+		private void DetectValue()
 		{
 			// record last moving time for stationary checking
 			if (rigidBody.velocity.sqrMagnitude > 0.01f || rigidBody.angularVelocity.sqrMagnitude > 0.01f)
@@ -190,7 +300,7 @@ namespace DiceRoller
 
 			// determine the value of this die
 			int lastValue = Value;
-			if (IsMoving || rollInitiating)
+			if (IsMoving || rollInitiating || Time.time - lastRotatingTime < 0.25f)
 			{
 				// die is stiill moving, set value to invalid
 				Value = -1;
@@ -212,12 +322,6 @@ namespace DiceRoller
 				lastRotation = transform.rotation;
 				Value = foundValue;
 			}
-
-			// fire onValueChange event if needed
-			if (Value != lastValue)
-			{
-				onValueChanged.Invoke();
-			}
 		}
 
 		/// <summary>
@@ -234,78 +338,37 @@ namespace DiceRoller
 			rollInitiating = true;
 		}
 
-		/// <summary>
-		/// Change the current die state of the die and fire the relavent onchange event
-		/// </summary>
-		protected void ChangeDieState(DieState state)
-		{
-			if (CurrentDieState != state)
-			{
-				CurrentDieState = state;
-				onDiceStateChanged();
-			}
-		}
-
-		// ========================================================= Team Behaviour =========================================================
-
-		/// <summary>
-		/// Register this unit to a player.
-		/// </summary>
-		protected void RegisterToPlayer()
-		{
-			if (game == null)
-				return;
-
-			Player p = game.GetPlayerById(playerId);
-			if (p != null)
-			{
-				p.dice.Add(this);
-			}
-		}
-
-		/// <summary>
-		///  Deregister this unit from a player.
-		/// </summary>
-		protected void DeregisterFromPlayer()
-		{
-			if (game == null)
-				return;
-
-			Player p = game.GetPlayerById(playerId);
-			if (p != null)
-			{
-				p.dice.Remove(this);
-			}
-		}
-
 		// ========================================================= State Machine Behaviour =========================================================
 
 		/// <summary>
 		/// Register all state behaviour to the centralized state machine.
 		/// </summary>
-		protected void RegisterStateBehaviours()
+		private void RegisterStateBehaviours()
 		{
-			stateMachine.Register(this, State.Navigation, new NavigationSB(this));
-			stateMachine.Register(this, State.DiceActionSelect, new DiceActionSelectSB(this));
-			stateMachine.Register(this, State.DiceThrow, new DiceThrowSB(this));
+			stateMachine.Register(this, DiceRoller.State.Navigation, new NavigationSB(this));
+			stateMachine.Register(this, DiceRoller.State.DiceActionSelect, new DiceActionSelectSB(this));
+			stateMachine.Register(this, DiceRoller.State.DiceThrow, new DiceThrowSB(this));
 		}
 
 		/// <summary>
 		/// Deregister all state behaviours to the centralized state machine.
 		/// </summary>
-		protected void DeregisterStateBehaviours()
+		private void DeregisterStateBehaviours()
 		{
 			if (stateMachine != null)
+			{
 				stateMachine.DeregisterAll(this);
+			}
 		}
 
 		// ========================================================= Navigation State =========================================================
-		protected class NavigationSB : StateBehaviour
+		private class NavigationSB : StateBehaviour
 		{
-			protected readonly Die self = null;
-			
-			protected bool lastIsHovering = false;
-			protected List<Tile> lastOccupiedTiles = new List<Tile>();
+			// host reference
+			private readonly Die self = null;
+
+			// caches
+			private bool lastIsHovering = false;
 
 			/// <summary>
 			/// Constructor.
@@ -328,34 +391,25 @@ namespace DiceRoller
 			public override void OnStateUpdate()
 			{
 				// show dice info on ui
-				if (self.isHovering != lastIsHovering)
+				if (CachedValueUtils.HasValueChanged(self.IsUserHovering, ref lastIsHovering))
 				{
-					if (self.isHovering)
+					if (self.IsUserHovering)
 					{
-						InspectingDice.Add(self);
+						inspectingDice.Add(self);
 						self.AddEffect(StatusType.InspectingSelf);
-						
 					}
 					else
-					{ 
-						InspectingDice.Remove(self);
+					{
+						inspectingDice.Remove(self);
 						self.RemoveEffect(StatusType.InspectingSelf);
 					}
 				}
-				lastIsHovering = self.isHovering;
 
 				// go to dice action selection state when this dice is pressed
-				if (self.playerId == stateMachine.Params.player.id && self.isPressed)
+				if (game.CurrentPlayer == self.Player && self.IsUserPressed)
 				{
-					SelectedDice.Add(self);
-					List<Die> dice = new List<Die>();
-					dice.Add(self);
-					stateMachine.ChangeState(State.DiceActionSelect,
-						new StateParams()
-						{
-							player = stateMachine.Params.player,
-							dice = dice
-						});
+					selectedDice.Add(self);
+					stateMachine.ChangeState(DiceRoller.State.DiceActionSelect);
 				}
 			}
 
@@ -364,23 +418,15 @@ namespace DiceRoller
 			/// </summary>
 			public override void OnStateExit()
 			{
-				// hide occupied tiles on board
-				/*
-				foreach (Tile tile in lastOccupiedTiles)
-				{
-					tile.RemoveDisplay(this, Tile.DisplayType.Position);
-				}
-				lastOccupiedTiles.Clear();
-				*/
-
 				// hide dice info on ui
-				if (self.IsInspecting)
+				if (self.IsBeingInspected)
 				{
-					InspectingDice.Remove(self);
+					inspectingDice.Remove(self);
 					self.RemoveEffect(StatusType.InspectingSelf);
 				}
 
-				lastIsHovering = false;
+				// reset caches
+				CachedValueUtils.ResetValueCache(ref lastIsHovering);
 			}
 		}
 
@@ -388,10 +434,12 @@ namespace DiceRoller
 		
 		protected class DiceActionSelectSB : StateBehaviour
 		{
-			protected readonly Die self = null;
+			// host reference
+			private readonly Die self = null;
 
-			protected bool lastIsHovering = false;
-			protected List<Tile> lastOccupiedTiles = new List<Tile>();
+			// caches
+			private bool isSelectedAtStateEnter = false;
+			private bool lastIsHovering = false;
 
 			/// <summary>
 			/// Constructor.
@@ -407,8 +455,9 @@ namespace DiceRoller
 			public override void OnStateEnter()
 			{
 				// display as selected
-				if (stateMachine.Params.dice.Contains(self))
+				if (self.IsSelected)
 				{
+					isSelectedAtStateEnter = true;
 					self.AddEffect(StatusType.SelectedSelf);
 				}
 			}
@@ -419,64 +468,42 @@ namespace DiceRoller
 			public override void OnStateUpdate()
 			{
 				// execute only if the selected unit is this unit
-				if (stateMachine.Params.player.id == self.playerId)
+				if (game.CurrentPlayer == self.Player)
 				{
 					// show dice info on ui
-					if (self.isHovering != lastIsHovering)
+					if (CachedValueUtils.HasValueChanged(self.IsUserHovering, ref lastIsHovering))
 					{
-						if (self.isHovering)
+						if (self.IsUserHovering)
 						{
-							InspectingDice.Add(self);
+							inspectingDice.Add(self);
 							self.AddEffect(StatusType.InspectingSelf);
 						}
 						else
 						{
-							InspectingDice.Remove(self);
+							inspectingDice.Remove(self);
 							self.RemoveEffect(StatusType.InspectingSelf);
 						}
 					}
-					lastIsHovering = self.isHovering;
 
 					// go to dice action selection state or navigation state when this dice is pressed
-					if (self.playerId == stateMachine.Params.player.id && self.isPressed)
+					if (self.IsUserPressed)
 					{
 						if (self.IsSelected)
 						{
-							SelectedDice.Remove(self);
-							self.RemoveEffect(StatusType.SelectedSelf);
+							selectedDice.Remove(self);
 						}
 						else
 						{
-							SelectedDice.Add(self);
-							self.AddEffect(StatusType.SelectedSelf);
+							selectedDice.Add(self);
 						}
 
-						List<Die> dice = stateMachine.Params.dice;
-						if (dice.Contains(self))
+						if (selectedDice.Count > 0)
 						{
-							dice.Remove(self);
+							stateMachine.ChangeState(DiceRoller.State.DiceActionSelect);
 						}
 						else
 						{
-							dice.Add(self);
-						}
-
-						if (dice.Count > 0)
-						{
-							stateMachine.ChangeState(State.DiceActionSelect,
-								new StateParams()
-								{
-									player = stateMachine.Params.player,
-									dice = dice
-								});
-						}
-						else
-						{
-							stateMachine.ChangeState(State.Navigation,
-								new StateParams()
-								{
-									player = stateMachine.Params.player
-								});
+							stateMachine.ChangeState(DiceRoller.State.Navigation);
 						}
 					}
 				}
@@ -488,30 +515,30 @@ namespace DiceRoller
 			public override void OnStateExit()
 			{
 				// revert display as selected
-				if (stateMachine.Params.dice.Contains(self))
+				if (isSelectedAtStateEnter)
 				{
+					isSelectedAtStateEnter = false;
 					self.RemoveEffect(StatusType.SelectedSelf);
 				}
 
 				// revert display as inspecting
-				if (self.IsInspecting)
+				if (self.IsBeingInspected)
 				{
-					InspectingDice.Remove(self);
+					inspectingDice.Remove(self);
 					self.RemoveEffect(StatusType.InspectingSelf);
 				}
 
-				lastIsHovering = false;
+				// reset caches
+				CachedValueUtils.ResetValueCache(ref lastIsHovering);
 			}
 		}
 
 		// ========================================================= Dice Throw State =========================================================
 
-		protected class DiceThrowSB : StateBehaviour
+		private class DiceThrowSB : StateBehaviour
 		{
-			protected readonly Die self = null;
-
-			protected bool lastIsHovering = false;
-			protected List<Tile> lastOccupiedTiles = new List<Tile>();
+			// host reference
+			private readonly Die self = null;
 
 			/// <summary>
 			/// Constructor.
@@ -540,10 +567,6 @@ namespace DiceRoller
 			/// </summary>
 			public override void OnStateExit()
 			{
-				if (stateMachine.Params.dice.Contains(self))
-				{
-					SelectedDice.Remove(self);
-				}
 			}
 		}
 	}

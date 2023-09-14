@@ -9,30 +9,6 @@ namespace DiceRoller
 {
 	public class Unit : Item
 	{
-		public static UniqueList<Unit> InspectingUnits { get; protected set; } = new UniqueList<Unit>();
-		public bool IsInspecting
-		{
-			get
-			{
-				return InspectingUnits.Contains(this);
-			}
-		}
-
-		public static UniqueList<Unit> SelectedUnits { get; protected set; } = new UniqueList<Unit>();
-		public bool IsSelected
-		{
-			get
-			{
-				return SelectedUnits.Contains(this);
-			}
-		}
-
-		public int Health { get; protected set; }
-		public int Melee { get; protected set; }
-		public int Defence { get; protected set; }
-		public int Magic { get; protected set; }
-		public int Movement { get; protected set; }
-
 		// parameters
 		[Header("Unit Parameters")]
 		public int maxHealth = 20;
@@ -43,13 +19,174 @@ namespace DiceRoller
 
 		public float moveTimePerTile = 0.2f;
 
-		// properties
-		public bool ActionDepleted { get; protected set; } = false;
+		// working variables
 
 		// events
 		public Action onHealthChanged = () => { };
 		public Action onStatChanged = () => { };
 
+		// ========================================================= Properties =========================================================
+
+		/// <summary>
+		/// Flag for if this unit is currently being inspected.
+		/// </summary>
+		public bool IsBeingInspected
+		{
+			get
+			{
+				return inspectingUnits.Contains(this);
+			}
+		}
+		private static UniqueList<Unit> inspectingUnits = new UniqueList<Unit>();
+
+		/// <summary>
+		/// Flag for if this unit is currently selected.
+		/// </summary>
+		public bool IsSelected
+		{
+			get
+			{
+				return selectedUnits.Contains(this);
+			}
+		}
+		private static UniqueList<Unit> selectedUnits = new UniqueList<Unit>();
+
+		/// <summary>
+		/// Flag for if this unit has deplete its actions.
+		/// </summary>
+		public bool ActionDepleted { get; private set; } = false;
+
+		/// <summary>
+		/// The current health value of this unit.
+		/// </summary>
+		public int Health
+		{
+			get
+			{
+				return _health;
+			}
+			private set
+			{
+				if (_health != value)
+				{
+					_health = value;
+					onHealthChanged.Invoke();
+				}
+			}
+		}
+		private int _health = 0;
+
+		/// <summary>
+		/// The current melee value of this unit.
+		/// </summary>
+		public int Melee 
+		{
+			get
+			{
+				return _melee;
+			}
+			private set
+			{
+				if (_melee != value)
+				{
+					_melee = value;
+					onStatChanged.Invoke();
+				}
+			}
+		}
+		private int _melee = 0;
+
+		/// <summary>
+		/// The current defence value of this unit.
+		/// </summary>
+		public int Defence
+		{
+			get
+			{
+				return _defence;
+			}
+			private set
+			{
+				if (_defence != value)
+				{
+					_defence = value;
+					onStatChanged.Invoke();
+				}
+			}
+		}
+		private int _defence = 0;
+
+		/// <summary>
+		/// The current magic value of this unit.
+		/// </summary>
+		public int Magic
+		{
+			get
+			{
+				return _magic;
+			}
+			private set
+			{
+				if (_magic != value)
+				{
+					_magic = value;
+					onStatChanged.Invoke();
+				}
+			}
+		}
+		private int _magic = 0;
+
+		/// <summary>
+		/// The current movement value of this unit.
+		/// </summary>
+		public int Movement
+		{
+			get
+			{
+				return _movement;
+			}
+			private set
+			{
+				if (_movement != value)
+				{
+					_movement = value;
+					onStatChanged.Invoke();
+				}
+			}
+		}
+		private int _movement = 0;
+
+
+		/// <summary>
+		/// The starting tiles of a selected movement path.
+		/// </summary>
+		public List<Tile> MovementStartingTiles { get; private set; } = new List<Tile>();
+
+		/// <summary>
+		/// Tiles in a selected movment path from start to end.
+		/// </summary>
+		public List<Tile> MovementSelectedPath { get; private set; } = new List<Tile>();
+
+
+
+
+		// ========================================================= Inquiries =========================================================
+
+		/// <summary>
+		/// Retrieve the first unit being currently inspected, return null if none is being inspected.
+		/// </summary>
+		public static Unit GetFirstInspectingUnit()
+		{
+			return inspectingUnits.Count > 0 ? inspectingUnits[0] : null;
+		}
+
+		/// <summary>
+		/// Retrieve the first currently selected unit, return null if none is selected.
+		/// </summary>
+		public static Unit GetFirstSelectedUnit()
+		{
+			return selectedUnits.Count > 0 ? selectedUnits[0] : null;
+		}
 
 		// ========================================================= Monobehaviour Methods =========================================================
 
@@ -98,6 +235,7 @@ namespace DiceRoller
 		/// </summary>
 		protected void OnDrawGizmos()
 		{
+			// draw size of the unit
 			if (Application.isEditor)
 			{
 				Gizmos.color = Color.white;
@@ -105,7 +243,37 @@ namespace DiceRoller
 			}
 		}
 
-		// ========================================================= General Behaviour =========================================================
+		// ========================================================= Team Behaviour =========================================================
+
+		/// <summary>
+		/// Register this unit to a player.
+		/// </summary>
+		protected void RegisterToPlayer()
+		{
+			if (game == null)
+				return;
+
+			if (Player != null)
+			{
+				Player.units.Add(this);
+			}
+		}
+
+		/// <summary>
+		///  Deregister this unit from a player.
+		/// </summary>
+		protected void DeregisterFromPlayer()
+		{
+			if (game == null)
+				return;
+
+			if (Player != null)
+			{
+				Player.units.Remove(this);
+			}
+		}
+
+		// ========================================================= Unit Behaviour =========================================================
 
 		/// <summary>
 		/// Add or remove health by a set amount.
@@ -120,11 +288,7 @@ namespace DiceRoller
 		/// </summary>
 		public void SetHealth(int value)
 		{
-			if (Health != value)
-			{
-				Health = value;
-				onHealthChanged.Invoke();
-			}
+			Health = value;
 		}
 
 		/// <summary>
@@ -148,63 +312,10 @@ namespace DiceRoller
 		/// </summary>
 		public void SetStat(int meleeValue, int defencevalue, int magicValue, int movementValue)
 		{
-			bool changed = false;
-			if (Melee != meleeValue)
-			{
-				Melee = meleeValue;
-				changed = true;
-			}
-			if (Defence != defencevalue)
-			{
-				Defence = defencevalue;
-				changed = true;
-			}
-			if (Magic != magicValue)
-			{
-				Magic = magicValue;
-				changed = true;
-			}
-			if (Movement != movementValue)
-			{
-				Movement = movementValue;
-				changed = true;
-			}
-			if (changed)
-			{
-				onStatChanged.Invoke();
-			}
-		}
-
-		// ========================================================= Team Behaviour =========================================================
-
-		/// <summary>
-		/// Register this unit to a player.
-		/// </summary>
-		protected void RegisterToPlayer()
-		{
-			if (game == null)
-				return;
-
-			Player p = game.GetPlayerById(playerId);
-			if (p != null)
-			{
-				p.units.Add(this);
-			}
-		}
-
-		/// <summary>
-		///  Deregister this unit from a player.
-		/// </summary>
-		protected void DeregisterFromPlayer()
-		{
-			if (game == null)
-				return;
-
-			Player p = game.GetPlayerById(playerId);
-			if (p != null)
-			{
-				p.units.Remove(this);
-			}
+			Melee = meleeValue;
+			Defence = defencevalue;
+			Magic = magicValue;
+			Movement = movementValue;
 		}
 
 		// ========================================================= State Machine Behaviour =========================================================
@@ -229,7 +340,9 @@ namespace DiceRoller
 		protected void DeregisterStateBehaviours()
 		{
 			if (stateMachine != null)
+			{
 				stateMachine.DeregisterAll(this);
+			}
 		}
 
 
@@ -237,7 +350,8 @@ namespace DiceRoller
 
 		protected class StartTurnSB : StateBehaviour
 		{
-			protected readonly Unit self = null;
+			// host reference
+			private readonly Unit self = null;
 
 			/// <summary>
 			/// Constructor.
@@ -273,10 +387,14 @@ namespace DiceRoller
 
 		protected class NavigationSB : StateBehaviour
 		{
+			// host reference
 			protected readonly Unit self = null;
 
-			protected bool lastIsHovering = false;
-			protected List<Tile> lastOccupiedTiles = new List<Tile>();
+			// caches
+			private bool lastIsHovering = false;
+			private List<Tile> lastOccupiedTiles = new List<Tile>();
+			private List<Tile> addOccupiedTiles = new List<Tile>();
+			private List<Tile> removeOccupiedTiles = new List<Tile>();
 
 			/// <summary>
 			/// Constructor.
@@ -304,43 +422,39 @@ namespace DiceRoller
 			public override void OnStateUpdate()
 			{
 				// show occupied tiles on the board
-				List<Tile> tiles = self.isHovering ? self.OccupiedTiles : Tile.EmptyTiles;
-				foreach (Tile tile in tiles.Except(lastOccupiedTiles))
-				{
-					tile.AddDisplay(self, self.playerId == stateMachine.Params.player.id ? Tile.DisplayType.SelfPosition : Tile.DisplayType.EnemyPosition);
+				IReadOnlyCollection<Tile> tiles = self.IsUserHovering ? self.OccupiedTiles : Tile.EmptyTiles;
+				if (CachedValueUtils.HasCollectionChanged(tiles, lastOccupiedTiles, addOccupiedTiles, removeOccupiedTiles))
+				{ 
+					foreach (Tile tile in addOccupiedTiles)
+					{
+						tile.AddDisplay(self, self.Player == game.CurrentPlayer ? Tile.DisplayType.SelfPosition : Tile.DisplayType.EnemyPosition);
+					}
+					foreach (Tile tile in removeOccupiedTiles)
+					{
+						tile.RemoveDisplay(self, self.Player == game.CurrentPlayer ? Tile.DisplayType.SelfPosition : Tile.DisplayType.EnemyPosition);
+					}
 				}
-				foreach (Tile tile in lastOccupiedTiles.Except(tiles))
-				{
-					tile.RemoveDisplay(self, self.playerId == stateMachine.Params.player.id ? Tile.DisplayType.SelfPosition : Tile.DisplayType.EnemyPosition);
-				}
-				lastOccupiedTiles.Clear();
-				lastOccupiedTiles.AddRange(tiles);
 
 				// show unit info on ui
-				if (self.isHovering != lastIsHovering)
+				if (CachedValueUtils.HasValueChanged(self.IsUserHovering, ref lastIsHovering))
 				{
-					if (self.isHovering)
+					if (self.IsUserHovering)
 					{
-						InspectingUnits.Add(self);
-						self.AddEffect(self.playerId == stateMachine.Params.player.id ? StatusType.InspectingSelf : StatusType.InspectingEnemy);
+						inspectingUnits.Add(self);
+						self.AddEffect(self.Player == game.CurrentPlayer ? StatusType.InspectingSelf : StatusType.InspectingEnemy);
 					}
 					else
 					{
-						InspectingUnits.Remove(self);
-						self.RemoveEffect(self.playerId == stateMachine.Params.player.id ? StatusType.InspectingSelf : StatusType.InspectingEnemy);
+						inspectingUnits.Remove(self);
+						self.RemoveEffect(self.Player == game.CurrentPlayer ? StatusType.InspectingSelf : StatusType.InspectingEnemy);
 					}
 				}
-				lastIsHovering = self.isHovering;
 
 				// go to unit movement selection state when this unit is pressed
-				if (self.playerId == stateMachine.Params.player.id && self.isPressed && !self.ActionDepleted && self.OccupiedTiles.Count > 0)
+				if (self.Player == game.CurrentPlayer && self.IsUserPressed && !self.ActionDepleted && self.OccupiedTiles.Count > 0)
 				{
-					stateMachine.ChangeState(State.UnitActionSelect,
-						new StateParams()
-						{
-							player = stateMachine.Params.player,
-							unit = self
-						});
+					selectedUnits.Add(self);
+					stateMachine.ChangeState(State.UnitActionSelect);
 				}
 			}
 
@@ -358,17 +472,19 @@ namespace DiceRoller
 				// hide occupied tiles on board
 				foreach (Tile tile in lastOccupiedTiles)
 				{
-					tile.RemoveDisplay(self, self.playerId == stateMachine.Params.player.id ? Tile.DisplayType.SelfPosition : Tile.DisplayType.EnemyPosition);
+					tile.RemoveDisplay(self, self.Player == game.CurrentPlayer ? Tile.DisplayType.SelfPosition : Tile.DisplayType.EnemyPosition);
 				}
-				lastOccupiedTiles.Clear();
 
 				// hide unit info on ui
-				if (self.isHovering)
+				if (self.IsUserHovering)
 				{
-					InspectingUnits.Remove(self);
-					self.RemoveEffect(self.playerId == stateMachine.Params.player.id ? StatusType.InspectingSelf : StatusType.InspectingEnemy);
+					inspectingUnits.Remove(self);
+					self.RemoveEffect(self.Player == game.CurrentPlayer ? StatusType.InspectingSelf : StatusType.InspectingEnemy);
 				}
-				lastIsHovering = false;
+
+				// reset cache
+				CachedValueUtils.ResetValueCache(ref lastIsHovering);
+				CachedValueUtils.ResetCollectionCache(lastOccupiedTiles, addOccupiedTiles, removeOccupiedTiles);
 			}
 		}
 
@@ -376,20 +492,24 @@ namespace DiceRoller
 
 		class UnitActionSelectSB : StateBehaviour
 		{
-			protected readonly Unit self = null;
+			// host reference
+			private readonly Unit self = null;
 
-			protected List<Tile> lastOccupiedTiles = new List<Tile>();
-			protected List<Tile> otherOccupiedTiles = new List<Tile>();
-			protected List<Tile> lastMovementArea = new List<Tile>();
-			protected List<Tile> lastPath = new List<Tile>();
-			protected Tile lastTargetTile = null;
-			protected bool lastReachable = true;
-			protected Vector2 pressedPosition0 = Vector2.negativeInfinity;
-			protected Vector2 pressedPosition1 = Vector2.negativeInfinity;
+			// caches
+			private bool isSelectedAtStateEnter = false;
 
-			protected List<Tile> nextPath = new List<Tile>();
-			protected List<Tile> appendPath = new List<Tile>();
-			protected List<Tile> appendExcludedTiles = new List<Tile>();
+			private List<Tile> lastOccupiedTiles = new List<Tile>();
+			private List<Tile> otherOccupiedTiles = new List<Tile>();
+			private List<Tile> lastMovementArea = new List<Tile>();
+			private List<Tile> lastPath = new List<Tile>();
+			private Tile lastTargetTile = null;
+			private bool lastReachable = true;
+			private Vector2 pressedPosition0 = Vector2.negativeInfinity;
+			private Vector2 pressedPosition1 = Vector2.negativeInfinity;
+
+			private List<Tile> nextPath = new List<Tile>();
+			private List<Tile> appendPath = new List<Tile>();
+			private List<Tile> appendExcludedTiles = new List<Tile>();
 
 			/// <summary>
 			/// Constructor.
@@ -405,8 +525,10 @@ namespace DiceRoller
 			public override void OnStateEnter()
 			{
 				// execute only if the selected unit is this unit
-				if (stateMachine.Params.unit == self)
+				if (self.IsSelected)
 				{
+					isSelectedAtStateEnter = true;
+
 					// show selection effect
 					self.AddEffect(StatusType.SelectedSelf);
 
@@ -438,7 +560,7 @@ namespace DiceRoller
 					}
 
 					// shwo unit info on ui  
-					InspectingUnits.Add(self);
+					inspectingUnits.Add(self);
 				}
 			}
 
@@ -448,7 +570,7 @@ namespace DiceRoller
 			public override void OnStateUpdate()
 			{
 				// execute only if the selected unit is this unit
-				if (stateMachine.Params.unit == self)
+				if (self.IsSelected)
 				{
 					// find the target tile that the mouse is pointing to
 					Tile targetTile = null;
@@ -557,37 +679,28 @@ namespace DiceRoller
 						if (reachable)
 						{
 							// pressed on a valid tile, initiate movement
-							stateMachine.ChangeState(State.UnitMove,
-								new StateParams()
-								{
-									player = stateMachine.Params.player,
-									unit = self,
-									startingTiles = new List<Tile>(self.OccupiedTiles),
-									path = new List<Tile>(lastPath)
-								});
+							self.MovementStartingTiles.Clear();
+							self.MovementStartingTiles.AddRange(self.OccupiedTiles);
+							self.MovementSelectedPath.Clear();
+							self.MovementSelectedPath.AddRange(lastPath);
+
+							stateMachine.ChangeState(State.UnitMove);
 						}
 						else
 						{
 							// return to navigation otherwise
-							stateMachine.ChangeState(State.Navigation,
-								new StateParams()
-								{
-									player = stateMachine.Params.player
-								});
+							selectedUnits.Remove(self);
+							stateMachine.ChangeState(State.Navigation);
 						}
 					}
 
 					// detect return to navitation by right mouse pressing
 					if (InputUtils.GetMousePress(1, ref pressedPosition1))
-					{	
+					{
 						// return to navigation otherwise
-						stateMachine.ChangeState(State.Navigation,
-						new StateParams()
-						{
-							player = stateMachine.Params.player
-						});
+						selectedUnits.Remove(self);
+						stateMachine.ChangeState(State.Navigation);
 					}
-					pressedPosition1 = Vector2.negativeInfinity;
 				}
 			}
 
@@ -597,7 +710,7 @@ namespace DiceRoller
 			public override void OnStateExit()
 			{
 				// execute only if the selected unit is this unit
-				if (stateMachine.Params.unit == self)
+				if (isSelectedAtStateEnter)
 				{
 					// hide selection effect
 					self.RemoveEffect(StatusType.SelectedSelf);
@@ -642,7 +755,7 @@ namespace DiceRoller
 					lastReachable = true;
 
 					// hide unit info on ui
-					InspectingUnits.Remove(self);
+					inspectingUnits.Remove(self);
 
 					// clear flags
 					InputUtils.ResetPressCache(ref pressedPosition0);
@@ -672,24 +785,27 @@ namespace DiceRoller
 			public override void OnStateEnter()
 			{
 				// execute only if the moving unit is this unit
-				if (stateMachine.Params.unit == self)
+				if (self.IsSelected)
 				{
-					self.StartCoroutine(MoveSequence(stateMachine.Params.startingTiles, stateMachine.Params.path));
+					self.StartCoroutine(MoveSequence());
 				}
 			}
 
 			/// <summary>
 			/// Movement coroutine for this unit.
 			/// </summary>
-			protected IEnumerator MoveSequence(List<Tile> startTiles, List<Tile> path)
+			protected IEnumerator MoveSequence()
 			{
+				List<Tile> startTiles = self.MovementStartingTiles;
+				List<Tile> path = self.MovementSelectedPath;
+
 				// show all displays on grid
 				startTiles.ForEach(x => x.AddDisplay(self, Tile.DisplayType.SelfPosition));
 				path.ForEach(x => { x.AddDisplay(self, Tile.DisplayType.Move); x.ShowPath(path); });
 				path[path.Count - 1].AddDisplay(self, Tile.DisplayType.MoveTarget);
 
 				// show unit info on ui
-				InspectingUnits.Add(self);
+				inspectingUnits.Add(self);
 
 				float startTime = 0;
 				float duration = 0;
@@ -734,17 +850,18 @@ namespace DiceRoller
 				path[path.Count - 1].RemoveDisplay(self, Tile.DisplayType.MoveTarget);
 
 				// hide unit info on ui
-				InspectingUnits.Remove(self);
+				inspectingUnits.Remove(self);
 
 				// set flag
 				self.ActionDepleted = true;
 
+				// clear information
+				selectedUnits.Remove(self);
+				self.MovementStartingTiles.Clear();
+				self.MovementSelectedPath.Clear();
+				
 				// change state back to navigation
-				stateMachine.ChangeState(State.Navigation,
-					new StateParams()
-					{
-						player = stateMachine.Params.player
-					});
+				stateMachine.ChangeState(State.Navigation);
 			}
 
 			/// <summary>

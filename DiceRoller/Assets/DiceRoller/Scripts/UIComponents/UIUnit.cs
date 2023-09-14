@@ -117,7 +117,7 @@ namespace DiceRoller
                 outlineImage.sprite = unit.outlineSprite;
                 outlineImage.enabled = unit.IsSelected;
                 overlayImage.sprite = unit.overlaySprite;
-                overlayImage.enabled = unit.IsInspecting;
+                overlayImage.enabled = unit.IsBeingInspected;
 
                 // change name text
                 nameText.text = unit.name;

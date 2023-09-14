@@ -76,7 +76,7 @@ namespace DiceRoller
 		{
 			if (game.CurrentTurn != null)
 			{
-				playerText.text = string.Format("Player : {0}", game.GetPlayerById(game.CurrentTurn.playerId).name);
+				playerText.text = string.Format("Player : {0}", game.CurrentPlayer.name);
 			}
 			else
 			{

@@ -58,7 +58,14 @@ namespace DiceRoller
 			}
 		}
 
-		public static List<Tile> EmptyTiles { get; protected set; } = new List<Tile>();
+		public static IReadOnlyCollection<Tile> EmptyTiles
+		{ 
+			get
+			{
+				return emptytiles.AsReadOnly();
+			} 
+		}
+		private static List<Tile> emptytiles = new List<Tile>();
 
 		// parameters
 		[HideInInspector]

@@ -244,11 +244,13 @@ namespace DiceRoller
 		}
 
 		// ========================================================= Dice Action State =========================================================
-		protected class DiceActionSelectSB : StateBehaviour
+		private class DiceActionSelectSB : StateBehaviour
 		{
-			protected readonly DiceThrower self = null;
+			// host reference
+			private readonly DiceThrower self = null;
 
-			protected Vector2 pressedPosition1 = Vector2.negativeInfinity;
+			// caches
+			private Vector2 pressedPosition1 = Vector2.negativeInfinity;
 
 			/// <summary>
 			/// Constructor.
@@ -271,31 +273,17 @@ namespace DiceRoller
 			public override void OnStateUpdate()
 			{
 				// detect abort bu checking left mouse button click
-				if (Input.GetMouseButtonDown(1))
+				if (InputUtils.GetMousePress(1, ref pressedPosition1))
 				{
-					pressedPosition1 = Input.mousePosition;
-				}
-				if (Input.GetMouseButtonUp(1) && pressedPosition1 != Vector2.negativeInfinity)
-				{
-					if (Vector2.Distance(pressedPosition1, Input.mousePosition) < 2f)
-					{
-						stateMachine.ChangeState(State.Navigation, new StateParams
-						{
-							player = stateMachine.Params.player
-						});
-					}
-					pressedPosition1 = Vector2.negativeInfinity;
+					Die.ClearSelectedDice();
+					stateMachine.ChangeState(State.Navigation);
 				}
 
 				// change to dice throw state if a throw is detected
-				DetectThrowResult result = self.DetectThrow(stateMachine.Params.dice);
+				DetectThrowResult result = self.DetectThrow(Die.GetAllSelectedDice());
 				if (result == DetectThrowResult.Thrown)
 				{
-					stateMachine.ChangeState(State.DiceThrow, new StateParams
-					{
-						player = stateMachine.Params.player,
-						dice = stateMachine.Params.dice
-					});
+					stateMachine.ChangeState(State.DiceThrow);
 				}
 			}
 
@@ -304,7 +292,7 @@ namespace DiceRoller
 			/// </summary>
 			public override void OnStateExit()
 			{
-				pressedPosition1 = Vector2.negativeInfinity;
+				InputUtils.ResetPressCache(ref pressedPosition1);
 			}
 		}
 
@@ -334,12 +322,10 @@ namespace DiceRoller
 			public override void OnStateUpdate()
 			{
 				// change to navigation state if dice throw is completed
-				if (stateMachine.Params.dice.All(x => x.Value != -1))
+				if (Die.GetAllSelectedDice().All(x => !x.IsMoving || x.IsFallen))
 				{
-					stateMachine.ChangeState(State.Navigation, new StateParams 
-					{ 
-						player = stateMachine.Params.player
-					});
+					Die.ClearSelectedDice();
+					stateMachine.ChangeState(State.Navigation);
 				}
 			}
 

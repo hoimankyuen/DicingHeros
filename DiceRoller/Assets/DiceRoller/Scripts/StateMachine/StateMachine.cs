@@ -32,10 +32,10 @@ namespace DiceRoller
 		// working variables
 		protected Dictionary<State, List<HostBehaviour>> stateBehaviours = new Dictionary<State, List<HostBehaviour>>();
 		protected State nextState = State.None;
-		protected StateParams nextStateParams;
+		//protected StateParams nextStateParams;
 
 		public State Current { get; protected set; } = State.None;
-		public StateParams Params { get; protected set; }
+		//public StateParams Params { get; protected set; }
 
 		// ========================================================= Monobehaviour Methods =========================================================
 
@@ -99,11 +99,17 @@ namespace DiceRoller
 		/// <summary>
 		/// Request a change on the state along with the parameters if needed.
 		/// </summary>
+		public void ChangeState(State state)
+		{
+			nextState = state;
+		}
+		/*
 		public void ChangeState(State state, StateParams stateParams)
 		{
 			nextState = state;
 			nextStateParams = stateParams;
 		}
+		*/
 
 		/// <summary>
 		/// Run the state machine and drive all registered state machine behaviour.
@@ -125,7 +131,7 @@ namespace DiceRoller
 
 				// change the current state and update params, reset flag
 				Current = nextState;
-				Params = nextStateParams;
+				//Params = nextStateParams;
 				nextState = State.None;
 
 				// invoke all OnStateEnter on all registered

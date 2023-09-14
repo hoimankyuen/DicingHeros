@@ -63,25 +63,30 @@ namespace DiceRoller
 
 		protected void Populate()
 		{
+			Unit targetUnit = Unit.GetFirstInspectingUnit();
+			Die targetDie = Die.GetFirstInspectingDie();
+
 			// display selectable information
-			if (Unit.InspectingUnits != null && Unit.InspectingUnits.Count > 0)
+			if (targetUnit != null)
 			{
 				// show unit information
+				Unit target = Unit.GetFirstInspectingUnit();
+				
 				dieDisplay.gameObject.SetActive(false);
 
 				unitImage.gameObject.SetActive(true);
-				unitImage.sprite = Unit.InspectingUnits[0].iconSprite;
+				unitImage.sprite = target.iconSprite;
 				healthDisplay.gameObject.SetActive(true);
-				healthDisplay.SetDisplay(Unit.InspectingUnits[0]);
+				healthDisplay.SetDisplay(target);
 				statDisplay.gameObject.SetActive(true);
-				statDisplay.SetDisplay(Unit.InspectingUnits[0]);
+				statDisplay.SetDisplay(target);
 
 			}
-			else if (Die.InspectingDice != null && Die.InspectingDice.Count > 0 && Die.InspectingDice[0].Value != -1)
+			else if (targetDie != null && targetDie.Value != -1)
 			{
 				// show dice information
 				dieDisplay.gameObject.SetActive(true);
-				dieDisplay.SetDisplay(Die.InspectingDice[0]);
+				dieDisplay.SetDisplay(targetDie);
 
 				unitImage.gameObject.SetActive(false);
 				healthDisplay.gameObject.SetActive(false);

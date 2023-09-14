@@ -13,72 +13,74 @@ namespace DiceRoller
 		// singleton
 		public static GameController current { get; protected set; }
 
-		// references
-		protected StateMachine stateMachine { get { return StateMachine.current; } }
-		protected DiceThrower diceThrower { get { return DiceThrower.current; } }
-
 		// paramaters
+		[Header("Player Information")]
 		[SerializeField]
-		protected int totalPlayers = 2;
-		[SerializeField]
-		protected List<Player> players = new List<Player>();
+		private List<Player> players = new List<Player>();
 
-		// properties
-		public Player CurrentPlayer { get; protected set; } = null;
-		public Turn CurrentTurn { get; protected set; } = null;
+		// references
+		private StateMachine stateMachine => StateMachine.current;
+		private DiceThrower diceThrower => DiceThrower.current;
 
 		// working variables
-		protected List<Turn> previousTurns = new List<Turn>();
-		protected Dictionary<int, Player> playersDict = new Dictionary<int, Player>();
+		private Dictionary<int, Player> playersDict = new Dictionary<int, Player>();
+		private List<Turn> previousTurns = new List<Turn>();
 
 		// events
-		public Action onPlayerChanged = () => {};
+		public Action onPlayerChanged = () => { };
 		public Action onTurnChanged = () => { };
 
-		// ========================================================= Monobehaviour Methods =========================================================
-
+		// ========================================================= Properties =========================================================
+		
 		/// <summary>
-		/// Awake is called when the game object was created. It is always called before start and is 
-		/// independent of if the game object is active or not.
+		/// Current player that is active within this turn.
 		/// </summary>
-		protected void Awake()
+		public Player CurrentPlayer
 		{
-			current = this;
-
-			foreach (Player player in players)
+			get
 			{
-				playersDict[player.id] = player;
+				return _currentPlayer;
 			}
-
-			Application.targetFrameRate = 60;
+			private set
+			{
+				if (_currentPlayer != value)
+				{
+					_currentPlayer = value;
+					onPlayerChanged.Invoke();
+				}
+			}
 		}
+		private Player _currentPlayer = null;
 
 		/// <summary>
-		/// Start is called before the first frame update and/or the game object is first active.
+		/// Current turn the game is in.
 		/// </summary>
-		protected void Start()
+		public Turn CurrentTurn
 		{
-			RegisterStateBehaviours();
-			stateMachine.ChangeState(State.StartTurn, new StateParams() { player = players[0] });
+			get
+			{
+				return _currentTurn;
+			}
+			private set
+			{
+				if (_currentTurn != value)
+				{
+					_currentTurn = value;
+					onTurnChanged.Invoke();
+				}
+			}
 		}
+		private Turn _currentTurn = null;
+
+		// ========================================================= Inquiries =========================================================
 
 		/// <summary>
-		/// Update is called once per frame.
+		/// Retrieve a list of all players.
 		/// </summary>
-		protected void Update()
+		public IReadOnlyCollection<Player> GetAllPlayers()
 		{
+			return players.AsReadOnly();
 		}
-
-		/// <summary>
-		/// OnDestroy is called when an game object is destroyed.
-		/// </summary>
-		protected void OnDestroy()
-		{
-			DeregisterStateBehaviours();
-			current = null;
-		}
-
-		// ========================================================= Information Handling =========================================================
 
 		/// <summary>
 		/// Retrieve a player object by its id.
@@ -95,12 +97,58 @@ namespace DiceRoller
 			}
 		}
 
+		// ========================================================= Monobehaviour Methods =========================================================
+
 		/// <summary>
-		/// Retrieve a list of all players.
+		/// Awake is called when the game object was created. It is always called before start and is 
+		/// independent of if the game object is active or not.
 		/// </summary>
-		public IReadOnlyCollection<Player> GetAllPlayers()
+		private void Awake()
 		{
-			return players.AsReadOnly();
+			current = this;
+
+			foreach (Player player in players)
+			{
+				playersDict[player.id] = player;
+			}
+
+			Application.targetFrameRate = 60;
+		}
+
+		/// <summary>
+		/// Start is called before the first frame update and/or the game object is first active.
+		/// </summary>
+		private void Start()
+		{
+			RegisterStateBehaviours();
+			StartGame();
+		}
+
+		/// <summary>
+		/// Update is called once per frame.
+		/// </summary>
+		private void Update()
+		{
+		}
+
+		/// <summary>
+		/// OnDestroy is called when an game object is destroyed.
+		/// </summary>
+		private void OnDestroy()
+		{
+			DeregisterStateBehaviours();
+			current = null;
+		}
+
+		// ========================================================= General Behaviour =========================================================
+
+		/// <summary>
+		/// Start the game from the first player.
+		/// </summary>
+		private void StartGame()
+		{
+			CurrentPlayer = players[0];
+			stateMachine.ChangeState(State.StartTurn);
 		}
 
 		// ========================================================= State Machine Behaviour =========================================================
@@ -108,7 +156,7 @@ namespace DiceRoller
 		/// <summary>
 		/// Register all state behaviour to the centralized state machine.
 		/// </summary>
-		protected void RegisterStateBehaviours()
+		private void RegisterStateBehaviours()
 		{
 			stateMachine.Register(this, State.StartTurn, new StartTurnSB(this));
 			stateMachine.Register(this, State.EndTurn, new EndTurnSB(this));
@@ -117,17 +165,20 @@ namespace DiceRoller
 		/// <summary>
 		/// Deregister all state behaviours to the centralized state machine.
 		/// </summary>
-		protected void DeregisterStateBehaviours()
+		private void DeregisterStateBehaviours()
 		{
 			if (stateMachine != null)
+			{
 				stateMachine.DeregisterAll(this);
+			}
 		}
 
 		// ========================================================= Start Turn State =========================================================
 
-		protected class StartTurnSB : StateBehaviour
+		private class StartTurnSB : StateBehaviour
 		{
-			protected GameController self;
+			// host reference
+			private GameController self;
 
 			/// <summary>
 			/// Constructor.
@@ -142,7 +193,7 @@ namespace DiceRoller
 			/// </summary>
 			public override void OnStateEnter()
 			{
-				// create new turn entry and find turn information
+				// create new turn entry and fill in turn information
 				Turn turn = new Turn();
 				int maxTurnId = self.previousTurns.Count > 0 ? self.previousTurns.Max(x => x.id) : -1;
 				int maxTurnNumber = self.previousTurns.Count > 0 ? self.previousTurns.Max(x => x.turnNumber) : 1;
@@ -162,18 +213,18 @@ namespace DiceRoller
 					turn.turnNumber = maxTurnNumber;
 					turn.playerId = remainingPlayerIds.First();
 				}
-				self.CurrentTurn = turn;
-				self.onTurnChanged.Invoke();
 
-				// change the current player
+				// set current turn as the newly created turn entry
+				self.CurrentTurn = turn;
+
+				// select the next player and set it as current player
 				self.CurrentPlayer = self.players.Find(x => x.id == turn.playerId);
-				self.onPlayerChanged.Invoke();
 
 				// reset remaining throw
 				self.diceThrower.ResetRemainingThrow(self.CurrentPlayer.throws);
 
-				// change to navigation state
-				stateMachine.ChangeState(State.Navigation, new StateParams() { player = game.CurrentPlayer });
+				// going into the new turn by changing to navigation state
+				stateMachine.ChangeState(State.Navigation);
 			}
 
 			/// <summary>
@@ -191,12 +242,12 @@ namespace DiceRoller
 			}
 		}
 
-
 		// ========================================================= End Turn State =========================================================
 
-		protected class EndTurnSB : StateBehaviour
+		private class EndTurnSB : StateBehaviour
 		{
-			protected GameController self;
+			// host reference
+			private GameController self;
 
 			/// <summary>
 			/// Constructor.
@@ -211,10 +262,11 @@ namespace DiceRoller
 			/// </summary>
 			public override void OnStateEnter()
 			{
+				// store the current turn
 				self.previousTurns.Add(self.CurrentTurn);
-				self.CurrentTurn = null;
-
-				stateMachine.ChangeState(State.StartTurn, new StateParams() { });
+				
+				// start a new turn by changing to navigation state
+				stateMachine.ChangeState(State.StartTurn);
 			}
 
 			/// <summary>
@@ -232,13 +284,16 @@ namespace DiceRoller
 			}
 		}
 
-		// ========================================================= Other =========================================================
+		// ========================================================= Navigation State =========================================================
 
+		/// <summary>
+		/// End the current turn and start the next turn.
+		/// </summary>
 		public void ProgressTurn()
 		{
 			if (stateMachine.Current == State.Navigation)
 			{
-				stateMachine.ChangeState(State.EndTurn, new StateParams() { player = stateMachine.Params.player });;
+				stateMachine.ChangeState(State.EndTurn);
 			}
 		}
 	}
