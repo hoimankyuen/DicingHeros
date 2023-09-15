@@ -95,6 +95,7 @@ namespace DiceRoller
 			}
 		}
 		private bool rollInitiating = false;
+		private float lastRotatingTime = 0;
 
 		/// <summary>
 		/// The current value of this die, -1 if value is invalid.
@@ -116,8 +117,6 @@ namespace DiceRoller
 		}
 		private int _value = -1;
 		private Quaternion lastRotation = Quaternion.identity;
-		private float lastRotatingTime = 0;
-		
 
 		/// <summary>
 		/// The current state of this die.

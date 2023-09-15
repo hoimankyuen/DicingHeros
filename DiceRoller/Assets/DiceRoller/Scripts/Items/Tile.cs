@@ -68,11 +68,9 @@ namespace DiceRoller
 		private static List<Tile> emptytiles = new List<Tile>();
 
 		// parameters
-		[HideInInspector]
+		[Header("Tile Properties (Auto Generated)")]
 		public float tileSize = 1f;
-		[HideInInspector]
 		public List<Tile> connectedTiles = new List<Tile>();
-		[HideInInspector]
 		public Int2 boardPos = Int2.zero;
 
 		public TileStyle style = null;
@@ -158,6 +156,18 @@ namespace DiceRoller
 		void OnMouseDown()
 		{
 
+		}
+
+		/// <summary>
+		/// OnDrawGizmos is called when the game object is in editor mode
+		/// </summary>
+		protected void OnDrawGizmos()
+		{
+			// draw size and each face of the die
+			if (Application.isEditor)
+			{
+				// draw connections
+			}
 		}
 
 		// ========================================================= Editor =========================================================
