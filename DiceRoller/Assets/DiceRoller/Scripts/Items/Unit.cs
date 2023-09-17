@@ -421,7 +421,7 @@ namespace DiceRoller
 			// caches
 			private bool lastIsHovering = false;
 			private List<Tile> lastOccupiedTiles = new List<Tile>();
-			private List<Tile> addOccupiedTiles = new List<Tile>();
+			private List<Tile> affectedOccupiedTiles = new List<Tile>();
 			private List<Tile> removeOccupiedTiles = new List<Tile>();
 
 			/// <summary>
@@ -451,15 +451,11 @@ namespace DiceRoller
 			{
 				// show occupied tiles on the board
 				IReadOnlyCollection<Tile> tiles = self.IsUserHovering ? self.OccupiedTiles : Tile.EmptyTiles;
-				if (CachedValueUtils.HasCollectionChanged(tiles, lastOccupiedTiles, addOccupiedTiles, removeOccupiedTiles))
-				{ 
-					foreach (Tile tile in addOccupiedTiles)
+				if (CachedValueUtils.HasCollectionChanged(tiles, lastOccupiedTiles, affectedOccupiedTiles))
+				{
+					foreach (Tile tile in affectedOccupiedTiles)
 					{
-						tile.AddDisplay(self, self.Player == game.CurrentPlayer ? Tile.DisplayType.SelfPosition : Tile.DisplayType.EnemyPosition);
-					}
-					foreach (Tile tile in removeOccupiedTiles)
-					{
-						tile.RemoveDisplay(self, self.Player == game.CurrentPlayer ? Tile.DisplayType.SelfPosition : Tile.DisplayType.EnemyPosition);
+						tile.UpdateDisplayAs(self, self.Player == game.CurrentPlayer ? Tile.DisplayType.SelfPosition : Tile.DisplayType.EnemyPosition, tiles);
 					}
 				}
 
@@ -500,7 +496,7 @@ namespace DiceRoller
 				// hide occupied tiles on board
 				foreach (Tile tile in lastOccupiedTiles)
 				{
-					tile.RemoveDisplay(self, self.Player == game.CurrentPlayer ? Tile.DisplayType.SelfPosition : Tile.DisplayType.EnemyPosition);
+					tile.UpdateDisplayAs(self, self.Player == game.CurrentPlayer ? Tile.DisplayType.SelfPosition : Tile.DisplayType.EnemyPosition, Tile.EmptyTiles);
 				}
 
 				// hide unit info on ui
@@ -512,7 +508,7 @@ namespace DiceRoller
 
 				// reset cache
 				CachedValueUtils.ResetValueCache(ref lastIsHovering);
-				CachedValueUtils.ResetCollectionCache(lastOccupiedTiles, addOccupiedTiles, removeOccupiedTiles);
+				CachedValueUtils.ResetCollectionCache(lastOccupiedTiles, affectedOccupiedTiles);
 			}
 		}
 
@@ -570,7 +566,7 @@ namespace DiceRoller
 					lastOccupiedTiles.AddRange(self.OccupiedTiles);
 					foreach (Tile tile in lastOccupiedTiles)
 					{
-						tile.AddDisplay(self, Tile.DisplayType.SelfPosition);
+						tile.UpdateDisplayAs(self, Tile.DisplayType.SelfPosition, lastOccupiedTiles);
 					}
 
 					// find all tiles that are occupied by other units
@@ -590,7 +586,7 @@ namespace DiceRoller
 					board.GetConnectedTilesInRange(self.OccupiedTiles, otherOccupiedTiles, self.baseMovement, lastMovementArea);
 					foreach (Tile tile in lastMovementArea)
 					{
-						tile.AddDisplay(self, Tile.DisplayType.Move);
+						tile.UpdateDisplayAs(self, Tile.DisplayType.Move, lastMovementArea);
 					}
 				}
 			}
@@ -690,11 +686,11 @@ namespace DiceRoller
 						// show target tile on the board
 						if (lastTargetTile != null && lastReachable)
 						{
-							lastTargetTile.RemoveDisplay(self, Tile.DisplayType.MoveTarget);
+							lastTargetTile.UpdateDisplayAs(self, Tile.DisplayType.MoveTarget, (Tile)null);
 						}
 						if (targetTile != null && reachable)
 						{
-							targetTile.AddDisplay(self, Tile.DisplayType.MoveTarget);
+							targetTile.UpdateDisplayAs(self, Tile.DisplayType.MoveTarget, targetTile);
 						}
 
 						lastPath.Clear();
@@ -755,7 +751,7 @@ namespace DiceRoller
 					// hide occupied tiles on board
 					foreach (Tile tile in lastOccupiedTiles)
 					{
-						tile.RemoveDisplay(self, Tile.DisplayType.SelfPosition);
+						tile.UpdateDisplayAs(self, Tile.DisplayType.SelfPosition, Tile.EmptyTiles);
 					}
 					lastOccupiedTiles.Clear();
 
@@ -765,7 +761,7 @@ namespace DiceRoller
 					// hide possible movement area on board
 					foreach (Tile tile in lastMovementArea)
 					{
-						tile.RemoveDisplay(self, Tile.DisplayType.Move);
+						tile.UpdateDisplayAs(self, Tile.DisplayType.Move, Tile.EmptyTiles);
 					}
 					lastMovementArea.Clear();
 
@@ -781,7 +777,7 @@ namespace DiceRoller
 					{
 						if (lastReachable)
 						{
-							lastTargetTile.RemoveDisplay(this, Tile.DisplayType.MoveTarget);
+							lastTargetTile.UpdateDisplayAs(this, Tile.DisplayType.MoveTarget, Tile.EmptyTiles);
 						}
 						else
 						{
@@ -840,9 +836,9 @@ namespace DiceRoller
 				List<Tile> path = self.MovementSelectedPath;
 
 				// show all displays on grid
-				startTiles.ForEach(x => x.AddDisplay(self, Tile.DisplayType.SelfPosition));
-				path.ForEach(x => { x.AddDisplay(self, Tile.DisplayType.Move); x.ShowPath(path); });
-				path[path.Count - 1].AddDisplay(self, Tile.DisplayType.MoveTarget);
+				startTiles.ForEach(x => x.UpdateDisplayAs(self, Tile.DisplayType.SelfPosition, startTiles));
+				path.ForEach(x => { x.UpdateDisplayAs(self, Tile.DisplayType.Move, path); x.ShowPath(path); });
+				path[path.Count - 1].UpdateDisplayAs(self, Tile.DisplayType.MoveTarget, path[path.Count - 1]);
 
 				// show unit info on ui
 				float startTime = 0;
@@ -883,9 +879,9 @@ namespace DiceRoller
 				}
 
 				// hide all displays on grid
-				startTiles.ForEach(x => x.RemoveDisplay(self, Tile.DisplayType.SelfPosition));
-				path.ForEach(x => { x.RemoveDisplay(self, Tile.DisplayType.Move); x.HidePath(); });
-				path[path.Count - 1].RemoveDisplay(self, Tile.DisplayType.MoveTarget);
+				startTiles.ForEach(x => x.UpdateDisplayAs(self, Tile.DisplayType.SelfPosition, Tile.EmptyTiles));
+				path.ForEach(x => { x.UpdateDisplayAs(self, Tile.DisplayType.Move, Tile.EmptyTiles); x.HidePath(); });
+				path[path.Count - 1].UpdateDisplayAs(self, Tile.DisplayType.MoveTarget, (Tile)null);
 
 				// set flag
 				self.ActionDepleted = true;

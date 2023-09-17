@@ -24,25 +24,26 @@ public class CachedValueUtils
 		cache = default;
 	}
 
-	public static bool HasCollectionChanged<T>(IReadOnlyCollection<T> target, ICollection<T> cache, ICollection<T> add, ICollection<T> remove)
+	public static bool HasCollectionChanged<T>(IReadOnlyCollection<T> target, ICollection<T> cache, ICollection<T> affected)
 	{
 		if (!target.SequenceEqual(cache))
 		{
-			add.Clear();
-			foreach (T t in target.Except(cache))
+			affected.Clear();
+			foreach (T t in target)
 			{
-				add.Add(t);
+				affected.Add(t);
 			}
-			remove.Clear();
 			foreach (T t in cache.Except(target))
 			{
-				remove.Add(t);
+				affected.Add(t);
 			}
+
 			cache.Clear();
 			foreach (T t in target)
 			{
 				cache.Add(t);
 			}
+			
 			return true;
 		}
 		else
@@ -51,10 +52,9 @@ public class CachedValueUtils
 		}
 	}
 
-	public static void ResetCollectionCache<T>(ICollection<T> cache, ICollection<T> add, ICollection<T> remove)
+	public static void ResetCollectionCache<T>(ICollection<T> cache, ICollection<T> affected)
 	{
 		cache.Clear();
-		add.Clear();
-		remove.Clear();
+		affected.Clear();
 	}
 }

@@ -50,11 +50,11 @@ namespace DiceRoller
 			current = this;
 			for (int i = 0; i < transform.childCount; i++)
 			{
-				if (transform.GetChild(i).CompareTag("Tile"))
+				if (transform.GetChild(i).gameObject.activeInHierarchy)
 				{
-					if (transform.GetChild(i).gameObject.activeInHierarchy)
+					Tile tile = transform.GetChild(i).GetComponent<Tile>();
+					if (tile != null)
 					{
-						Tile tile = transform.GetChild(i).GetComponent<Tile>();
 						tiles[tile.boardPos] = tile;
 					}
 				}

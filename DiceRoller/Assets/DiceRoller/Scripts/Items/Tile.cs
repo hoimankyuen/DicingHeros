@@ -28,9 +28,9 @@ namespace DiceRoller
 		{
 			Start,
 			Right,
-			Front,
+			Top,
 			Left,
-			Back,
+			Bottom,
 			End,
 		}
 
@@ -58,6 +58,17 @@ namespace DiceRoller
 			}
 		}
 
+		public class RangeDisplayEntry
+		{
+			public object holder;
+			public TileRange range;
+			public RangeDisplayEntry(object holder, TileRange range)
+			{
+				this.holder = holder;
+				this.range = range;
+			}
+		}
+
 		public static IReadOnlyCollection<Tile> EmptyTiles
 		{ 
 			get
@@ -73,19 +84,21 @@ namespace DiceRoller
 		public List<Tile> connectedTiles = new List<Tile>();
 		public Int2 boardPos = Int2.zero;
 
+		[Header("Resources")]
 		public TileStyle style = null;
 
 		// reference
-		protected GameController Game { get { return GameController.current; } }
+		private GameController Game { get { return GameController.current; } }
 
 		// component
-		protected SpriteRenderer displaySpriteRenderer = null;
-		protected SpriteRenderer pathSpriteRenderer = null;
-		protected new Collider collider = null;
+		private SpriteRenderer tileRenderer = null;
+		private List<TileRange> tileRanges = new List<TileRange>();
+		private SpriteRenderer pathRenderer = null;
+		private new Collider collider = null;
 
 		// working variables
-		protected Dictionary<DisplayType, HashSet<object>> registeredDisplay = new Dictionary<DisplayType, HashSet<object>>();
-		protected bool isHovering = false;
+		private Dictionary<DisplayType, List<RangeDisplayEntry>> registeredDisplay = new Dictionary<DisplayType, List<RangeDisplayEntry>>();
+		private bool isHovering = false;
 
 		// ========================================================= Monobehaviour Methods =========================================================
 
@@ -93,22 +106,25 @@ namespace DiceRoller
 		/// Awake is called when the game object was created. It is always called before start and is 
 		/// independent of if the game object is active or not.
 		/// </summary>
-		void Awake()
+		private void Awake()
 		{
-			displaySpriteRenderer = transform.Find("Model/DisplaySprite").GetComponent<SpriteRenderer>();
-			pathSpriteRenderer = transform.Find("Model/PathSprite").GetComponent<SpriteRenderer>();
+			tileRenderer = transform.Find("Sprites/Tile").GetComponent<SpriteRenderer>();
+			tileRanges.Add(transform.Find("Sprites/Ranges/Range").GetComponent<TileRange>());
+			pathRenderer = transform.Find("Sprites/Path").GetComponent<SpriteRenderer>();
 			collider = transform.Find("Collider").GetComponent<Collider>();
 
 			for (int i = 0; i < DisplayTypeCount; i++)
 			{
-				registeredDisplay[(DisplayType)i] = new HashSet<object>();
+				registeredDisplay[(DisplayType)i] = new List<RangeDisplayEntry>();
 			}
+
+			tileRanges[0].Show(false);
 		}
 
 		/// <summary>
 		/// Start is called before the first frame update and/or the game object is first active.
 		/// </summary>
-		void Start()
+		private void Start()
 		{
 
 		}
@@ -116,7 +132,7 @@ namespace DiceRoller
 		/// <summary>
 		/// Update is called once per frame.
 		/// </summary>
-		void Update()
+		private void Update()
 		{
 
 		}
@@ -124,14 +140,14 @@ namespace DiceRoller
 		/// <summary>
 		/// OnDestroy is called when the game object is destroyed.
 		/// </summary>
-		void OnDestroy()
+		private void OnDestroy()
 		{
 		}
 
 		/// <summary>
 		/// OnValidate is called when any inspector value is changed.
 		/// </summary>
-		void OnValidate()
+		private void OnValidate()
 		{
 
 		}
@@ -139,21 +155,21 @@ namespace DiceRoller
 		/// <summary>
 		/// OnMouseEnter is called when the mouse is start pointing to the game object.
 		/// </summary>
-		void OnMouseEnter()
+		private void OnMouseEnter()
 		{
 		}
 
 		/// <summary>
 		/// OnMouseExit is called when the mouse is stop pointing to the game object.
 		/// </summary>
-		void OnMouseExit()
+		private void OnMouseExit()
 		{
 		}
 
 		/// <summary>
 		/// OnMouseDown is called when a mouse button is pressed when pointing to the game object.
 		/// </summary>
-		void OnMouseDown()
+		private void OnMouseDown()
 		{
 
 		}
@@ -161,7 +177,7 @@ namespace DiceRoller
 		/// <summary>
 		/// OnDrawGizmos is called when the game object is in editor mode
 		/// </summary>
-		protected void OnDrawGizmos()
+		private void OnDrawGizmos()
 		{
 			// draw size and each face of the die
 			if (Application.isEditor)
@@ -177,9 +193,13 @@ namespace DiceRoller
 		/// </summary>
 		public void RegenerateTile()
 		{
-			SpriteRenderer displaySpriteRenderer = transform.Find("Model/DisplaySprite").GetComponent<SpriteRenderer>();
+			SpriteRenderer displaySpriteRenderer = transform.Find("Sprites/Tile").GetComponent<SpriteRenderer>();
 			displaySpriteRenderer.transform.localScale = new Vector3(tileSize / 1.28f, tileSize / 1.28f, 1f);
-			SpriteRenderer pathSpriteRenderer = transform.Find("Model/PathSprite").GetComponent<SpriteRenderer>();
+
+			TileRange tileRange = transform.Find("Sprites/Ranges/Range").GetComponent<TileRange>();
+			tileRange.transform.localScale = new Vector3(tileSize / 1.28f, tileSize / 1.28f, 1f);
+
+			SpriteRenderer pathSpriteRenderer = transform.Find("Sprites/Path").GetComponent<SpriteRenderer>();
 			pathSpriteRenderer.transform.localScale = new Vector3(tileSize / 1.28f, tileSize / 1.28f, 1f);
 
 			collider = transform.Find("Collider").GetComponent<Collider>();
@@ -188,6 +208,7 @@ namespace DiceRoller
 
 		// ========================================================= Appearance =========================================================
 
+		/*
 		/// <summary>
 		/// Register a particular display to this tile by any object.
 		/// </summary>
@@ -205,19 +226,126 @@ namespace DiceRoller
 			registeredDisplay[displayType].Remove(o);
 			ResolveDisplay();
 		}
+		*/
+
+		public void UpdateDisplayAs(object holder, DisplayType displayType, Tile targetTile)
+		{
+			if (targetTile == this)
+			{
+				// find all adjacencies of this tile
+				TileRange.Adj adjacencies = TileRange.Adj.None;
+
+				// check if there is already an entry of the same display type and holder
+				RangeDisplayEntry entry = registeredDisplay[displayType].FirstOrDefault(x => x.holder == holder);
+				if (entry == null)
+				{
+					// add new range
+					TileRange targetRange = tileRanges.Find(x => !x.IsShowing());
+					if (targetRange == null)
+					{
+						targetRange = Instantiate(tileRanges[0], tileRanges[0].transform.parent).GetComponent<TileRange>();
+					}
+					targetRange.SetTileStyle(style);
+					targetRange.SetColor(style.frameColors[displayType], style.backgroundColors[displayType]);
+					targetRange.SetAdjancencies(adjacencies);
+					targetRange.Show(true);
+					registeredDisplay[displayType].Add(new RangeDisplayEntry(holder, targetRange));
+				}
+				else
+				{
+					// modify existing range
+					entry.range.SetTileStyle(style);
+					entry.range.SetColor(style.frameColors[displayType], style.backgroundColors[displayType]);
+					entry.range.SetAdjancencies(adjacencies);
+				}
+				ResolveRangeOrder();
+			}
+			else
+			{
+				// remove entry and return range to pool
+				RangeDisplayEntry entry = registeredDisplay[displayType].First(x => x.holder == holder);
+				if (entry != null)
+				{
+					entry.range.Show(false);
+					registeredDisplay[displayType].Remove(entry);
+				}
+
+			}
+		}
+
+		public void UpdateDisplayAs(object holder, DisplayType displayType, IReadOnlyCollection<Tile> targetTiles)
+		{
+			if (targetTiles.Contains(this))
+			{
+				// find all adjacencies of this tile
+				TileRange.Adj adjacencies = TileRange.Adj.None;
+				if (targetTiles.Any(x => x.boardPos == (boardPos + new Int2(-1, 1))))
+					adjacencies |= TileRange.Adj.TopLeft;
+				if (targetTiles.Any(x => x.boardPos == (boardPos + new Int2(0, 1))))
+					adjacencies |= TileRange.Adj.Top;
+				if (targetTiles.Any(x => x.boardPos == (boardPos + new Int2(1, 1))))
+					adjacencies |= TileRange.Adj.TopRight;
+				if (targetTiles.Any(x => x.boardPos == (boardPos + new Int2(-1, 0))))
+					adjacencies |= TileRange.Adj.Left;
+				if (targetTiles.Any(x => x.boardPos == (boardPos + new Int2(1, 0))))
+					adjacencies |= TileRange.Adj.Right;
+				if (targetTiles.Any(x => x.boardPos == (boardPos + new Int2(-1, -1))))
+					adjacencies |= TileRange.Adj.BottomLeft;
+				if (targetTiles.Any(x => x.boardPos == (boardPos + new Int2(0, -1))))
+					adjacencies |= TileRange.Adj.Bottom;
+				if (targetTiles.Any(x => x.boardPos == (boardPos + new Int2(1, -1))))
+					adjacencies |= TileRange.Adj.BottomRight;
+
+				// check if there is already an entry of the same display type and holder
+				RangeDisplayEntry entry = registeredDisplay[displayType].FirstOrDefault(x => x.holder == holder);
+				if (entry == null)
+				{
+					// add new range
+					TileRange targetRange = tileRanges.Find(x => !x.IsShowing());
+					if (targetRange == null)
+					{
+						targetRange = Instantiate(tileRanges[0], tileRanges[0].transform.parent).GetComponent<TileRange>();
+					}			
+					targetRange.SetTileStyle(style);
+					targetRange.SetColor(style.frameColors[displayType], style.backgroundColors[displayType]);
+					targetRange.SetAdjancencies(adjacencies);
+					targetRange.Show(true);
+					registeredDisplay[displayType].Add(new RangeDisplayEntry(holder, targetRange));
+				}
+				else
+				{
+					// modify existing range
+					entry.range.SetTileStyle(style);
+					entry.range.SetColor(style.frameColors[displayType], style.backgroundColors[displayType]);
+					entry.range.SetAdjancencies(adjacencies);
+					entry.range.Show(true);
+				}
+				ResolveRangeOrder();
+			}
+			else
+			{
+				// remove entry and return range to pool
+				RangeDisplayEntry entry = registeredDisplay[displayType].FirstOrDefault(x => x.holder == holder);
+				if (entry != null)
+				{
+					entry.range.Show(false);
+					registeredDisplay[displayType].Remove(entry);
+				}
+
+			}
+		}
 
 		/// <summary>
-		/// Change the apparence of this tile according to all display registers.
+		/// Change the sprite order of the tile range to make each elements stack ontop of each other in the propper way.
 		/// </summary>
-		protected void ResolveDisplay()
+		private void ResolveRangeOrder()
 		{
-			for (int i = DisplayTypeCount - 1; i >= 0; i--)
+			for (int i = 0; i < DisplayTypeCount; i++)
 			{
 				DisplayType displayType = (DisplayType)i;
-				if (registeredDisplay[displayType].Count > 0 || displayType == DisplayType.Normal)
+				foreach (RangeDisplayEntry entry in registeredDisplay[displayType])
 				{
-					displaySpriteRenderer.sprite = style.visualSprites[displayType];
-					break;
+					entry.range.SetSpriteOrder(i + 1);
 				}
 			}
 		}
@@ -236,28 +364,28 @@ namespace DiceRoller
 				else if (path[pos - 1].boardPos.x > boardPos.x)
 					pathDirections.from = PathDirection.Right;
 				else if (path[pos - 1].boardPos.z > boardPos.z)
-					pathDirections.from = PathDirection.Front;
+					pathDirections.from = PathDirection.Top;
 				else if (path[pos - 1].boardPos.x < boardPos.x)
 					pathDirections.from = PathDirection.Left;
 				else if (path[pos - 1].boardPos.z < boardPos.z)
-					pathDirections.from = PathDirection.Back;
+					pathDirections.from = PathDirection.Bottom;
 
 				if (pos == path.Count - 1)
 					pathDirections.to = PathDirection.End;
 				else if (path[pos + 1].boardPos.x > boardPos.x)
 					pathDirections.to = PathDirection.Right;
 				else if (path[pos + 1].boardPos.z > boardPos.z)
-					pathDirections.to = PathDirection.Front;
+					pathDirections.to = PathDirection.Top;
 				else if (path[pos + 1].boardPos.x < boardPos.x)
 					pathDirections.to = PathDirection.Left;
 				else if (path[pos + 1].boardPos.z < boardPos.z)
-					pathDirections.to = PathDirection.Back;
+					pathDirections.to = PathDirection.Bottom;
 
-				pathSpriteRenderer.sprite = style.pathDirectionSprites[pathDirections];
+				pathRenderer.sprite = style.pathDirectionSprites[pathDirections];
 			}
 			else
 			{
-				pathSpriteRenderer.sprite = null;
+				pathRenderer.sprite = null;
 			}
 		}
 
@@ -266,7 +394,7 @@ namespace DiceRoller
 		/// </summary>
 		public void HidePath()
 		{
-			pathSpriteRenderer.sprite = null;
+			pathRenderer.sprite = null;
 		}
 
 		/// <summary>
@@ -274,7 +402,7 @@ namespace DiceRoller
 		/// </summary>
 		public void ShowInvalidPath()
 		{
-			pathSpriteRenderer.sprite = style.pathDirectionSprites[new PathDirections(PathDirection.End, PathDirection.Start)];
+			pathRenderer.sprite = style.pathDirectionSprites[new PathDirections(PathDirection.End, PathDirection.Start)];
 		}
 
 
@@ -283,7 +411,7 @@ namespace DiceRoller
 		/// </summary>
 		public void HideInvalidPath()
 		{
-			pathSpriteRenderer.sprite = null;
+			pathRenderer.sprite = null;
 		}
 
 		// ========================================================= Inqury =========================================================
