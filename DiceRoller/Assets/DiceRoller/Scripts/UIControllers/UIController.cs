@@ -68,7 +68,8 @@ namespace DiceRoller
 		{
 			stateMachine.Register(this, State.StartTurn, new StartTurnSB(this));
 			stateMachine.Register(this, State.Navigation, new NavigationSB(this));
-			stateMachine.Register(this, State.UnitActionSelect, new UnitActionSB(this));
+			stateMachine.Register(this, State.UnitMoveSelect, new UnitMoveSelectSB(this));
+			stateMachine.Register(this, State.UnitAttackSelect, new UnitAttackSelectSB(this));
 			stateMachine.Register(this, State.DiceActionSelect, new DiceActionSB(this));
 		}
 
@@ -159,16 +160,16 @@ namespace DiceRoller
 			}
 		}
 
-		// ========================================================= Unit Action State =========================================================
+		// ========================================================= Unit Move Select State =========================================================
 
-		protected class UnitActionSB : StateBehaviour
+		protected class UnitMoveSelectSB : StateBehaviour
 		{
 			protected readonly UIController self = null;
 
 			/// <summary>
 			/// Constructor.
 			/// </summary>
-			public UnitActionSB(UIController self)
+			public UnitMoveSelectSB(UIController self)
 			{
 				this.self = self;
 			}
@@ -198,6 +199,42 @@ namespace DiceRoller
 				self.inspectedItemWindow.Show = false;
 				self.unitDetailWindow.Show = false;
 				self.diceListWindow.Show = false;
+			}
+		}
+
+		// ========================================================= Unit Attack Select State =========================================================
+
+		protected class UnitAttackSelectSB : StateBehaviour
+		{
+			protected readonly UIController self = null;
+
+			/// <summary>
+			/// Constructor.
+			/// </summary>
+			public UnitAttackSelectSB(UIController self)
+			{
+				this.self = self;
+			}
+
+			/// <summary>
+			/// OnStateEnter is called when the centralized state machine is entering the current state.
+			/// </summary>
+			public override void OnStateEnter()
+			{
+			}
+
+			/// <summary>
+			/// OnStateUpdate is called each frame when the centralized state machine is in the current state.
+			/// </summary>
+			public override void OnStateUpdate()
+			{
+			}
+
+			/// <summary>
+			/// OnStateExit is called when the centralized state machine is leaving the current state.
+			/// </summary>
+			public override void OnStateExit()
+			{
 			}
 		}
 

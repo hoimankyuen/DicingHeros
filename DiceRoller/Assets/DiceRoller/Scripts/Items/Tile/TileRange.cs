@@ -115,6 +115,7 @@ namespace DiceRoller
 
             int r0 =
                 (adjacencies & (Adj.TopLeft | Adj.Top | Adj.Left)) == (Adj.None) ? 0 :
+                (adjacencies & (Adj.TopLeft | Adj.Top | Adj.Left)) == (Adj.TopLeft) ? 0 :
                 (adjacencies & (Adj.TopLeft | Adj.Top | Adj.Left)) == (Adj.Top) ? 8 :
                 (adjacencies & (Adj.TopLeft | Adj.Top | Adj.Left)) == (Adj.Top | Adj.TopLeft) ? 8 :
                 (adjacencies & (Adj.TopLeft | Adj.Top | Adj.Left)) == (Adj.Left) ? 10 :
@@ -125,6 +126,7 @@ namespace DiceRoller
 
             int r1 =
                 (adjacencies & (Adj.TopRight | Adj.Top | Adj.Right)) == (Adj.None) ? 1 :
+                (adjacencies & (Adj.TopRight | Adj.Top | Adj.Right)) == (Adj.TopRight) ? 1 :
                 (adjacencies & (Adj.TopRight | Adj.Top | Adj.Right)) == (Adj.Top) ? 9 :
                 (adjacencies & (Adj.TopRight | Adj.Top | Adj.Right)) == (Adj.Top | Adj.TopRight) ? 9 :
                 (adjacencies & (Adj.TopRight | Adj.Top | Adj.Right)) == (Adj.Right) ? 11 :
@@ -135,6 +137,7 @@ namespace DiceRoller
 
             int r2 =
                 (adjacencies & (Adj.BottomLeft | Adj.Bottom | Adj.Left)) == (Adj.None) ? 4 :
+                (adjacencies & (Adj.BottomLeft | Adj.Bottom | Adj.Left)) == (Adj.BottomLeft) ? 4 :
                 (adjacencies & (Adj.BottomLeft | Adj.Bottom | Adj.Left)) == (Adj.Bottom) ? 12 :
                 (adjacencies & (Adj.BottomLeft | Adj.Bottom | Adj.Left)) == (Adj.Bottom | Adj.BottomLeft) ? 12 :
                 (adjacencies & (Adj.BottomLeft | Adj.Bottom | Adj.Left)) == (Adj.Left) ? 14 :
@@ -145,6 +148,7 @@ namespace DiceRoller
 
             int r3 =
                 (adjacencies & (Adj.BottomRight | Adj.Bottom | Adj.Right)) == (Adj.None) ? 5 :
+                (adjacencies & (Adj.BottomRight | Adj.Bottom | Adj.Right)) == (Adj.BottomRight) ? 5 :
                 (adjacencies & (Adj.BottomRight | Adj.Bottom | Adj.Right)) == (Adj.Bottom) ? 13 :
                 (adjacencies & (Adj.BottomRight | Adj.Bottom | Adj.Right)) == (Adj.Bottom | Adj.BottomRight) ? 13 :
                 (adjacencies & (Adj.BottomRight | Adj.Bottom | Adj.Right)) == (Adj.Right) ? 15 :

@@ -34,7 +34,7 @@ namespace DiceRoller
 		 *     Unit -> State.UnitActionSelect, 
 		 *     Die -> State.DieActionSelect
 		 */
-		UnitActionSelect,
+		UnitMoveSelect,
 		/*
 		 * Registered : 
 		 *     UIController
@@ -43,12 +43,27 @@ namespace DiceRoller
 		 *     Unit -> State.UnitMovement, 
 		 *     Unit -> State.Navigation
 		 */
+		UnitAttackSelect,
+		/*
+		 * Registered :
+		 *	   UIController
+		 *     Unit
+		 * Transitions :
+		 *     
+		 */
 		UnitMove,
 		/*
 		 * Registered :
 		 *     Unit
 		 * Transitions : 
 		 *     Unit -> State.Navigation
+		 */
+		UnitAttack,
+		/*
+		 * Registered :
+		 *     
+		 * Transitions :
+		 *     
 		 */
 		DiceActionSelect,
 		/*
