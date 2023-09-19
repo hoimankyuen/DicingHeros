@@ -32,8 +32,8 @@ MonoBehaviour:
     frameColor: {r: 1, g: 0, b: 0, a: 1}
     backgroundColor: {r: 1, g: 0, b: 0, a: 0.2509804}
   - type: 6
-    frameColor: {r: 0, g: 1, b: 0, a: 1}
-    backgroundColor: {r: 0, g: 1, b: 0, a: 0.2509804}
+    frameColor: {r: 1, g: 0.5, b: 0, a: 1}
+    backgroundColor: {r: 1, g: 0.5, b: 0, a: 0.2509804}
   - type: 7
     frameColor: {r: 0.09451604, g: 1, b: 0, a: 1}
     backgroundColor: {r: 0, g: 1, b: 0, a: 0.2509804}

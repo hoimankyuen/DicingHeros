@@ -422,7 +422,6 @@ namespace DiceRoller
 			private bool lastIsHovering = false;
 			private List<Tile> lastOccupiedTiles = new List<Tile>();
 			private List<Tile> affectedOccupiedTiles = new List<Tile>();
-			private List<Tile> removeOccupiedTiles = new List<Tile>();
 
 			/// <summary>
 			/// Constructor.
@@ -450,7 +449,7 @@ namespace DiceRoller
 			public override void OnStateUpdate()
 			{
 				// show occupied tiles on the board
-				IReadOnlyCollection<Tile> tiles = self.IsUserHovering ? self.OccupiedTiles : Tile.EmptyTiles;
+				IReadOnlyCollection<Tile> tiles = self.IsHoveringOnObject ? self.OccupiedTiles : Tile.EmptyTiles;
 				if (CachedValueUtils.HasCollectionChanged(tiles, lastOccupiedTiles, affectedOccupiedTiles))
 				{
 					foreach (Tile tile in affectedOccupiedTiles)
@@ -460,9 +459,9 @@ namespace DiceRoller
 				}
 
 				// show unit info on ui
-				if (CachedValueUtils.HasValueChanged(self.IsUserHovering, ref lastIsHovering))
+				if (CachedValueUtils.HasValueChanged(self.IsHoveringOnObject, ref lastIsHovering))
 				{
-					if (self.IsUserHovering)
+					if (self.IsHoveringOnObject)
 					{
 						self.AddToInspection();
 						self.AddEffect(self.Player == game.CurrentPlayer ? StatusType.InspectingSelf : StatusType.InspectingEnemy);
@@ -475,7 +474,7 @@ namespace DiceRoller
 				}
 
 				// go to unit movement selection state when this unit is pressed
-				if (self.Player == game.CurrentPlayer && self.IsUserPressed && !self.ActionDepleted && self.OccupiedTiles.Count > 0)
+				if (self.Player == game.CurrentPlayer && self.IPressedOnObject && !self.ActionDepleted && self.OccupiedTiles.Count > 0)
 				{
 					self.AddToSelection();
 					stateMachine.ChangeState(State.UnitActionSelect);
@@ -500,7 +499,7 @@ namespace DiceRoller
 				}
 
 				// hide unit info on ui
-				if (self.IsUserHovering)
+				if (self.IsHoveringOnObject)
 				{
 					self.RemoveFromInspection();
 					self.RemoveEffect(self.Player == game.CurrentPlayer ? StatusType.InspectingSelf : StatusType.InspectingEnemy);
@@ -601,20 +600,55 @@ namespace DiceRoller
 				{
 					// find the target tile that the mouse is pointing to
 					Tile targetTile = null;
-					bool reachable = false;
+					
 					if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, Camera.main.farClipPlane, LayerMask.GetMask("Tile")))
 					{
 						Tile tile = hit.collider.GetComponentInParent<Tile>();
 						targetTile = tile;
-						if (lastMovementArea.Contains(tile))
-						{
-							reachable = true;
-						}
 					}
 
-					// calculate path towards the target tile
+					// check if target tile is reachable
+					bool reachable = lastMovementArea.Contains(targetTile);
+
 					if (lastTargetTile != targetTile)
 					{
+						// show occupied tile of other units if needed
+						if (lastTargetTile != null && !lastOccupiedTiles.Contains(lastTargetTile))
+						{
+							foreach (Item item in lastTargetTile.Occupants)
+							{
+								if (item is Unit)
+								{
+									Unit unit = item as Unit;
+									foreach (Tile t in unit.OccupiedTiles)
+									{
+										if (!lastOccupiedTiles.Contains(t))
+										{
+											t.UpdateDisplayAs(unit, unit.Player == game.CurrentPlayer ? Tile.DisplayType.FriendPosition : Tile.DisplayType.EnemyPosition, Tile.EmptyTiles);
+										}
+									}
+								}
+							}
+						}
+						if (targetTile != null && !lastOccupiedTiles.Contains(targetTile))
+						{
+							foreach (Item item in targetTile.Occupants)
+							{
+								if (item is Unit)
+								{
+									Unit unit = item as Unit;
+									foreach (Tile t in unit.OccupiedTiles)
+									{
+										if (!lastOccupiedTiles.Contains(t))
+										{
+											t.UpdateDisplayAs(unit, unit.Player == game.CurrentPlayer ? Tile.DisplayType.FriendPosition : Tile.DisplayType.EnemyPosition, unit.OccupiedTiles);
+										}
+									}
+								}
+							}
+						}
+
+						// calculate path
 						nextPath.Clear();
 						nextPath.AddRange(lastPath);
 						if (targetTile == null || !reachable)
@@ -753,25 +787,38 @@ namespace DiceRoller
 					{
 						tile.UpdateDisplayAs(self, Tile.DisplayType.SelfPosition, Tile.EmptyTiles);
 					}
-					lastOccupiedTiles.Clear();
-
-					// clear other occulied tiles
-					otherOccupiedTiles.Clear();
 
 					// hide possible movement area on board
 					foreach (Tile tile in lastMovementArea)
 					{
 						tile.UpdateDisplayAs(self, Tile.DisplayType.Move, Tile.EmptyTiles);
 					}
-					lastMovementArea.Clear();
+					
+					// hide occupied tile of other units
+					if (lastTargetTile != null && !lastOccupiedTiles.Contains(lastTargetTile))
+					{
+						foreach (Item item in lastTargetTile.Occupants)
+						{
+							if (item is Unit)
+							{
+								Unit unit = item as Unit;
+								foreach (Tile t in unit.OccupiedTiles)
+								{
+									if (!lastOccupiedTiles.Contains(t))
+									{
+										t.UpdateDisplayAs(unit, unit.Player == game.CurrentPlayer ? Tile.DisplayType.FriendPosition : Tile.DisplayType.EnemyPosition, Tile.EmptyTiles);
+									}
+								}
+							}
+						}
+					}
 
 					// hide path to target tile on board
 					foreach (Tile tile in lastPath)
 					{
 						tile.HidePath();
 					}
-					lastPath.Clear();
-
+					
 					// hdie target tile on board
 					if (lastTargetTile != null)
 					{
@@ -784,6 +831,12 @@ namespace DiceRoller
 							lastTargetTile.HideInvalidPath();
 						}
 					}
+
+					// clear flags
+					lastOccupiedTiles.Clear();
+					otherOccupiedTiles.Clear();
+					lastMovementArea.Clear();
+					lastPath.Clear();
 					lastTargetTile = null;
 					lastReachable = true;
 

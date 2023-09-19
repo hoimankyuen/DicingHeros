@@ -65,20 +65,6 @@ namespace DiceRoller
 		}
 		protected Player _player = null;
 
-		/// <summary>
-		/// Flag for if user is hovering on this item by any means.
-		/// </summary>
-		protected bool IsUserHovering { get; private set; } = false;
-		private bool isSelfHovering = false;
-		private bool isUIHovering = false;
-
-		/// <summary>
-		/// Flag for if user has pressed on this item by any means.
-		/// </summary>
-		protected bool IsUserPressed { get; private set; } = false;
-		private bool initiatedSelfPress = false;
-		private bool completedSelfPress = false;
-		private bool isUIPressed = false;
 
 		/// <summary>
 		/// Flag for if this item is fallen out of the board.
@@ -92,6 +78,22 @@ namespace DiceRoller
 		private float lastMovingTime = 0;
 
 		/// <summary>
+		/// Flag for if user is hovering on this item by any means.
+		/// </summary>
+		protected bool IsHoveringOnObject { get; private set; } = false;
+		private bool isSelfHovering = false;
+		private bool isUIHovering = false;
+
+		/// <summary>
+		/// Flag for if user has pressed on this item by any means.
+		/// </summary>
+		protected bool IPressedOnObject { get; private set; } = false;
+		private bool initiatedSelfPress = false;
+		private bool completedSelfPress = false;
+		private bool isUIPressed = false;
+
+
+		/// <summary>
 		///A read only list of tiles that this item occupies.
 		/// </summary>
 		public IReadOnlyCollection<Tile> OccupiedTiles
@@ -103,6 +105,13 @@ namespace DiceRoller
 		}
 		private List<Tile> occupiedTiles = new List<Tile>();
 		private Vector3 lastOccupiedPosition = Vector3.zero;
+		private List<Tile> lastOccupiedTile = new List<Tile>();
+
+		/// <summary>
+		/// Flag for if user is hovering on the tiles occupied by this item.
+		/// </summary>
+		protected bool IsHoveringOnTile { get; private set; } = false;
+		private Dictionary<Tile, bool> occupiedTilesHovering = new Dictionary<Tile, bool>();
 
 		// ========================================================= Monobehaviour Methods =========================================================
 
@@ -189,7 +198,7 @@ namespace DiceRoller
 			}
 		}
 
-		// ========================================================= Message From UI =========================================================
+		// ========================================================= Message From External =========================================================
 
 		/// <summary>
 		/// Set the hovering flag from ui elements.
@@ -207,6 +216,18 @@ namespace DiceRoller
 			isUIPressed = true;
 		}
 
+		/// <summary>
+		/// Set the hovering flag from tile elements.
+		/// </summary>
+		public void SetHoveringFromTile(Tile tile, bool hovering)
+		{
+			if (occupiedTilesHovering.ContainsKey(tile))
+			{
+				occupiedTilesHovering[tile] = hovering;
+
+				IsHoveringOnTile = occupiedTilesHovering.Aggregate(true, (result, x) => result && x.Value);
+			}
+		}
 		// ========================================================= General Behaviour =========================================================
 
 		/// <summary>
@@ -217,6 +238,25 @@ namespace DiceRoller
 			if (Vector3.Distance(transform.position, lastOccupiedPosition) > 0.0001f)
 			{
 				Board.current.GetCurrentTiles(transform.position, size, ref occupiedTiles);
+				if (!occupiedTiles.SequenceEqual(lastOccupiedTile))
+				{
+					foreach (Tile t in lastOccupiedTile.Except(occupiedTiles))
+					{
+						t.RemoveOccupant(this);
+						occupiedTilesHovering.Remove(t);
+					}
+					foreach (Tile t in occupiedTiles.Except(lastOccupiedTile))
+					{
+						occupiedTilesHovering.Add(t, false);
+						t.AddOccupant(this);
+					}
+
+					// update cache
+					lastOccupiedTile.Clear();
+					lastOccupiedTile.AddRange(occupiedTiles);
+				}
+
+				// update cache
 				lastOccupiedPosition = transform.position;
 			}
 		}
@@ -246,7 +286,7 @@ namespace DiceRoller
 		/// </summary>
 		private void DetectHover()
 		{
-			IsUserHovering = isSelfHovering || isUIHovering;
+			IsHoveringOnObject = isSelfHovering || isUIHovering;
 		}
 
 		/// <summary>
@@ -254,13 +294,13 @@ namespace DiceRoller
 		/// </summary>
 		private void DetectPress()
 		{
-			IsUserPressed = false;
+			IPressedOnObject = false;
 			if (completedSelfPress || isUIPressed)
 			{
 				completedSelfPress = false;
 				isUIPressed = false;
 
-				IsUserPressed = true;
+				IPressedOnObject = true;
 			}
 		}
 

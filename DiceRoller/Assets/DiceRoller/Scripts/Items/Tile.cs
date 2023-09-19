@@ -1,5 +1,3 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -76,7 +74,7 @@ namespace DiceRoller
 				return emptytiles.AsReadOnly();
 			} 
 		}
-		private static List<Tile> emptytiles = new List<Tile>();
+		private static readonly List<Tile> emptytiles = new List<Tile>();
 
 		// parameters
 		[Header("Tile Properties (Auto Generated)")]
@@ -88,17 +86,25 @@ namespace DiceRoller
 		public TileStyle style = null;
 
 		// reference
-		private GameController Game { get { return GameController.current; } }
+		private GameController game { get { return GameController.current; } }
 
 		// component
-		private SpriteRenderer tileRenderer = null;
 		private List<TileRange> tileRanges = new List<TileRange>();
 		private SpriteRenderer pathRenderer = null;
 		private new Collider collider = null;
 
 		// working variables
-		private Dictionary<DisplayType, List<RangeDisplayEntry>> registeredDisplay = new Dictionary<DisplayType, List<RangeDisplayEntry>>();
-		private bool isHovering = false;
+		private Dictionary<DisplayType, List<RangeDisplayEntry>> registeredDisplay = new Dictionary<DisplayType, List<RangeDisplayEntry>>();	
+		private bool hovering = false;
+
+		public IReadOnlyCollection<Item> Occupants
+		{
+			get
+			{
+				return occupants.AsReadOnly();
+			}
+		}
+		private List<Item> occupants = new List<Item>();
 
 		// ========================================================= Monobehaviour Methods =========================================================
 
@@ -108,7 +114,6 @@ namespace DiceRoller
 		/// </summary>
 		private void Awake()
 		{
-			tileRenderer = transform.Find("Sprites/Tile").GetComponent<SpriteRenderer>();
 			tileRanges.Add(transform.Find("Sprites/Ranges/Range").GetComponent<TileRange>());
 			pathRenderer = transform.Find("Sprites/Path").GetComponent<SpriteRenderer>();
 			collider = transform.Find("Collider").GetComponent<Collider>();
@@ -157,6 +162,14 @@ namespace DiceRoller
 		/// </summary>
 		private void OnMouseEnter()
 		{
+			if (!hovering)
+			{
+				foreach (Item item in occupants)
+				{
+					item.SetHoveringFromTile(this, true);
+				}
+				hovering = true;
+			}
 		}
 
 		/// <summary>
@@ -164,6 +177,14 @@ namespace DiceRoller
 		/// </summary>
 		private void OnMouseExit()
 		{
+			if (hovering)
+			{
+				foreach (Item item in occupants)
+				{
+					item.SetHoveringFromTile(this, false);
+				}
+				hovering = false;
+			}
 		}
 
 		/// <summary>
@@ -206,6 +227,30 @@ namespace DiceRoller
 			collider.transform.localScale = new Vector3(tileSize, 0.1f, tileSize);
 		}
 
+		/// <summary>
+		/// Add an occupant to this tile, all hovering through tile.
+		/// </summary>
+		public void AddOccupant(Item item)
+		{
+			if (!occupants.Contains(item))
+			{
+				occupants.Add(item);
+				item.SetHoveringFromTile(this, hovering);
+			}
+		}
+
+		/// <summary>
+		/// Remove an occupant from this tile.
+		/// </summary>
+		public void RemoveOccupant(Item item)
+		{
+			if (occupants.Contains(item))
+			{
+				item.SetHoveringFromTile(this, hovering);
+				occupants.Remove(item);
+			}
+		}
+
 		// ========================================================= Appearance =========================================================
 
 		/*
@@ -228,6 +273,9 @@ namespace DiceRoller
 		}
 		*/
 
+		/// <summary>
+		/// Add or remove the range display of this tile based on a single target tile. 
+		/// </summary>
 		public void UpdateDisplayAs(object holder, DisplayType displayType, Tile targetTile)
 		{
 			if (targetTile == this)
@@ -273,6 +321,9 @@ namespace DiceRoller
 			}
 		}
 
+		/// <summary>
+		/// Add or remove the range display of this tile based on a set of target tiles. 
+		/// </summary>
 		public void UpdateDisplayAs(object holder, DisplayType displayType, IReadOnlyCollection<Tile> targetTiles)
 		{
 			if (targetTiles.Contains(this))
