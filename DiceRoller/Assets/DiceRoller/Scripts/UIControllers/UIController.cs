@@ -13,16 +13,22 @@ namespace DiceRoller
 		public static UIController current { get; protected set; }
 
 		// references
-		protected StateMachine stateMachine { get { return StateMachine.current; } }
+		private StateMachine stateMachine { get { return StateMachine.current; } }
 
-		[Header("Components")]
+		[Header("Screen Space Components")]
 		public UIInfoWindow infoWindow;
-		public UIControlWindow controlWindow;
+		public UIGeneralControlWindow generalControlWindow;
+		public UIUnitControlWindow unitControlWindow;
 		public UIInspectedItemWindow inspectedItemWindow;
 		public UIDiceListWindow diceListWindow;
 		public UIUnitListWindow unitListWindow;
 		public UIDiceDetailWindow diceDetailWindow;
 		public UIUnitDetailWindow unitDetailWindow;
+
+		public UICursor cursor;
+		public UIUnitIndicator unitIndicator;
+
+		[Header("World Space Components")]
 		public UIThrowDisplay throwDisplay;
 
 		// ========================================================= Monobehaviour Methods =========================================================
@@ -31,7 +37,7 @@ namespace DiceRoller
 		/// Awake is called when the game object was created. It is always called before start and is 
 		/// independent of if the game object is active or not.
 		/// </summary>
-		protected void Awake()
+		private void Awake()
 		{
 			current = this;
 		}
@@ -39,32 +45,34 @@ namespace DiceRoller
 		/// <summary>
 		/// Start is called before the first frame update and/or the game object is first active.
 		/// </summary>
-		protected void Start()
+		private void Start()
 		{
 			RegisterStateBehaviours();
+			HideAllWindows();
 		}
 
 		/// <summary>
 		/// Update is called once per frame.
 		/// </summary>
-		protected void Update()
+		private void Update()
 		{
 		}
 
 		/// <summary>
 		/// OnDestroy is called when an game object is destroyed.
 		/// </summary>
-		protected void OnDestroy()
+		private void OnDestroy()
 		{
 			DeregisterStateBehaviours();
 			current = null;
 		}
+
 		// ========================================================= State Machine Behaviour =========================================================
 
 		/// <summary>
 		/// Register all state behaviour to the centralized state machine.
 		/// </summary>
-		protected void RegisterStateBehaviours()
+		private void RegisterStateBehaviours()
 		{
 			stateMachine.Register(this, State.StartTurn, new StartTurnSB(this));
 			stateMachine.Register(this, State.Navigation, new NavigationSB(this));
@@ -76,17 +84,34 @@ namespace DiceRoller
 		/// <summary>
 		/// Deregister all state behaviours to the centralized state machine.
 		/// </summary>
-		protected void DeregisterStateBehaviours()
+		private void DeregisterStateBehaviours()
 		{
 			if (stateMachine != null)
 				stateMachine.DeregisterAll(this);
 		}
 
+		// ========================================================= General Behaviour =========================================================
+
+		/// <summary>
+		/// Hide all windows in the uI.
+		/// </summary>
+		private void HideAllWindows()
+		{
+			//infoWindow.Show = false;
+			generalControlWindow.Show = false;
+			unitControlWindow.Show = false;
+			inspectedItemWindow.Show = false;
+			diceListWindow.Show = false;
+			unitListWindow.Show = false;
+			diceDetailWindow.Show = false;
+			unitDetailWindow.Show = false;
+		}
+
 		// ========================================================= Start Turn State =========================================================
 
-		protected class StartTurnSB : StateBehaviour
+		private class StartTurnSB : StateBehaviour
 		{
-			protected readonly UIController self = null;
+			private readonly UIController self = null;
 
 			/// <summary>
 			/// Constructor.
@@ -120,9 +145,9 @@ namespace DiceRoller
 
 		// ========================================================= Navigation State =========================================================
 
-		protected class NavigationSB : StateBehaviour
+		private class NavigationSB : StateBehaviour
 		{
-			protected readonly UIController self = null;
+			private readonly UIController self = null;
 
 			/// <summary>
 			/// Constructor.
@@ -140,6 +165,7 @@ namespace DiceRoller
 				self.inspectedItemWindow.Show = true;
 				self.diceListWindow.Show = true;
 				self.unitListWindow.Show = true;
+				self.generalControlWindow.Show = true;
 			}
 
 			/// <summary>
@@ -157,14 +183,15 @@ namespace DiceRoller
 				self.inspectedItemWindow.Show = false;
 				self.diceListWindow.Show = false;
 				self.unitListWindow.Show = false;
+				self.generalControlWindow.Show = false;
 			}
 		}
 
 		// ========================================================= Unit Move Select State =========================================================
 
-		protected class UnitMoveSelectSB : StateBehaviour
+		private class UnitMoveSelectSB : StateBehaviour
 		{
-			protected readonly UIController self = null;
+			private readonly UIController self = null;
 
 			/// <summary>
 			/// Constructor.
@@ -182,6 +209,10 @@ namespace DiceRoller
 				self.inspectedItemWindow.Show = true;
 				self.unitDetailWindow.Show = true;
 				self.diceListWindow.Show = true;
+				self.unitControlWindow.Show = true;
+
+				self.cursor.SetIcon(UICursor.IconType.SimpleMovement);
+				//self.targetIndicator.Setup(UITargetIndicator.Mode.Mouse, UICursor.IconType.SimpleMovement);
 			}
 
 			/// <summary>
@@ -199,14 +230,18 @@ namespace DiceRoller
 				self.inspectedItemWindow.Show = false;
 				self.unitDetailWindow.Show = false;
 				self.diceListWindow.Show = false;
+				self.unitControlWindow.Show = false;
+
+				self.cursor.SetIcon(UICursor.IconType.None);
+				//self.targetIndicator.Setup(UITargetIndicator.Mode.None, UICursor.IconType.None);
 			}
 		}
 
 		// ========================================================= Unit Attack Select State =========================================================
 
-		protected class UnitAttackSelectSB : StateBehaviour
+		private class UnitAttackSelectSB : StateBehaviour
 		{
-			protected readonly UIController self = null;
+			private readonly UIController self = null;
 
 			/// <summary>
 			/// Constructor.
@@ -221,6 +256,13 @@ namespace DiceRoller
 			/// </summary>
 			public override void OnStateEnter()
 			{
+				self.inspectedItemWindow.Show = true;
+				self.unitDetailWindow.Show = true;
+				self.diceListWindow.Show = true;
+				self.unitControlWindow.Show = true;
+
+				self.cursor.SetIcon(UICursor.IconType.SimpleMelee);
+				//self.targetIndicator.Setup(UITargetIndicator.Mode.Mouse, UICursor.IconType.SimpleMelee);
 			}
 
 			/// <summary>
@@ -235,14 +277,21 @@ namespace DiceRoller
 			/// </summary>
 			public override void OnStateExit()
 			{
+				self.inspectedItemWindow.Show = false;
+				self.unitDetailWindow.Show = false;
+				self.diceListWindow.Show = false;
+				self.unitControlWindow.Show = false;
+
+				self.cursor.SetIcon(UICursor.IconType.None);
+				//self.targetIndicator.Setup(UITargetIndicator.Mode.None, UICursor.IconType.None);
 			}
 		}
 
-		// ========================================================= Unit Action State =========================================================
+		// ========================================================= Dice Action State =========================================================
 
-		protected class DiceActionSB : StateBehaviour
+		private class DiceActionSB : StateBehaviour
 		{
-			protected readonly UIController self = null;
+			private readonly UIController self = null;
 
 			/// <summary>
 			/// Constructor.

@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace DiceRoller
 {
@@ -30,8 +31,11 @@ namespace DiceRoller
 		public int boardSizeZ = 1;
 		public GameObject tilePrefab = null;
 
+		public Tile HoveringTile { get; protected set; } = null;
+
 		// working variables
 		protected Dictionary<Int2, Tile> tiles = new Dictionary<Int2, Tile>();
+
 
 		// temporary working variables
 		protected List<Tile> tempTiles = new List<Tile>();
@@ -74,7 +78,7 @@ namespace DiceRoller
 		/// </summary>
 		void Update()
 		{
-
+			DetectTileHover();
 		}
 
 		/// <summary>
@@ -153,6 +157,31 @@ namespace DiceRoller
 				Convert.ToInt32(worldPos.z / tileSize + (float)(boardSizeZ - 1) / 2));
 		}
 
+		// ========================================================= Hover Detection =========================================================
+
+		/// <summary>
+		/// Detect if the mouse is hovering on any tile.
+		/// </summary>
+		protected void DetectTileHover()
+		{
+			// find the target tile that the mouse is pointing to
+			if (!EventSystem.current.IsPointerOverGameObject())
+			{
+				if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, Camera.main.farClipPlane, LayerMask.GetMask("Tile")))
+				{
+					HoveringTile = hit.collider.GetComponentInParent<Tile>();
+				}
+				else
+				{
+					HoveringTile = null;
+				}
+			}
+			else
+			{
+				HoveringTile = null;
+			}
+		}
+
 		// ========================================================= Inqury =========================================================
 
 		/// <summary>
@@ -187,29 +216,23 @@ namespace DiceRoller
 			result.Clear();
 
 			// calculate the bound of starting tiles
-			Int2 min = Int2.MinValue;
-			Int2 max = Int2.MaxValue;
-			foreach (Tile startingTile in startingTiles)
-			{
-				if (startingTile.boardPos.x < min.x)
-					min.x = startingTile.boardPos.x;
-				if (startingTile.boardPos.z < min.z)
-					min.z = startingTile.boardPos.z;
-				if (startingTile.boardPos.x > max.x)
-					max.x = startingTile.boardPos.x;
-				if (startingTile.boardPos.z > max.z)
-					max.z = startingTile.boardPos.z;
-			}
-			
+			Int2 min = Int2.MaxValue;
+			Int2 max = Int2.MinValue;
+			min.x = startingTiles.Select(tile => tile.boardPos.x).Min();
+			min.z = startingTiles.Select(tile => tile.boardPos.z).Min();
+			max.x = startingTiles.Select(tile => tile.boardPos.x).Max();
+			max.z = startingTiles.Select(tile => tile.boardPos.z).Max();
+
+			// search for tiles within range on a subset of all tiles
 			for (int x = min.x - range; x <= max.x + range; x++)
 			{
 				for (int z = min.z - range; z <= max.z + range; z++)
 				{
 					Int2 pos = new Int2(x, z);
-					if (tiles.ContainsKey(pos) && startingTiles.Any(t => Int2.Distance(pos, t.boardPos) <= range))
+					if (tiles.ContainsKey(pos) && startingTiles.Any(t => Int2.GridDistance(pos, t.boardPos) <= range))
 						result.Add(tiles[pos]);
 				}
-			}
+			}	
 		}
 
 		/// <summary>

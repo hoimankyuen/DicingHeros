@@ -75,9 +75,13 @@ public struct Int2 : IEquatable<Int2>
         return string.Format("Int2({0}, {1})", x, z);
     }
 
-    public static int Distance(Int2 a, Int2 b)
+    public static int GridDistance(Int2 a, Int2 b)
     {
-        return (a.x - b.x) * ((a.x - b.x < 0) ? -1 : 1) + (a.x - b.x) * ((a.x - b.x < 0) ? -1 : 1);
+        return Mathf.Abs(a.x - b.x) + Mathf.Abs(a.z - b.z);
     }
 
+    public static float Distance(Int2 a, Int2 b)
+    {
+        return Mathf.Sqrt((a.x - b.x) * (a.x - b.x )+ (a.z - b.z) * (a.z - b.z));
+    }
 }

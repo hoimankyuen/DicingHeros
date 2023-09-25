@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class InputUtils
 {
@@ -12,13 +13,19 @@ public class InputUtils
 	{
 		if (Input.GetMouseButtonDown(button))
 		{
-			pressedPositionCache = Input.mousePosition;
+			if (!EventSystem.current.IsPointerOverGameObject())
+			{
+				pressedPositionCache = Input.mousePosition;
+			}
 		}
 		if (Input.GetMouseButtonUp(button) && pressedPositionCache != Vector2.negativeInfinity)
 		{
 			if (Vector2.Distance(pressedPositionCache, Input.mousePosition) < 2f)
 			{
-				return true;
+				if (!EventSystem.current.IsPointerOverGameObject())
+				{
+					return true;
+				}
 			}
 			pressedPositionCache = Vector2.negativeInfinity;
 		}

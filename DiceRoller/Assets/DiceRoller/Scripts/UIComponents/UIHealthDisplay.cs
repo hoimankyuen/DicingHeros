@@ -12,15 +12,15 @@ namespace DiceRoller
         public Image healthIcon;
         public TextMeshProUGUI healthValue;
 
-        [Header("Displayed Values")]
-        protected Unit unit;
+        // references
+		private Unit unit;
 
 		// ========================================================= Monobehaviour Methods =========================================================
 
 		/// <summary>
 		/// Start is called before the first frame update and/or the game object is first active.
 		/// </summary>
-		protected void Start()
+		private void Start()
 		{
 			if (unit != null)
 			{
@@ -31,7 +31,7 @@ namespace DiceRoller
 		/// <summary>
 		/// OnDestroy is called when an game object is destroyed.
 		/// </summary>
-		protected void OnDestroy()
+		private void OnDestroy()
 		{
 			// deregister all events
 			if (unit != null)
@@ -65,7 +65,7 @@ namespace DiceRoller
 		/// <summary>
 		/// Change the current display of this ui element to either match the information of the inspecting object.
 		/// </summary>
-		public void RefreshDisplay()
+		private void RefreshDisplay()
         {
             healthValue.text = unit != null ? string.Format("{0}/{1}", unit.Health, unit.maxHealth) : "==/==";
         }

@@ -162,6 +162,7 @@ namespace DiceRoller
 		/// </summary>
 		private void OnMouseEnter()
 		{
+			// not working, consider fixing or removing
 			if (!hovering)
 			{
 				foreach (Item item in occupants)
@@ -177,6 +178,7 @@ namespace DiceRoller
 		/// </summary>
 		private void OnMouseExit()
 		{
+			// not working, consider fixing or removing
 			if (hovering)
 			{
 				foreach (Item item in occupants)
@@ -272,6 +274,14 @@ namespace DiceRoller
 			ResolveDisplay();
 		}
 		*/
+		
+		/// <summary>
+		/// Remove the range display of this tile. 
+		/// </summary>
+		public void RemoveDisplay(object holder, DisplayType displayType)
+		{
+			UpdateDisplayAs(holder, displayType, (Tile)null);
+		}
 
 		/// <summary>
 		/// Add or remove the range display of this tile based on a single target tile. 

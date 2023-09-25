@@ -20,11 +20,17 @@ MonoBehaviour:
     outlineColor: {r: 1, g: 0, b: 0, a: 1}
     overlayColor: {r: 0, g: 0, b: 0, a: 0}
   - effectType: 2
-    outlineColor: {r: 0, g: 1, b: 0, a: 1}
+    outlineColor: {r: 1, g: 0.5, b: 0, a: 1}
     overlayColor: {r: 0, g: 0, b: 0, a: 0}
   - effectType: 3
+    outlineColor: {r: 0, g: 1, b: 0, a: 1}
+    overlayColor: {r: 0, g: 0, b: 0, a: 0}
+  - effectType: 4
     outlineColor: {r: 0, g: 0, b: 0, a: 0}
     overlayColor: {r: 1, g: 0, b: 0, a: 0.5019608}
-  - effectType: 4
+  - effectType: 5
+    outlineColor: {r: 0, g: 0, b: 0, a: 0}
+    overlayColor: {r: 1, g: 0.5, b: 0, a: 0.5019608}
+  - effectType: 6
     outlineColor: {r: 0, g: 0, b: 0, a: 0}
     overlayColor: {r: 0, g: 1, b: 0, a: 0.5019608}

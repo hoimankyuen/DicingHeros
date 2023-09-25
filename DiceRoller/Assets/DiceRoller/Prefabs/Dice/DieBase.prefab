@@ -326,6 +326,7 @@ MonoBehaviour:
   outlineSprite: {fileID: 0}
   overlaySprite: {fileID: 0}
   size: 0.14
+  height: 1
   playerId: 0
   effectStyle: {fileID: 11400000, guid: a259e5d099e63654e82a558feaab5487, type: 2}
   type: 0
@@ -354,7 +355,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7980804633894842004}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 12b5953e5db74bd48b6d17a3406df640, type: 3}
   m_Name: 
@@ -374,7 +375,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7980804633894842004}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 62df72655532bf84a954f4f3fc49e5ca, type: 3}
   m_Name: 

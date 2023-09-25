@@ -30,8 +30,8 @@ namespace DiceRoller
 		 *     Unit
 		 *     Die 
 		 * Transitions : 
-		 *     GameController -> State.EndTurn, 
-		 *     Unit -> State.UnitActionSelect, 
+		 *     GameController -> State.EndTurn
+		 *     Unit -> State.UnitActionSelect
 		 *     Die -> State.DieActionSelect
 		 */
 		UnitMoveSelect,
@@ -40,8 +40,9 @@ namespace DiceRoller
 		 *     UIController
 		 *     Unit
 		 * Transitions : 
-		 *     Unit -> State.UnitMovement, 
+		 *     Unit -> State.UnitMovement
 		 *     Unit -> State.Navigation
+		 *     Unit -> State.UnitAttackSelect
 		 */
 		UnitAttackSelect,
 		/*
@@ -49,7 +50,8 @@ namespace DiceRoller
 		 *	   UIController
 		 *     Unit
 		 * Transitions :
-		 *     
+		 *     Unit -> State.Navigation
+		 *     Unit -> State.UnitMoveSelect
 		 */
 		UnitMove,
 		/*
@@ -73,9 +75,9 @@ namespace DiceRoller
 		 *     Die
 		 *     DiceThrower
 		 * Transitions : 
-		 *     Die -> State.Navigation, 
-		 *     Die -> State.DiceActionSelect, 
-		 *     DiceThrower -> State.DiceThrow, 
+		 *     Die -> State.Navigation
+		 *     Die -> State.DiceActionSelect
+		 *     DiceThrower -> State.DiceThrow
 		 *     DiceThrower -> State.Navigation
 		 */
 		DiceThrow,

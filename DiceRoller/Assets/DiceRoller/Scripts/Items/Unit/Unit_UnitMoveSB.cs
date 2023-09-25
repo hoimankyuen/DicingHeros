@@ -8,7 +8,10 @@ namespace DiceRoller
     {
 		class UnitMoveSB : StateBehaviour
 		{
+			// host reference
 			protected readonly Unit self = null;
+
+			// ========================================================= Constructor =========================================================\
 
 			/// <summary>
 			/// Constructor.
@@ -17,6 +20,8 @@ namespace DiceRoller
 			{
 				this.self = self;
 			}
+
+			// ========================================================= State Machine Methods =========================================================
 
 			/// <summary>
 			/// OnStateEnter is called when the centralized state machine is entering the current state.

@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace DiceRoller
 {
@@ -13,7 +14,7 @@ namespace DiceRoller
 			private readonly Unit self = null;
 
 			// caches
-			private bool isSelectedAtStateEnter = false;
+			private bool isSelectedAtEnter = false;
 
 			private List<Tile> lastOccupiedTiles = new List<Tile>();
 			private List<Tile> otherOccupiedTiles = new List<Tile>();
@@ -28,6 +29,10 @@ namespace DiceRoller
 			private List<Tile> appendPath = new List<Tile>();
 			private List<Tile> appendExcludedTiles = new List<Tile>();
 
+			private bool lastIsHoveringFromTiles = false;
+
+			// ========================================================= Constructor =========================================================
+
 			/// <summary>
 			/// Constructor.
 			/// </summary>
@@ -36,22 +41,18 @@ namespace DiceRoller
 				this.self = self;
 			}
 
+			// ========================================================= State Enter Methods =========================================================
+
 			/// <summary>
 			/// OnStateEnter is called when the centralized state machine is entering the current state.
 			/// </summary>
 			public override void OnStateEnter()
 			{
-				// show action depleted effect
-				if (self.ActionDepleted)
-				{
-					self.AddEffect(StatusType.Depleted);
-				}
+				isSelectedAtEnter = self.IsSelected;
 
-				// execute only if the selected unit is this unit
-				if (self.IsSelected)
+				// actions for the selected unit
+				if (isSelectedAtEnter)
 				{
-					isSelectedAtStateEnter = true;
-
 					// show selection effect
 					self.AddEffect(StatusType.SelectedSelf);
 
@@ -82,66 +83,36 @@ namespace DiceRoller
 						tile.UpdateDisplayAs(self, Tile.DisplayType.Move, lastMovementArea);
 					}
 				}
+
+				// actions for other units
+				if (!isSelectedAtEnter)
+				{
+					// show action depleted effect if needed
+					if (self.ActionDepleted)
+					{
+						self.AddEffect(StatusType.Depleted);
+					}
+				}
 			}
+
+			// ========================================================= State Update Methods =========================================================
 
 			/// <summary>
 			/// OnStateUpdate is called each frame when the centralized state machine is in the current state.
 			/// </summary>
 			public override void OnStateUpdate()
 			{
-				// execute only if the selected unit is this unit
-				if (self.IsSelected)
+				// actions for the selected unit
+				if (isSelectedAtEnter)
 				{
 					// find the target tile that the mouse is pointing to
-					Tile targetTile = null;
-
-					if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, Camera.main.farClipPlane, LayerMask.GetMask("Tile")))
-					{
-						Tile tile = hit.collider.GetComponentInParent<Tile>();
-						targetTile = tile;
-					}
+					Tile targetTile = board.HoveringTile;
 
 					// check if target tile is reachable
 					bool reachable = lastMovementArea.Contains(targetTile);
 
 					if (lastTargetTile != targetTile)
 					{
-						// show occupied tile of other units if needed
-						if (lastTargetTile != null && !lastOccupiedTiles.Contains(lastTargetTile))
-						{
-							foreach (Item item in lastTargetTile.Occupants)
-							{
-								if (item is Unit)
-								{
-									Unit unit = item as Unit;
-									foreach (Tile t in unit.OccupiedTiles)
-									{
-										if (!lastOccupiedTiles.Contains(t))
-										{
-											t.UpdateDisplayAs(unit, unit.Player == game.CurrentPlayer ? Tile.DisplayType.FriendPosition : Tile.DisplayType.EnemyPosition, Tile.EmptyTiles);
-										}
-									}
-								}
-							}
-						}
-						if (targetTile != null && !lastOccupiedTiles.Contains(targetTile))
-						{
-							foreach (Item item in targetTile.Occupants)
-							{
-								if (item is Unit)
-								{
-									Unit unit = item as Unit;
-									foreach (Tile t in unit.OccupiedTiles)
-									{
-										if (!lastOccupiedTiles.Contains(t))
-										{
-											t.UpdateDisplayAs(unit, unit.Player == game.CurrentPlayer ? Tile.DisplayType.FriendPosition : Tile.DisplayType.EnemyPosition, unit.OccupiedTiles);
-										}
-									}
-								}
-							}
-						}
-
 						// calculate path
 						nextPath.Clear();
 						nextPath.AddRange(lastPath);
@@ -257,21 +228,49 @@ namespace DiceRoller
 						stateMachine.ChangeState(State.Navigation);
 					}
 				}
+
+				// action for other units
+				if (!isSelectedAtEnter)
+				{
+					// show or hide hovering by tile
+					bool isHoveringOnTiles = self.OccupiedTiles.Contains(board.HoveringTile);
+					if (GetFirstSelected() != null)
+					{
+						isHoveringOnTiles &= !GetFirstSelected().OccupiedTiles.Contains(board.HoveringTile);
+					}
+					if (CachedValueUtils.HasValueChanged(isHoveringOnTiles, ref lastIsHoveringFromTiles))
+					{
+						if (isHoveringOnTiles)
+						{
+							self.AddToInspection();
+							self.AddEffect(self.Player == game.CurrentPlayer ? StatusType.InspectingFriend : StatusType.InspectingEnemy);
+							foreach (Tile t in self.OccupiedTiles)
+							{
+								t.UpdateDisplayAs(self, self.Player == game.CurrentPlayer ? Tile.DisplayType.FriendPosition : Tile.DisplayType.EnemyPosition, self.OccupiedTiles);
+							}
+						}
+						else
+						{
+							self.RemoveFromInspection();
+							self.RemoveEffect(self.Player == game.CurrentPlayer ? StatusType.InspectingFriend : StatusType.InspectingEnemy);
+							foreach (Tile t in self.OccupiedTiles)
+							{
+								t.UpdateDisplayAs(self, self.Player == game.CurrentPlayer ? Tile.DisplayType.FriendPosition : Tile.DisplayType.EnemyPosition, Tile.EmptyTiles);
+							}
+						}
+					}
+				}
 			}
+
+			// ========================================================= State Exit Methods =========================================================
 
 			/// <summary>
 			/// OnStateExit is called when the centralized state machine is leaving the current state.
 			/// </summary>
 			public override void OnStateExit()
 			{
-				// hide depleted effect
-				if (self.ActionDepleted)
-				{
-					self.RemoveEffect(StatusType.Depleted);
-				}
-
-				// execute only if the selected unit is this unit
-				if (isSelectedAtStateEnter)
+				// action for the selected unit
+				if (isSelectedAtEnter)
 				{
 					// hide selection effect
 					self.RemoveEffect(StatusType.SelectedSelf);
@@ -296,6 +295,7 @@ namespace DiceRoller
 							if (item is Unit)
 							{
 								Unit unit = item as Unit;
+								unit.RemoveEffect(unit.Player == game.CurrentPlayer ? StatusType.InspectingFriend : StatusType.InspectingEnemy);
 								foreach (Tile t in unit.OccupiedTiles)
 								{
 									if (!lastOccupiedTiles.Contains(t))
@@ -318,7 +318,7 @@ namespace DiceRoller
 					{
 						if (lastReachable)
 						{
-							lastTargetTile.UpdateDisplayAs(this, Tile.DisplayType.MoveTarget, Tile.EmptyTiles);
+							lastTargetTile.UpdateDisplayAs(self, Tile.DisplayType.MoveTarget, Tile.EmptyTiles);
 						}
 						else
 						{
@@ -326,7 +326,7 @@ namespace DiceRoller
 						}
 					}
 
-					// clear flags
+					// reset cache
 					lastOccupiedTiles.Clear();
 					otherOccupiedTiles.Clear();
 					lastMovementArea.Clear();
@@ -334,12 +334,44 @@ namespace DiceRoller
 					lastTargetTile = null;
 					lastReachable = true;
 
-					// clear flags
 					InputUtils.ResetPressCache(ref pressedPosition0);
 					InputUtils.ResetPressCache(ref pressedPosition1);
 				}
-			}
 
+				// action for other units
+				if (!isSelectedAtEnter)
+				{
+					// hide depleted effect
+					if (self.ActionDepleted)
+					{
+						self.RemoveEffect(StatusType.Depleted);
+					}
+
+					// hide hovering by tile
+					if (lastIsHoveringFromTiles)
+					{
+						self.RemoveFromInspection();
+						self.RemoveEffect(self.Player == game.CurrentPlayer ? StatusType.InspectingFriend : StatusType.InspectingEnemy);
+						foreach (Tile t in self.OccupiedTiles)
+						{
+							t.UpdateDisplayAs(self, self.Player == game.CurrentPlayer ? Tile.DisplayType.FriendPosition : Tile.DisplayType.EnemyPosition, Tile.EmptyTiles);
+						}
+					}
+
+					// reset cache
+					CachedValueUtils.ResetValueCache(ref lastIsHoveringFromTiles);
+				}
+			}
+		}
+
+		// ========================================================= Other Methods =========================================================
+
+		public void ChangeToAttackSelect()
+		{
+			if (stateMachine.Current == State.UnitMoveSelect)
+			{
+				stateMachine.ChangeState(State.UnitAttackSelect);
+			}
 		}
 	}
 }

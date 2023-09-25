@@ -53,6 +53,7 @@ MonoBehaviour:
   outlineSprite: {fileID: 21300000, guid: 7db0928e898551a4fba1d69713871f8b, type: 3}
   overlaySprite: {fileID: 21300000, guid: e36f969212adaac438c78d1685ca6e7c, type: 3}
   size: 0.19
+  height: 0.32
   playerId: 0
   effectStyle: {fileID: 11400000, guid: a259e5d099e63654e82a558feaab5487, type: 2}
   maxHealth: 20
@@ -84,7 +85,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2284104210925587979}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 12b5953e5db74bd48b6d17a3406df640, type: 3}
   m_Name: 
@@ -104,7 +105,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2284104210925587979}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 62df72655532bf84a954f4f3fc49e5ca, type: 3}
   m_Name: 

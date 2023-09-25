@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace DiceRoller
 {
-    public class UIControlWindow : UISideWindow
+    public class UIUnitControlWindow : UISideWindow
     {
 		// ========================================================= Monobehaviour Methods =========================================================
 
@@ -39,6 +39,26 @@ namespace DiceRoller
 		protected override void OnDestroy()
 		{
 			base.OnDestroy();
+		}
+
+		// ========================================================= UI Methods =========================================================
+
+		public void SwapToMove()
+		{
+			Unit unit = Unit.GetFirstSelected();
+			if (unit != null)
+			{
+				unit.ChangeToMoveSelect();
+			}
+		}
+
+		public void SwapToAttack()
+		{
+			Unit unit = Unit.GetFirstSelected();
+			if (unit != null)
+			{
+				unit.ChangeToAttackSelect(); 
+			}
 		}
 	}
 }

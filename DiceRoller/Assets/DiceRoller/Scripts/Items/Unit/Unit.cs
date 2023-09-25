@@ -17,15 +17,15 @@ namespace DiceRoller
 		public int baseMagic = 1;
 		public int baseMovement = 4;
 
-		public float moveTimePerTile = 0.2f;
-
-		// working variables
+		// readonly
+		private readonly float moveTimePerTile = 0.2f;
 
 		// events
 		public Action onInspectionChanged = () => { };
 		public Action onSelectionChanged = () => { };
 		public Action onHealthChanged = () => { };
 		public Action onStatChanged = () => { };
+		public Action onPendingHealthDeltaChange = () => { };
 
 		// ========================================================= Properties =========================================================
 
@@ -158,6 +158,25 @@ namespace DiceRoller
 		}
 		private int _movement = 0;
 
+		/// <summary>
+		/// The proposed health change delta (damage or heal) to this unit.
+		/// </summary>
+		public int PendingHealthDelta
+		{
+			get
+			{
+				return _pendingHealthDelta;
+			}
+			private set
+			{
+				if (_pendingHealthDelta != value)
+				{
+					_pendingHealthDelta = value;
+					onPendingHealthDeltaChange.Invoke();
+				}
+			}
+		}
+		private int _pendingHealthDelta;
 
 		/// <summary>
 		/// The starting tiles of a selected movement path.

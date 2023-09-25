@@ -14,8 +14,10 @@ namespace DiceRoller
 		{
 			Depleted,
 			SelectedEnemy,
+			SelectedFriend,
 			SelectedSelf,
 			InspectingEnemy,
+			InspectingFriend,
 			InspectingSelf,
 		}
 
@@ -26,6 +28,7 @@ namespace DiceRoller
 		public Sprite outlineSprite = null;
 		public Sprite overlaySprite = null;
 		public float size = 1f;
+		public float height = 1f;
 		public int playerId = 0;
 
 		[Header("Data")]
@@ -224,7 +227,6 @@ namespace DiceRoller
 			if (occupiedTilesHovering.ContainsKey(tile))
 			{
 				occupiedTilesHovering[tile] = hovering;
-
 				IsHoveringOnTile = occupiedTilesHovering.Aggregate(true, (result, x) => result && x.Value);
 			}
 		}
@@ -316,11 +318,13 @@ namespace DiceRoller
 
 			if (outline.Color != outlineColor)
 			{
+				outline.enabled = outlineColor.a != 0;
 				outline.Color = outlineColor;
 			}
 
 			if (overlay.Color != overlayColor)
 			{
+				overlay.enabled = overlayColor.a != 0;
 				overlay.Color = overlayColor;
 			}
 
@@ -337,11 +341,13 @@ namespace DiceRoller
 
 			if (outline.Color != outlineColor)
 			{
+				outline.enabled = outline.Color.a != 0;
 				outline.Color = outlineColor;
 			}
 
 			if (overlay.Color != overlayColor)
 			{
+				overlay.enabled = overlayColor.a != 0;
 				overlay.Color = overlayColor;
 			}
 
