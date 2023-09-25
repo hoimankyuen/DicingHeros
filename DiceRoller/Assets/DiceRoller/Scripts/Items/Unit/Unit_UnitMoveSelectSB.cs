@@ -8,7 +8,7 @@ namespace DiceRoller
 {
     public partial class Unit
     {
-		class UnitMovSelectSB : StateBehaviour
+		class UnitMoveSelectSB : StateBehaviour
 		{
 			// host reference
 			private readonly Unit self = null;
@@ -36,7 +36,7 @@ namespace DiceRoller
 			/// <summary>
 			/// Constructor.
 			/// </summary>
-			public UnitMovSelectSB(Unit self)
+			public UnitMoveSelectSB(Unit self)
 			{
 				this.self = self;
 			}
@@ -205,11 +205,7 @@ namespace DiceRoller
 						if (reachable)
 						{
 							// pressed on a valid tile, initiate movement
-							self.MovementStartingTiles.Clear();
-							self.MovementStartingTiles.AddRange(self.OccupiedTiles);
-							self.MovementSelectedPath.Clear();
-							self.MovementSelectedPath.AddRange(lastPath);
-
+							self.NextMovement = new UnitMovement(self.OccupiedTiles, lastPath);
 							stateMachine.ChangeState(State.UnitMove);
 						}
 						else
@@ -242,7 +238,7 @@ namespace DiceRoller
 					{
 						if (isHoveringOnTiles)
 						{
-							self.AddToInspection();
+							//self.AddToInspection();
 							self.AddEffect(self.Player == game.CurrentPlayer ? StatusType.InspectingFriend : StatusType.InspectingEnemy);
 							foreach (Tile t in self.OccupiedTiles)
 							{
@@ -251,7 +247,7 @@ namespace DiceRoller
 						}
 						else
 						{
-							self.RemoveFromInspection();
+							//self.RemoveFromInspection();
 							self.RemoveEffect(self.Player == game.CurrentPlayer ? StatusType.InspectingFriend : StatusType.InspectingEnemy);
 							foreach (Tile t in self.OccupiedTiles)
 							{
@@ -350,7 +346,7 @@ namespace DiceRoller
 					// hide hovering by tile
 					if (lastIsHoveringFromTiles)
 					{
-						self.RemoveFromInspection();
+						//self.RemoveFromInspection();
 						self.RemoveEffect(self.Player == game.CurrentPlayer ? StatusType.InspectingFriend : StatusType.InspectingEnemy);
 						foreach (Tile t in self.OccupiedTiles)
 						{

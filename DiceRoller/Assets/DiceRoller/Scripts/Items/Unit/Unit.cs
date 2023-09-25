@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace DiceRoller
 {
-	public partial class Unit : Item
+	public partial class Unit : Item, IEquatable<Unit>
 	{
 		// parameters
 		[Header("Unit Parameters")]
@@ -178,15 +178,10 @@ namespace DiceRoller
 		}
 		private int _pendingHealthDelta;
 
-		/// <summary>
-		/// The starting tiles of a selected movement path.
-		/// </summary>
-		public List<Tile> MovementStartingTiles { get; private set; } = new List<Tile>();
+		public UnitMovement NextMovement { get; private set; } = null;
 
-		/// <summary>
-		/// Tiles in a selected movment path from start to end.
-		/// </summary>
-		public List<Tile> MovementSelectedPath { get; private set; } = new List<Tile>();
+		public UnitAttack NextAttack { get; private set; } = null;
+
 
 		// ========================================================= Inspection and Selection =========================================================
 
@@ -328,6 +323,16 @@ namespace DiceRoller
 			}
 		}
 
+		// ========================================================= IEqautable Methods =========================================================
+
+		/// <summary>
+		/// Check if this object is equal to the other object.
+		/// </summary>
+		public bool Equals(Unit other)
+		{
+			return this == other;
+		}
+
 		// ========================================================= Team Behaviour =========================================================
 
 		/// <summary>
@@ -411,9 +416,10 @@ namespace DiceRoller
 		protected void RegisterStateBehaviours()
 		{
 			stateMachine.Register(this, State.Navigation, new NavigationSB(this));
-			stateMachine.Register(this, State.UnitMoveSelect, new UnitMovSelectSB(this));
-			stateMachine.Register(this, State.UnitAttackSelect, new UnitAttackSelectSB(this));
+			stateMachine.Register(this, State.UnitMoveSelect, new UnitMoveSelectSB(this));
 			stateMachine.Register(this, State.UnitMove, new UnitMoveSB(this));
+			stateMachine.Register(this, State.UnitAttackSelect, new UnitAttackSelectSB(this));
+			stateMachine.Register(this, State.UnitAttack, new UnitAttackSB(this));
 			stateMachine.Register(this, State.DiceActionSelect, new EffectOnlySB(this));
 			stateMachine.Register(this, State.DiceThrow, new EffectOnlySB(this));
 			stateMachine.Register(this, State.EndTurn, new EndTurnSB(this));

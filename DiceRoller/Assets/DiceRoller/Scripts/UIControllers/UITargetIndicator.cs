@@ -29,7 +29,6 @@ namespace DiceRoller
 		[Header("Components")]
 		public Image actionImage;
 		public Image pointerImage;
-		private RectTransform rectTransform;
 
 		[Header("Data")]
 		public UICursorIcons icons;
@@ -47,7 +46,6 @@ namespace DiceRoller
 		/// </summary>
 		private void Awake()
 		{
-			rectTransform = GetComponent<RectTransform>();
 		}
 
 		/// <summary>

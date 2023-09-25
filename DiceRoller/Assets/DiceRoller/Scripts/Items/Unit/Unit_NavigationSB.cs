@@ -71,7 +71,7 @@ namespace DiceRoller
 				}
 
 				// go to unit movement selection state when this unit is pressed
-				if (self.Player == game.CurrentPlayer && self.IPressedOnObject && !self.ActionDepleted && self.OccupiedTiles.Count > 0)
+				if (self.Player == game.CurrentPlayer && self.IsPressedOnObject && !self.ActionDepleted && self.OccupiedTiles.Count > 0)
 				{
 					self.AddToSelection();
 					stateMachine.ChangeState(State.UnitMoveSelect);

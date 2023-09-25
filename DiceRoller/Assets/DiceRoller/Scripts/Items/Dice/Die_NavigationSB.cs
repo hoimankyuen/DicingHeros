@@ -52,7 +52,7 @@ namespace DiceRoller
 				}
 
 				// go to dice action selection state when this dice is pressed
-				if (game.CurrentPlayer == self.Player && self.IPressedOnObject)
+				if (game.CurrentPlayer == self.Player && self.IsPressedOnObject)
 				{
 					self.AddToSelection();
 					stateMachine.ChangeState(DiceRoller.State.DiceActionSelect);

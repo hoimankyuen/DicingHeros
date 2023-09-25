@@ -18,15 +18,18 @@ namespace DiceRoller
 		}
 
 		[Header("Components")]
-		public Image actionImage;
-		public Image pointerImage;
+		public Image actionImage = null;
+		public Image pointerImage = null;
 
 		[Header("Data")]
-		public UICursorIcons icons;
+		public UICursorIcons icons = null;
+
+		[Header("Settings")]
+		public bool hideCursorAtStart = false;
 
 		// working variables
-		private IconType iconType;
-		private Sprite iconSprite;
+		private IconType iconType = IconType.None;
+		private Sprite iconSprite = null;
 
 		// ========================================================= Monobehaviour Methods =========================================================
 
@@ -43,7 +46,11 @@ namespace DiceRoller
 		/// </summary>
 		private void Start()
 		{
-			//Cursor.visible = false;
+			if (hideCursorAtStart)
+			{
+				Cursor.visible = false;
+			}
+			
 			SetIcon(IconType.None);
 		}
 

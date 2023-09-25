@@ -34,3 +34,12 @@ MonoBehaviour:
   - effectType: 6
     outlineColor: {r: 0, g: 0, b: 0, a: 0}
     overlayColor: {r: 0, g: 1, b: 0, a: 0.5019608}
+  - effectType: 7
+    outlineColor: {r: 1, g: 0, b: 0, a: 0.5019608}
+    overlayColor: {r: 0, g: 0, b: 0, a: 0}
+  - effectType: 8
+    outlineColor: {r: 1, g: 0.5, b: 0, a: 0.5019608}
+    overlayColor: {r: 0, g: 0, b: 0, a: 0}
+  - effectType: 9
+    outlineColor: {r: 0, g: 1, b: 0, a: 0.5019608}
+    overlayColor: {r: 0, g: 0, b: 0, a: 0}

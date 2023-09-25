@@ -60,7 +60,7 @@ namespace DiceRoller
 					}
 
 					// go to dice action selection state or navigation state when this dice is pressed
-					if (self.IPressedOnObject)
+					if (self.IsPressedOnObject)
 					{
 						if (self.IsSelected)
 						{

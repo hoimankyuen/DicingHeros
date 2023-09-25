@@ -19,6 +19,9 @@ namespace DiceRoller
 			InspectingEnemy,
 			InspectingFriend,
 			InspectingSelf,
+			PossibleEnemy,
+			PossibleFriend,
+			PossibleSelf,
 		}
 
 		// parameters
@@ -90,11 +93,10 @@ namespace DiceRoller
 		/// <summary>
 		/// Flag for if user has pressed on this item by any means.
 		/// </summary>
-		protected bool IPressedOnObject { get; private set; } = false;
+		protected bool IsPressedOnObject { get; private set; } = false;
 		private bool initiatedSelfPress = false;
 		private bool completedSelfPress = false;
 		private bool isUIPressed = false;
-
 
 		/// <summary>
 		///A read only list of tiles that this item occupies.
@@ -296,13 +298,13 @@ namespace DiceRoller
 		/// </summary>
 		private void DetectPress()
 		{
-			IPressedOnObject = false;
+			IsPressedOnObject = false;
 			if (completedSelfPress || isUIPressed)
 			{
 				completedSelfPress = false;
 				isUIPressed = false;
 
-				IPressedOnObject = true;
+				IsPressedOnObject = true;
 			}
 		}
 
@@ -341,7 +343,7 @@ namespace DiceRoller
 
 			if (outline.Color != outlineColor)
 			{
-				outline.enabled = outline.Color.a != 0;
+				outline.enabled = outlineColor.a != 0;
 				outline.Color = outlineColor;
 			}
 
@@ -353,5 +355,6 @@ namespace DiceRoller
 
 			onStatusChanged.Invoke();
 		}
+
 	}
 }

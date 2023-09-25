@@ -61,7 +61,6 @@ MonoBehaviour:
   baseDefence: 4
   baseMagic: 1
   baseMovement: 4
-  moveTimePerTile: 0.2
 --- !u!54 &2284104210925587976
 Rigidbody:
   m_ObjectHideFlags: 0

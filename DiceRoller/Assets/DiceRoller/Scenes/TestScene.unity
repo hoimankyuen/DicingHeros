@@ -7849,6 +7849,7 @@ MonoBehaviour:
   actionImage: {fileID: 666635765}
   pointerImage: {fileID: 1736576107}
   icons: {fileID: 11400000, guid: ccc184c075419104786ad7ac4a3b5bc0, type: 2}
+  hideCursorAtStart: 1
 --- !u!224 &375950720
 RectTransform:
   m_ObjectHideFlags: 0

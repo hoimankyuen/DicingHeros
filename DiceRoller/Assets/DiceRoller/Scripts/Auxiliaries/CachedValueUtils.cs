@@ -8,13 +8,28 @@ public class CachedValueUtils
 {
 	public static bool HasValueChanged<T>(T target, ref T cache) where T : IEquatable<T>
 	{
-		if (!target.Equals(cache))
+		if ((target == null && cache != null) || (target != null && !target.Equals(cache)))
 		{
 			cache = target;
 			return true;
 		}
 		else
 		{
+			return false;
+		}
+	}
+
+	public static bool HasValueChanged<T>(T target, ref T cache, out T lastValue) where T : IEquatable<T>
+	{
+		if ((target == null && cache != null) || (target != null && !target.Equals(cache)))
+		{
+			lastValue = cache;
+			cache = target;
+			return true;
+		}
+		else
+		{
+			lastValue = target;
 			return false;
 		}
 	}

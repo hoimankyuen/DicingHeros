@@ -21,7 +21,7 @@ namespace DiceRoller
 				this.self = self;
 			}
 
-			// ========================================================= State Machine Methods =========================================================
+			// ========================================================= State Enter Methods =========================================================
 
 			/// <summary>
 			/// OnStateEnter is called when the centralized state machine is entering the current state.
@@ -46,8 +46,8 @@ namespace DiceRoller
 			/// </summary>
 			protected IEnumerator MoveSequence()
 			{
-				List<Tile> startTiles = self.MovementStartingTiles;
-				List<Tile> path = self.MovementSelectedPath;
+				List<Tile> startTiles = self.NextMovement.startingTiles;
+				List<Tile> path = self.NextMovement.path;
 
 				// show all displays on grid
 				startTiles.ForEach(x => x.UpdateDisplayAs(self, Tile.DisplayType.SelfPosition, startTiles));
@@ -103,12 +103,13 @@ namespace DiceRoller
 
 				// clear information
 				self.RemoveFromSelection();
-				self.MovementStartingTiles.Clear();
-				self.MovementSelectedPath.Clear();
+				self.NextMovement = null;
 
 				// change state back to navigation
 				stateMachine.ChangeState(State.Navigation);
 			}
+
+			// ========================================================= State Update Methods =========================================================
 
 			/// <summary>
 			/// OnStateUpdate is called each frame when the centralized state machine is ing the current state.
@@ -116,6 +117,8 @@ namespace DiceRoller
 			public override void OnStateUpdate()
 			{
 			}
+
+			// ========================================================= State Exit Methods =========================================================
 
 			/// <summary>
 			/// OnStateExit is called when the centralized state machine is leaving the current state.
