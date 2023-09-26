@@ -74,7 +74,7 @@ namespace DiceRoller
 
 		protected void RefreshPlayerDisplay()
 		{
-			if (game.CurrentTurn != null)
+			if (game.CurrentPlayer != null)
 			{
 				playerText.text = string.Format("Player : {0}", game.CurrentPlayer.name);
 			}
@@ -92,7 +92,7 @@ namespace DiceRoller
 			}
 			else
 			{
-				playerText.text = "Turn : ==";
+				turnText.text = "Turn : ==";
 			}
 		}
 

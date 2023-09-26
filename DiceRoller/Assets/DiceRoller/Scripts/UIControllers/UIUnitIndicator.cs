@@ -27,7 +27,6 @@ namespace DiceRoller
 		*/
 
 		// references
-		private RectTransform rectTransform;
 		private Unit targetUnit;
 
 
@@ -40,7 +39,6 @@ namespace DiceRoller
 		/// </summary>
 		private void Awake()
 		{
-			rectTransform = GetComponent<RectTransform>();
 		}
 
 		/// <summary>

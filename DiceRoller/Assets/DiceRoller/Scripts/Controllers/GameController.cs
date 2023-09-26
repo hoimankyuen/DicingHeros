@@ -19,6 +19,7 @@ namespace DiceRoller
 		private List<Player> players = new List<Player>();
 
 		// references
+		private UIController uiController => UIController.current;
 		private StateMachine stateMachine => StateMachine.current;
 		private DiceThrower diceThrower => DiceThrower.current;
 
@@ -223,50 +224,14 @@ namespace DiceRoller
 				// reset remaining throw
 				self.diceThrower.ResetRemainingThrow(self.CurrentPlayer.throws);
 
-				// going into the new turn by changing to navigation state
+				// wait for start turn animation and change state
+				self.StartCoroutine(WaitForAnimationAndChangeState());
+			}
+
+			private IEnumerator WaitForAnimationAndChangeState()
+			{
+				yield return self.uiController.prompt.StartTurnAnimation(self.CurrentPlayer, self.CurrentTurn);
 				stateMachine.ChangeState(State.Navigation);
-			}
-
-			/// <summary>
-			/// OnStateUpdate is called each frame when the centralized state machine is in the current state.
-			/// </summary>
-			public override void OnStateUpdate()
-			{
-			}
-
-			/// <summary>
-			/// OnStateExit is called when the centralized state machine is leaving the current state.
-			/// </summary>
-			public override void OnStateExit()
-			{
-			}
-		}
-
-		// ========================================================= End Turn State =========================================================
-
-		private class EndTurnSB : StateBehaviour
-		{
-			// host reference
-			private GameController self;
-
-			/// <summary>
-			/// Constructor.
-			/// </summary>
-			public EndTurnSB(GameController self)
-			{
-				this.self = self;
-			}
-
-			/// <summary>
-			/// OnStateEnter is called when the centralized state machine is entering the current state.
-			/// </summary>
-			public override void OnStateEnter()
-			{
-				// store the current turn
-				self.previousTurns.Add(self.CurrentTurn);
-				
-				// start a new turn by changing to navigation state
-				stateMachine.ChangeState(State.StartTurn);
 			}
 
 			/// <summary>
@@ -296,5 +261,55 @@ namespace DiceRoller
 				stateMachine.ChangeState(State.EndTurn);
 			}
 		}
+
+
+		// ========================================================= End Turn State =========================================================
+
+		private class EndTurnSB : StateBehaviour
+		{
+			// host reference
+			private GameController self;
+
+			/// <summary>
+			/// Constructor.
+			/// </summary>
+			public EndTurnSB(GameController self)
+			{
+				this.self = self;
+			}
+
+			/// <summary>
+			/// OnStateEnter is called when the centralized state machine is entering the current state.
+			/// </summary>
+			public override void OnStateEnter()
+			{
+				// store the current turn
+				self.previousTurns.Add(self.CurrentTurn);
+
+				// wait for end turn animation and change state
+				self.StartCoroutine(WaitForAnimationAndChangeState());
+			}
+
+			private IEnumerator WaitForAnimationAndChangeState()
+			{
+				yield return self.uiController.prompt.EndTurnAnimation(self.CurrentPlayer, self.CurrentTurn);
+				stateMachine.ChangeState(State.StartTurn);
+			}
+
+			/// <summary>
+			/// OnStateUpdate is called each frame when the centralized state machine is in the current state.
+			/// </summary>
+			public override void OnStateUpdate()
+			{
+			}
+
+			/// <summary>
+			/// OnStateExit is called when the centralized state machine is leaving the current state.
+			/// </summary>
+			public override void OnStateExit()
+			{
+			}
+		}
+
 	}
 }
