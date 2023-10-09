@@ -7,7 +7,7 @@ using System;
 
 namespace DiceRoller
 {
-	public partial class Die : Item
+	public partial class Die : Item, IEquatable<Die>
 	{
 		public enum Type
 		{
@@ -357,6 +357,16 @@ namespace DiceRoller
 				Gizmos.color = Color.white;
 				Gizmos.DrawWireSphere(transform.position, size / 2);
 			}
+		}
+
+		// ========================================================= IEqautable Methods =========================================================
+
+		/// <summary>
+		/// Check if this object is equal to the other object.
+		/// </summary>
+		public bool Equals(Die other)
+		{
+			return this == other;
 		}
 
 		// ========================================================= General Behaviour =========================================================

@@ -39,6 +39,8 @@ namespace DiceRoller
 		 * Registered : 
 		 *     UIController
 		 *     Unit
+		 *     Equipment
+		 *     EquipmentDieSlot
 		 *     Die
 		 * Transitions : 
 		 *     Unit -> State.UnitMovement
@@ -50,6 +52,8 @@ namespace DiceRoller
 		 * Registered :
 		 *	   UIController
 		 *     Unit
+		 *     Equipment
+		 *     EquipmentDieSlot
 		 *     Die
 		 * Transitions :
 		 *     Unit -> State.Navigation

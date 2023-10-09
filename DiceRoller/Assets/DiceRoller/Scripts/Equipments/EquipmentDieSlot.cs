@@ -24,6 +24,7 @@ namespace DiceRoller
 
 		// events
 		public event Action onDieChanged = () => { };
+		public event Action onFulfillmentChanged = () => { };
 
 		// ========================================================= Properties =========================================================
 
@@ -75,6 +76,9 @@ namespace DiceRoller
 		~EquipmentDieSlot()
 		{
 			DeregisterStateBehaviours();
+
+			if (this.Die != null)
+				this.Die.onValueChanged -= RefreshFulfillment;
 		}
 
 		// ========================================================= Message From External =========================================================
@@ -134,10 +138,29 @@ namespace DiceRoller
 		{
 			if (this.Die != die)
 			{
+				// register event callbacks
+				if (this.Die != null)
+					this.Die.onValueChanged -= RefreshFulfillment;
+				if (die != null)
+					die.onValueChanged += RefreshFulfillment;
+
+				// change value
 				this.Die = die;
-				IsRequirementFulfilled = IsFulfillBy(die);
+				RefreshFulfillment();
 
 				onDieChanged.Invoke();
+			}
+		}
+
+		/// <summary>
+		/// Updates the value of requirement fulfillment and trigger callback if needed.
+		/// </summary>
+		private void RefreshFulfillment()
+		{
+			if (IsRequirementFulfilled != IsFulfillBy(Die))
+			{
+				IsRequirementFulfilled = IsFulfillBy(Die);
+				onFulfillmentChanged.Invoke();
 			}
 		}
 

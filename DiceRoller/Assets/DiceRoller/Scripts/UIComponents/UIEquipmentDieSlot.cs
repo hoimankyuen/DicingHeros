@@ -132,12 +132,12 @@ namespace DiceRoller
                 }
                 else
                 {
-                    uiDie.SetInspectingTarget(equipmentDieSlot.dieType, equipmentDieSlot.parameter, equipmentDieSlot.requirement);
+                    uiDie.SetDisplayedValue(equipmentDieSlot.dieType, equipmentDieSlot.parameter, equipmentDieSlot.requirement);
                 }
             }
             else
             {
-                uiDie.SetInspectingTarget(Die.Type.Unknown, -1);
+                uiDie.SetDisplayedValue(Die.Type.Unknown, -1);
             }
         }
     }

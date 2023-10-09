@@ -15,6 +15,10 @@ namespace DiceRoller
 		public UIHealthDisplay healthDisplay;
 		public UIStatDisplay statDisplay;
 
+		// working variables
+		private Unit inspectingUnit = null;
+		private Die inspectingDie = null;
+
 		// ========================================================= Monobehaviour Methods =========================================================
 
 		/// <summary>
@@ -63,45 +67,57 @@ namespace DiceRoller
 
 		protected void Populate()
 		{
-			Unit targetUnit = Unit.GetFirstBeingInspected();
-			Die targetDie = Die.GetFirstBeingInspected();
 
-			// display selectable information
-			if (targetUnit != null)
+			bool changed = false;
+			changed |= CachedValueUtils.HasValueChanged(Unit.GetFirstBeingInspected(), ref inspectingUnit);
+			changed |= CachedValueUtils.HasValueChanged(Die.GetFirstBeingInspected(), ref inspectingDie);
+			if (changed)
 			{
-				// show unit information
-				Unit target = Unit.GetFirstBeingInspected();
-				
-				dieDisplay.gameObject.SetActive(false);
+				Unit targetUnit = Unit.GetFirstBeingInspected();
+				Die targetDie = Die.GetFirstBeingInspected();
 
-				unitImage.gameObject.SetActive(true);
-				unitImage.sprite = target.iconSprite;
-				healthDisplay.gameObject.SetActive(true);
-				healthDisplay.SetDisplay(target);
-				statDisplay.gameObject.SetActive(true);
-				statDisplay.SetDisplay(target);
+				// display selectable information
+				if (targetUnit != null)
+				{
+					// show unit information
+					Unit target = Unit.GetFirstBeingInspected();
+
+					dieDisplay.gameObject.SetActive(false);
+
+					unitImage.gameObject.SetActive(true);
+					unitImage.sprite = target.iconSprite;
+					healthDisplay.gameObject.SetActive(true);
+					healthDisplay.SetDisplay(target);
+					statDisplay.gameObject.SetActive(true);
+					statDisplay.SetDisplay(target);
+
+				}
+				else if (targetDie != null && targetDie.Value != -1)
+				{
+					// show dice information
+					dieDisplay.gameObject.SetActive(true);
+					dieDisplay.SetInspectingTarget(targetDie);
+
+					unitImage.gameObject.SetActive(false);
+					healthDisplay.gameObject.SetActive(false);
+					statDisplay.gameObject.SetActive(false);
+				}
+				else
+				{
+					// show nothing selected
+					dieDisplay.gameObject.SetActive(true);
+					dieDisplay.SetDisplayedValue(Die.Type.Unknown, -1);
+
+					unitImage.gameObject.SetActive(false);
+					healthDisplay.gameObject.SetActive(false);
+					statDisplay.gameObject.SetActive(false);
+				}
 
 			}
-			else if (targetDie != null && targetDie.Value != -1)
-			{
-				// show dice information
-				dieDisplay.gameObject.SetActive(true);
-				dieDisplay.SetInspectingTarget(targetDie);
 
-				unitImage.gameObject.SetActive(false);
-				healthDisplay.gameObject.SetActive(false);
-				statDisplay.gameObject.SetActive(false);
-			}
-			else
-			{
-				// show nothing selected
-				dieDisplay.gameObject.SetActive(true);
-				dieDisplay.SetInspectingTarget(Die.Type.Unknown, -1);
+			
 
-				unitImage.gameObject.SetActive(false);
-				healthDisplay.gameObject.SetActive(false);
-				statDisplay.gameObject.SetActive(false);
-			}
+			
 		}
 	}
 }

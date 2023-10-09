@@ -48,6 +48,8 @@ namespace DiceRoller
 		protected Coroutine rollingValueCoroutine;
 		protected bool rolling = false;
 
+		protected bool pointerEntered = false;
+
 		public RectTransform rectTransform => GetComponent<RectTransform>();
 
 		// ========================================================= Monobehaviour Methods =========================================================
@@ -100,6 +102,8 @@ namespace DiceRoller
 				die.OnUIMouseEnter();
 			if (mode == Mode.Equipment && dieSlot != null)
 				dieSlot.OnPointerEnter(eventData);
+
+			pointerEntered = true;
 		}
 
 		/// <summary>
@@ -107,10 +111,12 @@ namespace DiceRoller
 		/// </summary>
 		public void OnPointerExit(PointerEventData eventData)
 		{
-			if (mode == Mode.Default && die != null)
+			if ((mode == Mode.Default || mode == Mode.Equipment) && die != null)
 				die.OnUIMouseExit();
 			if (mode == Mode.Equipment && dieSlot != null)
 				dieSlot.OnPointerExit(eventData);
+
+			pointerEntered = false;
 		}
 
 		/// <summary>
@@ -163,13 +169,45 @@ namespace DiceRoller
 		/// </summary>
 		public void SetInspectingTarget(Die die)
 		{
+			SetTargetOrValue(die, type, value, requirement);
+		}
+
+		/// <summary>
+		/// Set the displayed information as some preset value.
+		/// </summary>
+		public void SetDisplayedValue(Die.Type type, int value)
+		{
+			SetTargetOrValue(null, type, value, EquipmentDieSlot.Requirement.None);
+		}
+
+		/// <summary>
+		/// Set the displayed information as some preset value.
+		/// </summary>
+		public void SetDisplayedValue(Die.Type type, int value, EquipmentDieSlot.Requirement requirement)
+		{
+			SetTargetOrValue(null, type, value, requirement);
+		}
+
+		/// <summary>
+		/// Combined method of either setting the inspecting target die, or some preset value.
+		/// </summary>
+		protected void SetTargetOrValue(Die die, Die.Type type, int value, EquipmentDieSlot.Requirement requirement)
+		{
 			// prevent excessive calls
-			if (this.die == die)
+			if (die != null && this.die == die)
 				return;
 
-			// register and deregister callbacks
+			// register and deregister callbacks, also trigger the missing pointer exit and enter
 			if (this.die != null)
 			{
+				if (pointerEntered)
+				{
+					if ((mode == Mode.Default || mode == Mode.Equipment) && this.die != null)
+						this.die.OnUIMouseExit();
+					if (mode == Mode.Equipment && dieSlot != null)
+						dieSlot.OnPointerExit(null);
+				}
+
 				this.die.onValueChanged -= RefreshDisplay;
 				this.die.onDieStateChanged -= RefreshDisplay;
 				this.die.onStatusChanged -= RefreshDisplay;
@@ -178,6 +216,14 @@ namespace DiceRoller
 			}
 			if (die != null)
 			{
+				if (pointerEntered)
+				{
+					if ((mode == Mode.Default || mode == Mode.Equipment) && die != null)
+						die.OnUIMouseEnter();
+					if (mode == Mode.Equipment && dieSlot != null)
+						dieSlot.OnPointerEnter(null);
+				}
+
 				die.onValueChanged += RefreshDisplay;
 				die.onDieStateChanged += RefreshDisplay;
 				die.onStatusChanged += RefreshDisplay;
@@ -190,42 +236,12 @@ namespace DiceRoller
 
 			// set values
 			this.die = die;
-			RefreshDisplay();
-		}
-
-		/// <summary>
-		/// Set the displayed information as some preset value.
-		/// </summary>
-		public void SetInspectingTarget(Die.Type type, int value)
-		{
-			SetInspectingTarget(type, value, EquipmentDieSlot.Requirement.None);
-		}
-
-		/// <summary>
-		/// Set the displayed information as some preset value.
-		/// </summary>
-		public void SetInspectingTarget(Die.Type type, int value, EquipmentDieSlot.Requirement requirement)
-		{
-			// deregister callbacks
-			if (die != null)
-			{
-				die.onValueChanged -= RefreshDisplay;
-				die.onDieStateChanged -= RefreshDisplay;
-				die.onStatusChanged -= RefreshDisplay;
-				Die.onInspectionChanged -= RefreshDisplay;
-				Die.onSelectionChanged -= RefreshDisplay;
-			}
-
-			// stop running animations
-			rolling = false;
-
-			// set values
-			die = null;
 			this.type = type;
 			this.value = value;
 			this.requirement = requirement;
 			RefreshDisplay();
 		}
+
 
 		/// <summary>
 		/// Change the current display of this ui element to either match the information of the inspecting object, or match the input values.

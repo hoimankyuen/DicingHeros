@@ -127,14 +127,14 @@ namespace DiceRoller
 				unitIcon.gameObject.SetActive(false);
 				dieIcon.gameObject.SetActive(false);
 				unitIcon.sprite = null;
-				dieIcon.SetInspectingTarget(Die.Type.Unknown, 20);
+				dieIcon.SetDisplayedValue(Die.Type.Unknown, 20);
 			}
 			else if (draggingItem is Unit)
 			{
 				unitIcon.gameObject.SetActive(true);
 				dieIcon.gameObject.SetActive(false);
 				unitIcon.sprite = draggingItem.iconSprite;
-				dieIcon.SetInspectingTarget(Die.Type.Unknown, 20);
+				dieIcon.SetDisplayedValue(Die.Type.Unknown, 20);
 			}
 			else if (draggingItem is Die)
 			{

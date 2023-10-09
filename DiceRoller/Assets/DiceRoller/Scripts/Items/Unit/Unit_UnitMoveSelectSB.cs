@@ -18,6 +18,7 @@ namespace DiceRoller
 
 			private List<Tile> lastOccupiedTiles = new List<Tile>();
 			private List<Tile> otherOccupiedTiles = new List<Tile>();
+			private int lastMovement = int.MinValue;
 			private List<Tile> lastMovementArea = new List<Tile>();
 			private List<Tile> lastPath = new List<Tile>();
 			private Tile lastTargetTile = null;
@@ -75,13 +76,6 @@ namespace DiceRoller
 							}
 						}
 					}
-
-					// show possible movement area on board, assume unit wont move during movement selection state
-					board.GetConnectedTilesInRange(self.OccupiedTiles, otherOccupiedTiles, self.baseMovement, lastMovementArea);
-					foreach (Tile tile in lastMovementArea)
-					{
-						tile.UpdateDisplayAs(self, Tile.DisplayType.Move, lastMovementArea);
-					}
 				}
 
 				// actions for other units
@@ -105,6 +99,21 @@ namespace DiceRoller
 				// actions for the selected unit
 				if (isSelectedAtEnter)
 				{
+					// update movement area if needed
+					if (CachedValueUtils.HasValueChanged(self.Movement, ref lastMovement))
+					{
+						// show possible movement area on board
+						foreach (Tile tile in lastMovementArea)
+						{
+							tile.RemoveDisplay(self, Tile.DisplayType.Move);
+						}
+						board.GetConnectedTilesInRange(self.OccupiedTiles, otherOccupiedTiles, self.Movement, lastMovementArea);
+						foreach (Tile tile in lastMovementArea)
+						{
+							tile.UpdateDisplayAs(self, Tile.DisplayType.Move, lastMovementArea);
+						}
+					}
+
 					// find the target tile that the mouse is pointing to
 					Tile targetTile = board.HoveringTile;
 
@@ -131,7 +140,7 @@ namespace DiceRoller
 						{
 							// no path exist, find the shortest path to target tile
 							nextPath.Clear();
-							self.board.GetShortestPath(self.OccupiedTiles, otherOccupiedTiles, targetTile, self.baseMovement, in nextPath);
+							self.board.GetShortestPath(self.OccupiedTiles, otherOccupiedTiles, targetTile, self.Movement, in nextPath);
 						}
 						else if (nextPath.Contains(targetTile))
 						{
@@ -146,7 +155,7 @@ namespace DiceRoller
 							appendExcludedTiles.AddRange(nextPath);
 							appendExcludedTiles.AddRange(otherOccupiedTiles);
 							appendExcludedTiles.Remove(nextPath[nextPath.Count - 1]);
-							self.board.GetShortestPath(nextPath[nextPath.Count - 1], appendExcludedTiles, targetTile, self.baseMovement + 1 - nextPath.Count, in appendPath);
+							self.board.GetShortestPath(nextPath[nextPath.Count - 1], appendExcludedTiles, targetTile, self.Movement + 1 - nextPath.Count, in appendPath);
 							if (appendPath.Count > 0)
 							{
 								// append a path from last tile of the path to the target tile
@@ -158,7 +167,7 @@ namespace DiceRoller
 							{
 								// path is too long, retrieve a shortest path to target tile instead
 								nextPath.Clear();
-								self.board.GetShortestPath(self.OccupiedTiles, otherOccupiedTiles, targetTile, self.baseMovement, in nextPath);
+								self.board.GetShortestPath(self.OccupiedTiles, otherOccupiedTiles, targetTile, self.Movement, in nextPath);
 							}
 						}
 
@@ -325,6 +334,8 @@ namespace DiceRoller
 					}
 
 					// reset cache
+					lastMovement = int.MinValue;
+
 					lastOccupiedTiles.Clear();
 					otherOccupiedTiles.Clear();
 					lastMovementArea.Clear();

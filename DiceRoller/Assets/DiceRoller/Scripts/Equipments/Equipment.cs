@@ -12,7 +12,7 @@ namespace DiceRoller
         protected bool activated = false;
 
         // events
-        public event Action onDieChanged = () => { };
+        public event Action onFulfillmentChanged = () => { };
 
         // ========================================================= Properties =========================================================
 
@@ -44,7 +44,7 @@ namespace DiceRoller
             FillDieSlots();
             foreach (EquipmentDieSlot dieSlot in DieSlots)
             {
-                dieSlot.onDieChanged += IndividualDieChanged;
+                dieSlot.onFulfillmentChanged += CheckAllSlotFulfilled;
             }
 
             RegisterStateBehaviours();
@@ -58,7 +58,7 @@ namespace DiceRoller
             // revert die slots
             foreach (EquipmentDieSlot dieSlot in DieSlots)
             {
-                dieSlot.onDieChanged -= IndividualDieChanged;
+                dieSlot.onFulfillmentChanged -= CheckAllSlotFulfilled;
             }
 
             DeregisterStateBehaviours();
@@ -107,29 +107,29 @@ namespace DiceRoller
         /// <summary>
         /// Notify that a die slot has its die changed.
         /// </summary>
-        private void IndividualDieChanged()
+        private void CheckAllSlotFulfilled()
         {
-            IsRequirementFulfilled = CheckAllSlotFulfilled();
-            onDieChanged.Invoke();
-        }
-
-        /// <summary>
-        /// Check if the requirement of this dice is fulfilled.
-        /// </summary>
-        public bool CheckAllSlotFulfilled()
-        {
-            bool fulfilled = true;
-            foreach (EquipmentDieSlot dieSlot in DieSlots)
+            // check if all requirement is fulfilled, activate or deactivate effect when changed
+            bool fulfilled = DieSlots.Aggregate(true, (acc, dieSlot) => acc && dieSlot.IsRequirementFulfilled);
+            if (IsRequirementFulfilled != fulfilled)
             {
-                fulfilled &= dieSlot.IsRequirementFulfilled;
+                if (fulfilled)
+                {
+                    Activate();
+                }
+                else
+                {
+                    Deactivate();
+                }
+                IsRequirementFulfilled = fulfilled;
             }
-            return fulfilled;
+            onFulfillmentChanged.Invoke();
         }
 
         /// <summary>
         /// Activate the effect of this equipment.
         /// </summary>
-        public void Activate()
+        private void Activate()
         {
             if (!activated)
             {
@@ -141,7 +141,7 @@ namespace DiceRoller
         /// <summary>
         /// Deactivate the effect of this equipment.
         /// </summary>
-        public void Deactivate()
+        private void Deactivate()
         {
             if (activated)
             {
