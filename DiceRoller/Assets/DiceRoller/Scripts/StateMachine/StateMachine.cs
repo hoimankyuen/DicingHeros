@@ -20,9 +20,10 @@ namespace DiceRoller
 
 	public class StateMachine : MonoBehaviour
 	{
-		protected struct HostBehaviour
+		protected struct HostedBehaviour
 		{
-			public MonoBehaviour host;
+			public GameObject gameObject;
+			public object host;
 			public StateBehaviour stateBehaviour;
 		}
 
@@ -30,7 +31,7 @@ namespace DiceRoller
 		public static StateMachine current { get; protected set; }
 
 		// working variables
-		protected Dictionary<State, List<HostBehaviour>> stateBehaviours = new Dictionary<State, List<HostBehaviour>>();
+		protected Dictionary<State, List<HostedBehaviour>> stateBehaviours = new Dictionary<State, List<HostedBehaviour>>();
 		protected State nextState = State.None;
 		//protected StateParams nextStateParams;
 
@@ -77,19 +78,19 @@ namespace DiceRoller
 		/// <summary>
 		/// Register a state machine behaviour to the game controller.
 		/// </summary>
-		public void Register(MonoBehaviour host, State state, StateBehaviour stateBehaviour)
+		public void Register(GameObject gameObject, object host, State state, StateBehaviour stateBehaviour)
 		{
 			if (!stateBehaviours.ContainsKey(state))
-				stateBehaviours[state] = new List<HostBehaviour>();
-			stateBehaviours[state].Add(new HostBehaviour() { host = host, stateBehaviour = stateBehaviour });
+				stateBehaviours[state] = new List<HostedBehaviour>();
+			stateBehaviours[state].Add(new HostedBehaviour() { gameObject = gameObject, host = host, stateBehaviour = stateBehaviour });
 		}
 
 		/// <summary>
 		/// Deregister a state machine behaviour from the game controller.
 		/// </summary>
-		public void DeregisterAll(MonoBehaviour host)
+		public void DeregisterAll(object host)
 		{
-			foreach (KeyValuePair<State, List<HostBehaviour>> kvp in stateBehaviours)
+			foreach (KeyValuePair<State, List<HostedBehaviour>> kvp in stateBehaviours)
 			{
 				kvp.Value.RemoveAll(x => x.host == host);
 			}
@@ -124,7 +125,7 @@ namespace DiceRoller
 				{
 					stateBehaviours[Current].ForEach(x =>
 					{
-						if (x.host.gameObject != null && x.host.gameObject.activeInHierarchy)
+						if (x.gameObject != null && x.gameObject.activeInHierarchy)
 							x.stateBehaviour.OnStateExit();
 					});
 				}
@@ -139,7 +140,7 @@ namespace DiceRoller
 				{
 					stateBehaviours[Current].ForEach(x =>
 					{
-						if (x.host.gameObject != null && x.host.gameObject.activeInHierarchy)
+						if (x.gameObject != null && x.gameObject.activeInHierarchy)
 							x.stateBehaviour.OnStateEnter();
 					});
 				}
@@ -150,7 +151,7 @@ namespace DiceRoller
 			{
 				stateBehaviours[Current].ForEach(x =>
 				{
-					if (x.host.gameObject != null && x.host.gameObject.activeInHierarchy)
+					if (x.gameObject != null && x.gameObject.activeInHierarchy)
 						x.stateBehaviour.OnStateUpdate();
 				});
 			}

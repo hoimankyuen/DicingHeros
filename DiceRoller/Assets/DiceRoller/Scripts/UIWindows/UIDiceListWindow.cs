@@ -91,7 +91,7 @@ namespace DiceRoller
 			{
 				UIDie uiDie = Instantiate(uiDiePrefab, uiDiePrefab.transform.parent).GetComponent<UIDie>();
 				uiDie.gameObject.SetActive(true);
-				uiDie.SetDisplay(inspectingPlayer.dice[i]);
+				uiDie.SetInspectingTarget(inspectingPlayer.dice[i]);
 				uiDie.rectTransform.pivot = new Vector2(i % 2 == 0 ? 1 : 0, 1);
 				uiDie.rectTransform.anchoredPosition = new Vector2(0, i / 2 * -uiDie.rectTransform.rect.height);	
 				uiDice.Add(uiDie);

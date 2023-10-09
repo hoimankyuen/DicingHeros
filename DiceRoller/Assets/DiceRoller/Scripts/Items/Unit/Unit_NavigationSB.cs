@@ -46,7 +46,7 @@ namespace DiceRoller
 			public override void OnStateUpdate()
 			{
 				// show occupied tiles on the board
-				IReadOnlyCollection<Tile> tiles = self.IsHoveringOnObject ? self.OccupiedTiles : Tile.EmptyTiles;
+				IReadOnlyCollection<Tile> tiles = self.IsHovering ? self.OccupiedTiles : Tile.EmptyTiles;
 				if (CachedValueUtils.HasCollectionChanged(tiles, lastOccupiedTiles, affectedOccupiedTiles))
 				{
 					foreach (Tile tile in affectedOccupiedTiles)
@@ -56,9 +56,9 @@ namespace DiceRoller
 				}
 
 				// show unit info on ui
-				if (CachedValueUtils.HasValueChanged(self.IsHoveringOnObject, ref lastIsHovering))
+				if (CachedValueUtils.HasValueChanged(self.IsHovering, ref lastIsHovering))
 				{
-					if (self.IsHoveringOnObject)
+					if (self.IsHovering)
 					{
 						self.AddToInspection();
 						self.AddEffect(self.Player == game.CurrentPlayer ? StatusType.InspectingSelf : StatusType.InspectingEnemy);
@@ -71,7 +71,7 @@ namespace DiceRoller
 				}
 
 				// go to unit movement selection state when this unit is pressed
-				if (self.Player == game.CurrentPlayer && self.IsPressedOnObject && !self.ActionDepleted && self.OccupiedTiles.Count > 0)
+				if (self.Player == game.CurrentPlayer && self.IsPressed[0] && !self.ActionDepleted && self.OccupiedTiles.Count > 0)
 				{
 					self.AddToSelection();
 					stateMachine.ChangeState(State.UnitMoveSelect);
@@ -96,7 +96,7 @@ namespace DiceRoller
 				}
 
 				// hide unit info on ui
-				if (self.IsHoveringOnObject)
+				if (self.IsHovering)
 				{
 					self.RemoveFromInspection();
 					self.RemoveEffect(self.Player == game.CurrentPlayer ? StatusType.InspectingSelf : StatusType.InspectingEnemy);

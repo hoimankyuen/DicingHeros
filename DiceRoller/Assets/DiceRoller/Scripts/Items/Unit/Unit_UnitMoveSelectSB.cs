@@ -208,12 +208,14 @@ namespace DiceRoller
 							self.NextMovement = new UnitMovement(self.OccupiedTiles, lastPath);
 							stateMachine.ChangeState(State.UnitMove);
 						}
+						/*
 						else
 						{
 							// return to navigation otherwise
 							self.RemoveFromSelection();
 							stateMachine.ChangeState(State.Navigation);
 						}
+						*/
 					}
 
 					// detect return to navitation by right mouse pressing
@@ -367,6 +369,15 @@ namespace DiceRoller
 			if (stateMachine.Current == State.UnitMoveSelect)
 			{
 				stateMachine.ChangeState(State.UnitAttackSelect);
+			}
+		}
+
+		public void CancelMoveSelect()
+		{
+			if (stateMachine.Current == State.UnitMoveSelect)
+			{
+				RemoveFromSelection();
+				stateMachine.ChangeState(State.Navigation);
 			}
 		}
 	}

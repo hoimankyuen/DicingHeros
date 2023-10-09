@@ -12,10 +12,15 @@ namespace DiceRoller
 		public Image unitImage;
 		public UIHealthDisplay healthDisplay;
 		public UIStatDisplay statDisplay;
+		public Transform gearFrame;
+
+		// reference
+		protected GameController game => GameController.current;
 
 		// working variables
-		protected Unit unit;
-
+		private Unit inspectingUnit = null;
+		private List<UIEquipment> equipments = new List<UIEquipment>();
+	
 		// ========================================================= Monobehaviour Methods =========================================================
 
 		/// <summary>
@@ -33,7 +38,9 @@ namespace DiceRoller
 		protected override void Start()
 		{
 			base.Start();
-			Populate();
+
+			Unit.onSelectionChanged += RefreshDisplay;
+			RefreshDisplay();
 		}
 
 		/// <summary>
@@ -50,6 +57,7 @@ namespace DiceRoller
 		protected override void OnDestroy()
 		{
 			base.OnDestroy();
+			Unit.onSelectionChanged -= RefreshDisplay;
 		}
 
 		/// <summary>
@@ -62,11 +70,52 @@ namespace DiceRoller
 
 		// ========================================================= Behaviour =========================================================
 
-		protected void Populate()
+		protected void RefreshDisplay()
 		{
-			unitImage.sprite = unit != null ? unit.iconSprite : null;
-			healthDisplay.SetDisplay(unit);
-			statDisplay.SetDisplay(unit);
+			Unit inspectingUnit = Unit.GetFirstSelected();
+			if (this.inspectingUnit != inspectingUnit)
+			{
+				this.inspectingUnit = inspectingUnit;
+				
+				// fill in basic information
+				unitImage.sprite = inspectingUnit != null ? inspectingUnit.iconSprite : null;
+				healthDisplay.SetDisplay(inspectingUnit);
+				statDisplay.SetDisplay(inspectingUnit);
+
+				// removing previous equipment uis
+				for (int i = gearFrame.childCount - 1; i >= 0; i--)
+				{
+					Destroy(gearFrame.GetChild(i).gameObject);
+				}
+				// add new equipment uis
+				if (inspectingUnit != null)
+				{
+					for (int i = 0; i < inspectingUnit.Equipments.Count; i++)
+					{
+						// select the correct ui for the equipment
+						GameObject prefab = null;
+						if (inspectingUnit.Equipments[i] is SimpleKnife)
+						{
+							prefab = Resources.Load("UISimpleKnife") as GameObject;
+						}
+						else if (inspectingUnit.Equipments[i] is SimpleShoe)
+						{
+							prefab = Resources.Load("UISimpleShoe") as GameObject;
+						}
+
+						// spawn the equipment ui
+						if (prefab != null)
+						{
+							GameObject uiEquipment = Instantiate(prefab, gearFrame);
+							RectTransform rt = uiEquipment.GetComponent<RectTransform>();
+							rt.anchorMin = new Vector2(0, 1);
+							rt.anchorMax = new Vector2(1, 1);
+							rt.anchoredPosition = new Vector3(0, -5 - i * (rt.rect.height + 10), 0);
+							uiEquipment.GetComponent<UIEquipment>().SetInspectingTarget(inspectingUnit.Equipments[i]);
+						}
+					}
+				}
+			}
 		}
 	}
 }

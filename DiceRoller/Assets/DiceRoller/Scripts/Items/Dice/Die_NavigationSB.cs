@@ -37,9 +37,9 @@ namespace DiceRoller
 			public override void OnStateUpdate()
 			{
 				// show dice info on ui
-				if (CachedValueUtils.HasValueChanged(self.IsHoveringOnObject, ref lastIsHovering))
+				if (CachedValueUtils.HasValueChanged(self.IsHovering, ref lastIsHovering))
 				{
-					if (self.IsHoveringOnObject)
+					if (self.IsHovering)
 					{
 						self.AddToInspection();
 						self.AddEffect(self.Player == game.CurrentPlayer ? StatusType.InspectingSelf : StatusType.InspectingEnemy);
@@ -52,7 +52,7 @@ namespace DiceRoller
 				}
 
 				// go to dice action selection state when this dice is pressed
-				if (game.CurrentPlayer == self.Player && self.IsPressedOnObject)
+				if (game.CurrentPlayer == self.Player && self.IsPressed[0])
 				{
 					self.AddToSelection();
 					stateMachine.ChangeState(DiceRoller.State.DiceActionSelect);

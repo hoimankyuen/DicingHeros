@@ -7,8 +7,16 @@ using UnityEngine.EventSystems;
 
 namespace DiceRoller
 {
-	public class UIDie : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
+	public class UIDie : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler
 	{
+		public enum Mode
+		{
+			Default,
+			Equipment,
+			Cursor,	
+		}
+
+
 		[Header("Data")]
 		public UIDieIcons defaultDieIcons;
 		public UIItemStateIcons itemStateIcons;
@@ -30,9 +38,13 @@ namespace DiceRoller
 		protected Die.Type type;
 		[SerializeField]
 		protected int value;
+		[SerializeField]
+		protected EquipmentDieSlot.Requirement requirement;
 
 		// working variables
+		protected Mode mode;
 		protected Die die;
+		protected UIEquipmentDieSlot dieSlot;
 		protected Coroutine rollingValueCoroutine;
 		protected bool rolling = false;
 
@@ -58,8 +70,8 @@ namespace DiceRoller
 				die.onValueChanged -= RefreshDisplay;
 				die.onDieStateChanged -= RefreshDisplay;
 				die.onStatusChanged -= RefreshDisplay;
-				die.onInspectionChanged -= RefreshDisplay;
-				die.onSelectionChanged -= RefreshDisplay;
+				Die.onInspectionChanged -= RefreshDisplay;
+				Die.onSelectionChanged -= RefreshDisplay;
 			}
 
 			// stop running animations
@@ -80,38 +92,76 @@ namespace DiceRoller
 		// ========================================================= Mouse Event Handler ========================================================
 
 		/// <summary>
-		/// Callback triggered by mouse button enter from Event System.
+		/// Callback triggered by mouse enter from Event System.
 		/// </summary>
 		public void OnPointerEnter(PointerEventData eventData)
 		{
-			if (die != null)
-				die.SetHoveringFromUI(true);
+			if ((mode == Mode.Default || mode == Mode.Equipment) && die != null)
+				die.OnUIMouseEnter();
+			if (mode == Mode.Equipment && dieSlot != null)
+				dieSlot.OnPointerEnter(eventData);
 		}
 
 		/// <summary>
-		/// Callback triggered by mouse button exit from Event System.
+		/// Callback triggered by mouse exit from Event System.
 		/// </summary>
 		public void OnPointerExit(PointerEventData eventData)
 		{
-			if (die != null)
-				die.SetHoveringFromUI(false);
+			if (mode == Mode.Default && die != null)
+				die.OnUIMouseExit();
+			if (mode == Mode.Equipment && dieSlot != null)
+				dieSlot.OnPointerExit(eventData);
 		}
 
 		/// <summary>
 		/// Callback triggered by mouse button down from Event System.
 		/// </summary>
-		public void OnPointerClick(PointerEventData eventData)
+		public void OnPointerDown(PointerEventData eventData)
 		{
-			if (die != null)
-				die.SetPressedFromUI();
+			if ((mode == Mode.Default || mode == Mode.Equipment) && die != null)
+				die.OnUIMouseDown((int)eventData.button);
+			if (mode == Mode.Equipment && dieSlot != null)
+				dieSlot.OnPointerDown(eventData);
+		}
+
+		/// <summary>
+		/// Callback triggered by mouse button up from Event System.
+		/// </summary>
+		public void OnPointerUp(PointerEventData eventData)
+		{
+			if ((mode == Mode.Default || mode == Mode.Equipment) && die != null)
+				die.OnUIMouseUp((int)eventData.button);
+			if (mode == Mode.Equipment && dieSlot != null)
+				dieSlot.OnPointerUp(eventData);
 		}
 
 		// ========================================================= UI Methods =========================================================
 
 		/// <summary>
+		/// Set this ui die to be a part of the equipment ui, allowing information pass back to the equipment ui.
+		/// </summary>
+		public void SetAsEquipmentSlots(UIEquipmentDieSlot dieSlot)
+		{
+			mode = Mode.Equipment;
+			this.dieSlot = dieSlot;
+		}
+
+		/// <summary>
+		/// Set this ui die to be a part of the cursor ui.
+		/// </summary>
+		public void SetAsCursor()
+		{
+			mode = Mode.Cursor;
+			foreach (Graphic graphic in transform.GetComponentsInChildren<Graphic>())
+			{
+				graphic.raycastTarget = false;
+			}
+		}
+
+		/// <summary>
 		/// Set the displayed information as an existing die.
 		/// </summary>
-		public void SetDisplay(Die die)
+		public void SetInspectingTarget(Die die)
 		{
 			// prevent excessive calls
 			if (this.die == die)
@@ -123,16 +173,16 @@ namespace DiceRoller
 				this.die.onValueChanged -= RefreshDisplay;
 				this.die.onDieStateChanged -= RefreshDisplay;
 				this.die.onStatusChanged -= RefreshDisplay;
-				die.onInspectionChanged -= RefreshDisplay;
-				die.onSelectionChanged -= RefreshDisplay;
+				Die.onInspectionChanged -= RefreshDisplay;
+				Die.onSelectionChanged -= RefreshDisplay;
 			}
 			if (die != null)
 			{
 				die.onValueChanged += RefreshDisplay;
 				die.onDieStateChanged += RefreshDisplay;
 				die.onStatusChanged += RefreshDisplay;
-				die.onInspectionChanged += RefreshDisplay;
-				die.onSelectionChanged += RefreshDisplay;
+				Die.onInspectionChanged += RefreshDisplay;
+				Die.onSelectionChanged += RefreshDisplay;
 			}
 
 			// stop running animations
@@ -146,7 +196,15 @@ namespace DiceRoller
 		/// <summary>
 		/// Set the displayed information as some preset value.
 		/// </summary>
-		public void SetDisplay(Die.Type type, int value)
+		public void SetInspectingTarget(Die.Type type, int value)
+		{
+			SetInspectingTarget(type, value, EquipmentDieSlot.Requirement.None);
+		}
+
+		/// <summary>
+		/// Set the displayed information as some preset value.
+		/// </summary>
+		public void SetInspectingTarget(Die.Type type, int value, EquipmentDieSlot.Requirement requirement)
 		{
 			// deregister callbacks
 			if (die != null)
@@ -154,8 +212,8 @@ namespace DiceRoller
 				die.onValueChanged -= RefreshDisplay;
 				die.onDieStateChanged -= RefreshDisplay;
 				die.onStatusChanged -= RefreshDisplay;
-				die.onInspectionChanged -= RefreshDisplay;
-				die.onSelectionChanged -= RefreshDisplay;
+				Die.onInspectionChanged -= RefreshDisplay;
+				Die.onSelectionChanged -= RefreshDisplay;
 			}
 
 			// stop running animations
@@ -165,6 +223,7 @@ namespace DiceRoller
 			die = null;
 			this.type = type;
 			this.value = value;
+			this.requirement = requirement;
 			RefreshDisplay();
 		}
 
@@ -218,8 +277,33 @@ namespace DiceRoller
 				outlineImage.enabled = false;
 				overlayImage.enabled = false;
 
-				valueText.text = value == -1 ? "?" : value.ToString();
-				
+				// change value text
+				switch (requirement)
+				{
+					case EquipmentDieSlot.Requirement.None:
+						valueText.text = value == -1 ? "?" : value.ToString();
+						break;
+					case EquipmentDieSlot.Requirement.GreaterThan:
+						valueText.text = ">" + (value == -1 ? "?" : value.ToString());
+						break;
+					case EquipmentDieSlot.Requirement.LesserThan:
+						valueText.text = "<" + (value == -1 ? "?" : value.ToString());
+						break;
+					case EquipmentDieSlot.Requirement.Equals:
+						valueText.text = "=" + (value == -1 ? "?" : value.ToString());
+						break;
+					case EquipmentDieSlot.Requirement.NotEquals:
+						valueText.text = "≠" + (value == -1 ? "?" : value.ToString());
+						break;
+					case EquipmentDieSlot.Requirement.IsEven:
+						valueText.text = "Even";
+						break;
+					case EquipmentDieSlot.Requirement.IsOdd:
+						valueText.text = "Odd";
+						break;
+				}
+
+				// change state icon
 				stateImage.enabled = false;
 			}
 		}

@@ -225,8 +225,8 @@ namespace DiceRoller
 		/// </summary>
 		protected void RegisterStateBehaviours()
 		{
-			stateMachine.Register(this, State.DiceActionSelect, new DiceActionSelectSB(this));
-			stateMachine.Register(this, State.DiceThrow, new DiceThrowSB(this));
+			stateMachine.Register(gameObject, this, State.DiceActionSelect, new DiceActionSelectSB(this));
+			stateMachine.Register(gameObject, this, State.DiceThrow, new DiceThrowSB(this));
 		}
 
 		/// <summary>

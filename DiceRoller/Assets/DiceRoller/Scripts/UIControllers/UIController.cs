@@ -76,11 +76,11 @@ namespace DiceRoller
 		/// </summary>
 		private void RegisterStateBehaviours()
 		{
-			stateMachine.Register(this, State.StartTurn, new StartTurnSB(this));
-			stateMachine.Register(this, State.Navigation, new NavigationSB(this));
-			stateMachine.Register(this, State.UnitMoveSelect, new UnitMoveSelectSB(this));
-			stateMachine.Register(this, State.UnitAttackSelect, new UnitAttackSelectSB(this));
-			stateMachine.Register(this, State.DiceActionSelect, new DiceActionSB(this));
+			stateMachine.Register(gameObject, this, State.StartTurn, new StartTurnSB(this));
+			stateMachine.Register(gameObject, this, State.Navigation, new NavigationSB(this));
+			stateMachine.Register(gameObject, this, State.UnitMoveSelect, new UnitMoveSelectSB(this));
+			stateMachine.Register(gameObject, this, State.UnitAttackSelect, new UnitAttackSelectSB(this));
+			stateMachine.Register(gameObject, this, State.DiceActionSelect, new DiceActionSB(this));
 		}
 
 		/// <summary>

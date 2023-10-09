@@ -45,9 +45,9 @@ namespace DiceRoller
 				if (game.CurrentPlayer == self.Player)
 				{
 					// show dice info on ui
-					if (CachedValueUtils.HasValueChanged(self.IsHoveringOnObject, ref lastIsHovering))
+					if (CachedValueUtils.HasValueChanged(self.IsHovering, ref lastIsHovering))
 					{
-						if (self.IsHoveringOnObject)
+						if (self.IsHovering)
 						{
 							self.AddToInspection();
 							self.AddEffect(StatusType.InspectingSelf);
@@ -60,7 +60,7 @@ namespace DiceRoller
 					}
 
 					// go to dice action selection state or navigation state when this dice is pressed
-					if (self.IsPressedOnObject)
+					if (self.IsPressed[0])
 					{
 						if (self.IsSelected)
 						{

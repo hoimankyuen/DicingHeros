@@ -165,7 +165,7 @@ namespace DiceRoller
 		protected void DetectTileHover()
 		{
 			// find the target tile that the mouse is pointing to
-			if (!EventSystem.current.IsPointerOverGameObject())
+			if (!EventSystem.current.IsPointerOverGameObject() && !InputUtils.IsDragging)
 			{
 				if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, Camera.main.farClipPlane, LayerMask.GetMask("Tile")))
 				{

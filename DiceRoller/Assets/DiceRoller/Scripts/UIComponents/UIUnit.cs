@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 namespace DiceRoller
 {
-    public class UIUnit : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
+    public class UIUnit : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler
     {
         [Header("Data")]
         public UIItemStateIcons itemStateIcons;
@@ -44,8 +44,8 @@ namespace DiceRoller
             {
                 unit.onHealthChanged -= RefreshDisplay;
                 unit.onStatusChanged -= RefreshDisplay;
-                unit.onInspectionChanged -= RefreshDisplay;
-                unit.onSelectionChanged -= RefreshDisplay;
+                Unit.onInspectionChanged -= RefreshDisplay;
+                Unit.onSelectionChanged -= RefreshDisplay;
             }
         }
 
@@ -57,7 +57,7 @@ namespace DiceRoller
         public void OnPointerEnter(PointerEventData eventData)
         {
             if (unit != null)
-                unit.SetHoveringFromUI(true);
+                unit.OnUIMouseEnter();
         }
 
         /// <summary>
@@ -66,16 +66,25 @@ namespace DiceRoller
         public void OnPointerExit(PointerEventData eventData)
         {
             if (unit != null)
-                unit.SetHoveringFromUI(false);
+                unit.OnUIMouseExit();
         }
 
         /// <summary>
         /// Callback triggered by mouse button down from Event System.
         /// </summary>
-        public void OnPointerClick(PointerEventData eventData)
+        public void OnPointerDown(PointerEventData eventData)
         {
             if (unit != null)
-                unit.SetPressedFromUI();
+                unit.OnUIMouseDown((int)eventData.button);
+        }
+
+        /// <summary>
+        /// Callback triggered by mouse button down from Event System.
+        /// </summary>
+        public void OnPointerUp(PointerEventData eventData)
+        {
+            if (unit != null)
+                unit.OnUIMouseUp((int)eventData.button);
         }
 
         // ========================================================= UI Methods =========================================================
@@ -94,15 +103,15 @@ namespace DiceRoller
             {
                 this.unit.onHealthChanged -= RefreshDisplay;
                 this.unit.onStatusChanged -= RefreshDisplay;
-                unit.onInspectionChanged -= RefreshDisplay;
-                unit.onSelectionChanged -= RefreshDisplay;
+                Unit.onInspectionChanged -= RefreshDisplay;
+                Unit.onSelectionChanged -= RefreshDisplay;
             }
             if (unit != null)
             {
                 unit.onHealthChanged += RefreshDisplay;
                 unit.onStatusChanged += RefreshDisplay;
-                unit.onInspectionChanged += RefreshDisplay;
-                unit.onSelectionChanged += RefreshDisplay;
+                Unit.onInspectionChanged += RefreshDisplay;
+                Unit.onSelectionChanged += RefreshDisplay;
             }
 
             // set values

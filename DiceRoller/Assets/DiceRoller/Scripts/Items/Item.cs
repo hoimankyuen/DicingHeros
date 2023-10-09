@@ -58,19 +58,7 @@ namespace DiceRoller
 		/// <summary>
 		/// The player that owns this item.
 		/// </summary>
-		public Player Player
-		{
-			get
-			{
-				return _player;
-			}
-			private set
-			{
-				_player = value;
-			}
-		}
-		protected Player _player = null;
-
+		public Player Player { get; private set; } = null;
 
 		/// <summary>
 		/// Flag for if this item is fallen out of the board.
@@ -86,17 +74,34 @@ namespace DiceRoller
 		/// <summary>
 		/// Flag for if user is hovering on this item by any means.
 		/// </summary>
-		protected bool IsHoveringOnObject { get; private set; } = false;
+		protected bool IsHovering { get; private set; } = false;
 		private bool isSelfHovering = false;
 		private bool isUIHovering = false;
 
 		/// <summary>
+		/// Flag for if user has started drag on this item by any means.
+		/// </summary>
+		protected bool[] IsStartedDrag { get; private set; } = new bool[] { false, false, false };
+		/// <summary>
+		/// Flag for if user has completed a drag for this item.
+		/// </summary>
+		protected bool[] IsCompletedDrag { get; private set; } = new bool[] { false, false, false };
+		/// <summary>
+		/// Flag for if user has ended drag on this item component by any means.
+		/// </summary>
+		private bool[] startedSelfDrag = new bool[] { false, false, false };
+		private bool[] startedUIDrag = new bool[] { false, false, false };
+		private Vector2[] lastMousePosition = new Vector2[] { Vector2.negativeInfinity, Vector2.negativeInfinity, Vector2.negativeInfinity };
+
+		/// <summary>
 		/// Flag for if user has pressed on this item by any means.
 		/// </summary>
-		protected bool IsPressedOnObject { get; private set; } = false;
-		private bool initiatedSelfPress = false;
-		private bool completedSelfPress = false;
-		private bool isUIPressed = false;
+		protected bool[] IsPressed { get; private set; } = new bool[] { false, false, false };
+
+		private bool[] startedSelfPress = new bool[] { false, false, false };
+		private bool[] startedUIPress = new bool[] { false, false, false };
+		private bool[] completedSelfPress = new bool[] { false, false, false };
+		private bool[] completedUIPress = new bool[] { false, false, false };
 
 		/// <summary>
 		///A read only list of tiles that this item occupies.
@@ -149,6 +154,7 @@ namespace DiceRoller
 			DetectFallen();
 			DetectHover();
 			DetectPress();
+			DetectDrag();
 		}
 
 		/// <summary>
@@ -166,6 +172,8 @@ namespace DiceRoller
 		{
 		}
 
+		// ========================================================= Monobehaviour Methods (Inputs) =========================================================
+
 		/// <summary>
 		/// OnMouseEnter is called when the mouse is start pointing to the game object.
 		/// </summary>
@@ -180,7 +188,6 @@ namespace DiceRoller
 		protected void OnMouseExit()
 		{
 			isSelfHovering = false;
-			initiatedSelfPress = false;
 		}
 
 		/// <summary>
@@ -188,7 +195,12 @@ namespace DiceRoller
 		/// </summary>
 		protected void OnMouseDown()
 		{
-			initiatedSelfPress = true;
+			for (int i = 0; i < 3; i++)
+			{
+				startedSelfPress[i] = true;
+				startedSelfDrag[i] = true;
+				lastMousePosition[i] = Input.mousePosition;
+			}
 		}
 
 		/// <summary>
@@ -196,29 +208,58 @@ namespace DiceRoller
 		/// </summary>
 		protected void OnMouseUp()
 		{
-			if (initiatedSelfPress)
+			for (int i = 0; i < 3; i++)
 			{
-				initiatedSelfPress = false;
-				completedSelfPress = true;
+				if (startedSelfPress[i] && Vector2.Distance(lastMousePosition[i], Input.mousePosition) < 2f)
+				{
+					startedSelfPress[i] = false;
+					startedSelfDrag[i] = false;
+					completedSelfPress[i] = true;
+					lastMousePosition[i] = Vector2.negativeInfinity;
+				}
 			}
 		}
 
-		// ========================================================= Message From External =========================================================
+		// ========================================================= Message From External (Inputs) =========================================================
 
 		/// <summary>
-		/// Set the hovering flag from ui elements.
+		/// An OnMouseEnter triggered from UI.
 		/// </summary>
-		public void SetHoveringFromUI(bool hovering)
+		public void OnUIMouseEnter()
 		{
-			isUIHovering = hovering;
+			isUIHovering = true;
 		}
 
 		/// <summary>
-		/// Set the pressed flag from ui.
+		/// An OnMouseExit triggered from UI.
 		/// </summary>
-		public void SetPressedFromUI()
+		public void OnUIMouseExit()
 		{
-			isUIPressed = true;
+			isUIHovering = false;
+		}
+
+		/// <summary>
+		/// An OnMouseDown triggered from UI.
+		/// </summary>
+		public void OnUIMouseDown(int mouseButton)
+		{
+			startedUIPress[mouseButton] = true;
+			startedUIDrag[mouseButton] = true;
+			lastMousePosition[mouseButton] = Input.mousePosition;
+		}
+
+		/// <summary>
+		/// An OnMouseUp triggered from UI.
+		/// </summary>
+		public void OnUIMouseUp(int mouseButton)
+		{
+			if (startedUIPress[mouseButton] && Vector2.Distance(lastMousePosition[mouseButton], Input.mousePosition) < 2f)
+			{
+				startedUIPress[mouseButton] = false;
+				startedUIDrag[mouseButton] = false;
+				completedUIPress[mouseButton] = true;
+				lastMousePosition[mouseButton] = Vector2.negativeInfinity;
+			}
 		}
 
 		/// <summary>
@@ -232,7 +273,62 @@ namespace DiceRoller
 				IsHoveringOnTile = occupiedTilesHovering.Aggregate(true, (result, x) => result && x.Value);
 			}
 		}
-		// ========================================================= General Behaviour =========================================================
+
+		// ========================================================= Input Interpetation =========================================================
+
+		/// <summary>
+		/// Detect hover events.
+		/// </summary>
+		private void DetectHover()
+		{
+			IsHovering = isSelfHovering || isUIHovering;
+		}
+
+		/// <summary>
+		/// Detect press event and trim to a single frame flag.
+		/// </summary>
+		private void DetectPress()
+		{
+			for (int i = 0; i < 3; i++)
+			{
+				IsPressed[i] = false;
+				if (completedSelfPress[i] || completedUIPress[i])
+				{
+					completedSelfPress[i] = false;
+					completedUIPress[i] = false;
+
+					IsPressed[i] = true;
+				}
+			}
+		}
+
+		/// <summary>
+		/// Detect draga event and trim to a single frame flag.
+		/// </summary>
+		private void DetectDrag()
+		{
+			for (int i = 0; i < 3; i++)
+			{
+				IsStartedDrag[i] = false;
+				if ((startedSelfDrag[i] || startedUIDrag[i]) && Vector2.Distance(lastMousePosition[i], Input.mousePosition) >= 2f)
+				{
+					startedSelfPress[i] = false;
+					startedUIPress[i] = false;
+					startedSelfDrag[i] = false;
+					startedUIDrag[i] = false;
+
+					IsStartedDrag[i] = true;
+				}
+
+				IsCompletedDrag[i] = false;
+				if (Input.GetMouseButtonUp(i))
+				{
+					IsCompletedDrag[i] = true;
+				}
+			}
+		}
+
+		// ========================================================= General Detection =========================================================
 
 		/// <summary>
 		/// Detect tile occupation and update the occupation list.
@@ -283,29 +379,6 @@ namespace DiceRoller
 		private void DetectFallen()
 		{
 			IsFallen = transform.position.y < -10;
-		}
-
-		/// <summary>
-		/// Detect hover events.
-		/// </summary>
-		private void DetectHover()
-		{
-			IsHoveringOnObject = isSelfHovering || isUIHovering;
-		}
-
-		/// <summary>
-		/// Detect press event and trim to a single frame flag.
-		/// </summary>
-		private void DetectPress()
-		{
-			IsPressedOnObject = false;
-			if (completedSelfPress || isUIPressed)
-			{
-				completedSelfPress = false;
-				isUIPressed = false;
-
-				IsPressedOnObject = true;
-			}
 		}
 
 		// ========================================================= Effects =========================================================

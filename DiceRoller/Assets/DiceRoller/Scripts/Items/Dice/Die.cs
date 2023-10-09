@@ -56,12 +56,19 @@ namespace DiceRoller
 		private LineRenderer lineRenderer = null;
 
 		// events
-		public Action onInspectionChanged = () => { };
-		public Action onSelectionChanged = () => { };
+		public static Action onInspectionChanged = () => { };
+		public static Action onSelectionChanged = () => { };
+		public static Action onDragChanged = () => { };
+
 		public Action onValueChanged = () => { };
 		public Action onDieStateChanged = () => { };
 
 		// ========================================================= Properties =========================================================
+		
+		/// <summary>
+		/// The Equipment that this die is assigned to.
+		/// </summary>
+		public EquipmentDieSlot EquipmentDieSlot { get; private set; } = null;
 
 		/// <summary>
 		/// Flag for if this die is currently being inspected.
@@ -74,7 +81,7 @@ namespace DiceRoller
 			}
 		}
 		private static UniqueList<Die> inspectingDice = new UniqueList<Die>();
-
+		
 		/// <summary>
 		/// Flag for if this die is currently selected.
 		/// </summary>
@@ -87,6 +94,21 @@ namespace DiceRoller
 		}
 		private static UniqueList<Die> selectedDice = new UniqueList<Die>();
 
+		/// <summary>
+		/// Flag for if this die is currently begin dragged.
+		/// </summary>
+		public bool IsBeingDragged
+		{
+			get
+			{
+				return draggingDice.Contains(this);
+			}
+		}
+		private static UniqueList<Die> draggingDice = new UniqueList<Die>();
+
+		/// <summary>
+		/// Flag for if this die is still rolling.
+		/// </summary>
 		public bool IsRolling
 		{
 			get
@@ -157,6 +179,14 @@ namespace DiceRoller
 		}
 
 		/// <summary>
+		/// Retrieve the first die being currently dragged, return null if none is selected.
+		/// </summary>
+		public static Die GetFirstBeingDragged()
+		{
+			return draggingDice.Count > 0 ? draggingDice[0] : null;
+		}
+
+		/// <summary>
 		/// Retrieve all currently selected die.
 		/// </summary>
 		public static IReadOnlyCollection<Die> GetAllSelected()
@@ -220,6 +250,30 @@ namespace DiceRoller
 			{
 				selectedDice.Remove(this);
 				onSelectionChanged.Invoke();
+			}
+		}
+
+		/// <summary>
+		/// Add this die to as being dragged.
+		/// </summary>
+		public void AddToDrag()
+		{
+			if (!draggingDice.Contains(this))
+			{
+				draggingDice.Add(this);
+				onDragChanged.Invoke();
+			}
+		}
+
+		/// <summary>
+		/// Remove this die fropm as being dragged.
+		/// </summary>
+		public void RemoveFromDrag()
+		{
+			if (draggingDice.Contains(this))
+			{
+				draggingDice.Remove(this);
+				onDragChanged.Invoke();
 			}
 		}
 
@@ -406,9 +460,11 @@ namespace DiceRoller
 		/// </summary>
 		private void RegisterStateBehaviours()
 		{
-			stateMachine.Register(this, DiceRoller.State.Navigation, new NavigationSB(this));
-			stateMachine.Register(this, DiceRoller.State.DiceActionSelect, new DiceActionSelectSB(this));
-			stateMachine.Register(this, DiceRoller.State.DiceThrow, new DiceThrowSB(this));
+			stateMachine.Register(gameObject, this, State.Navigation, new NavigationSB(this));
+			stateMachine.Register(gameObject, this, State.UnitMoveSelect, new UnitActionSelectSB(this));
+			stateMachine.Register(gameObject, this, State.UnitAttackSelect, new UnitActionSelectSB(this));
+			stateMachine.Register(gameObject, this, State.DiceActionSelect, new DiceActionSelectSB(this));
+			stateMachine.Register(gameObject, this, State.DiceThrow, new DiceThrowSB(this));
 		}
 
 		/// <summary>

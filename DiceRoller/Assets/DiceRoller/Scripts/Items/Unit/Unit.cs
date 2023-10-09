@@ -19,12 +19,15 @@ namespace DiceRoller
 
 		// readonly
 		private readonly float moveTimePerTile = 0.2f;
-
+		
 		// events
-		public Action onInspectionChanged = () => { };
-		public Action onSelectionChanged = () => { };
+		public static Action onInspectionChanged = () => { };
+		public static Action onSelectionChanged = () => { };
+		public static Action onDragChanged = () => { };
+
 		public Action onHealthChanged = () => { };
 		public Action onStatChanged = () => { };
+		public Action onEquipmentChanged = () => { };
 		public Action onPendingHealthDeltaChange = () => { };
 
 		// ========================================================= Properties =========================================================
@@ -54,6 +57,18 @@ namespace DiceRoller
 		private static UniqueList<Unit> selectedUnits = new UniqueList<Unit>();
 
 		/// <summary>
+		/// Flag for if this unit is currently begin dragged.
+		/// </summary>
+		public bool IsBeingDragged
+		{
+			get
+			{
+				return draggingUnits.Contains(this);
+			}
+		}
+		private static UniqueList<Unit> draggingUnits = new UniqueList<Unit>();
+
+		/// <summary>
 		/// Flag for if this unit has deplete its actions.
 		/// </summary>
 		public bool ActionDepleted { get; private set; } = false;
@@ -81,7 +96,7 @@ namespace DiceRoller
 		/// <summary>
 		/// The current melee value of this unit.
 		/// </summary>
-		public int Melee 
+		public int Melee
 		{
 			get
 			{
@@ -159,6 +174,11 @@ namespace DiceRoller
 		private int _movement = 0;
 
 		/// <summary>
+		/// All equpiments this unit pocesses.
+		/// </summary>
+		public List<Equipment> Equipments { get; private set; } = new List<Equipment>();		
+
+		/// <summary>
 		/// The proposed health change delta (damage or heal) to this unit.
 		/// </summary>
 		public int PendingHealthDelta
@@ -178,10 +198,15 @@ namespace DiceRoller
 		}
 		private int _pendingHealthDelta;
 
+		/// <summary>
+		/// The next movement action chosen by the player.
+		/// </summary>
 		public UnitMovement NextMovement { get; private set; } = null;
 
+		/// <summary>
+		/// The next acttack action chosen by the player.
+		/// </summary>
 		public UnitAttack NextAttack { get; private set; } = null;
-
 
 		// ========================================================= Inspection and Selection =========================================================
 
@@ -199,6 +224,14 @@ namespace DiceRoller
 		public static Unit GetFirstSelected()
 		{
 			return selectedUnits.Count > 0 ? selectedUnits[0] : null;
+		}
+
+		/// <summary>
+		/// Retrieve the first unit being currently dragged, return null if none is selected.
+		/// </summary>
+		public static Unit GetFirstBeingDragged()
+		{
+			return draggingUnits.Count > 0 ? draggingUnits[0] : null;
 		}
 
 		/// <summary>
@@ -288,6 +321,8 @@ namespace DiceRoller
 			RegisterStateBehaviours();
 			RegisterToPlayer();
 
+			SetupInitialEquipments();
+
 			SetHealth(maxHealth);
 			ResetStat();
 		}
@@ -298,6 +333,8 @@ namespace DiceRoller
 		protected override void Update()
 		{
 			base.Update();
+
+			UpdateEquipments();
 		}
 
 		/// <summary>
@@ -306,6 +343,7 @@ namespace DiceRoller
 		protected override void OnDestroy()
 		{
 			base.OnDestroy();
+
 			DeregisterStateBehaviours();
 			DeregisterFromPlayer();
 		}
@@ -408,6 +446,27 @@ namespace DiceRoller
 			Movement = movementValue;
 		}
 
+		/// <summary>
+		/// Add the starting equipments to this unit.
+		/// </summary>
+		public void SetupInitialEquipments()
+		{
+			Equipments.Add(new SimpleKnife(this));
+			Equipments.Add(new SimpleShoe(this));
+			onEquipmentChanged.Invoke();
+		}
+
+		/// <summary>
+		/// Allows the Update method to function on each equipments.
+		/// </summary>
+		public void UpdateEquipments()
+		{
+			foreach (Equipment equipment in Equipments)
+			{
+				equipment.Update();
+			}
+		}
+
 		// ========================================================= State Machine Behaviour =========================================================
 
 		/// <summary>
@@ -415,14 +474,14 @@ namespace DiceRoller
 		/// </summary>
 		protected void RegisterStateBehaviours()
 		{
-			stateMachine.Register(this, State.Navigation, new NavigationSB(this));
-			stateMachine.Register(this, State.UnitMoveSelect, new UnitMoveSelectSB(this));
-			stateMachine.Register(this, State.UnitMove, new UnitMoveSB(this));
-			stateMachine.Register(this, State.UnitAttackSelect, new UnitAttackSelectSB(this));
-			stateMachine.Register(this, State.UnitAttack, new UnitAttackSB(this));
-			stateMachine.Register(this, State.DiceActionSelect, new EffectOnlySB(this));
-			stateMachine.Register(this, State.DiceThrow, new EffectOnlySB(this));
-			stateMachine.Register(this, State.EndTurn, new EndTurnSB(this));
+			stateMachine.Register(gameObject, this, State.Navigation, new NavigationSB(this));
+			stateMachine.Register(gameObject, this, State.UnitMoveSelect, new UnitMoveSelectSB(this));
+			stateMachine.Register(gameObject, this, State.UnitMove, new UnitMoveSB(this));
+			stateMachine.Register(gameObject, this, State.UnitAttackSelect, new UnitAttackSelectSB(this));
+			stateMachine.Register(gameObject, this, State.UnitAttack, new UnitAttackSB(this));
+			stateMachine.Register(gameObject, this, State.DiceActionSelect, new EffectOnlySB(this));
+			stateMachine.Register(gameObject, this, State.DiceThrow, new EffectOnlySB(this));
+			stateMachine.Register(gameObject, this, State.EndTurn, new EndTurnSB(this));
 		}
 
 		/// <summary>

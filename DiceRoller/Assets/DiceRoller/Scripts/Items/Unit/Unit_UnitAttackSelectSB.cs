@@ -104,7 +104,7 @@ namespace DiceRoller
 				if (isSelectedAtEnter)
 				{
 					// detect hovering on enemy units
-					Unit target = lastTargetableUnits.FirstOrDefault(x => x.IsHoveringOnObject);
+					Unit target = lastTargetableUnits.FirstOrDefault(x => x.IsHovering);
 					if (CachedValueUtils.HasValueChanged(target, ref lastTargetedUnit, out Unit previous))
 					{
 						if (previous != null)
@@ -132,18 +132,20 @@ namespace DiceRoller
 					}
 
 					// detect press on enemy unit
-					if (target != null && target.IsPressedOnObject)
+					if (target != null && target.IsPressed[0])
 					{
 						self.NextAttack = new UnitAttack(target, self.Melee * -1);
 						stateMachine.ChangeState(State.UnitAttack);
 					}
 
 					// detect press on anywhere other than enemy unit
+					/*
 					if (InputUtils.GetMousePress(0, ref pressedPosition0) && target == null)
 					{
 						self.RemoveFromSelection();
 						stateMachine.ChangeState(State.Navigation);
 					}
+					*/
 
 					// detect return to navitation by right mouse pressing
 					if (InputUtils.GetMousePress(1, ref pressedPosition1))
@@ -220,11 +222,22 @@ namespace DiceRoller
 			}
 		}
 
+		// ========================================================= Other Methods =========================================================
+
 		public void ChangeToMoveSelect()
 		{
 			if (stateMachine.Current == State.UnitAttackSelect)
 			{
 				stateMachine.ChangeState(State.UnitMoveSelect);
+			}
+		}
+
+		public void CancelAttackSelect()
+		{
+			if (stateMachine.Current == State.UnitAttackSelect)
+			{
+				RemoveFromSelection();
+				stateMachine.ChangeState(State.Navigation);
 			}
 		}
 	}

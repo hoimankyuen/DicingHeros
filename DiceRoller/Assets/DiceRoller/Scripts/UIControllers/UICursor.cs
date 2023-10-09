@@ -18,6 +18,8 @@ namespace DiceRoller
 		}
 
 		[Header("Components")]
+		public Image unitIcon = null;
+		public UIDie dieIcon = null;
 		public Image actionImage = null;
 		public Image pointerImage = null;
 
@@ -30,6 +32,7 @@ namespace DiceRoller
 		// working variables
 		private IconType iconType = IconType.None;
 		private Sprite iconSprite = null;
+		private Item draggingItem = null;
 
 		// ========================================================= Monobehaviour Methods =========================================================
 
@@ -46,12 +49,18 @@ namespace DiceRoller
 		/// </summary>
 		private void Start()
 		{
+			dieIcon.SetAsCursor();
+
 			if (hideCursorAtStart)
 			{
 				Cursor.visible = false;
 			}
 			
 			SetIcon(IconType.None);
+			SetDraggingItem(null);
+
+			Unit.onDragChanged += UpdateDraggingItem;
+			Die.onDragChanged += UpdateDraggingItem;
 		}
 
 		/// <summary>
@@ -67,6 +76,8 @@ namespace DiceRoller
 		/// </summary>
 		private void OnDestroy()
 		{
+			Unit.onDragChanged -= UpdateDraggingItem;
+			Die.onDragChanged -= UpdateDraggingItem;
 		}
 
 		// ========================================================= Behaviour Methods =========================================================
@@ -80,10 +91,59 @@ namespace DiceRoller
 			iconSprite = null;
 		}
 
+		/// <summary>
+		/// Set the icon shown with the cursor.
+		/// </summary>
 		public void SetIcon(Sprite sprite)
 		{
 			iconType = IconType.Custom;
 			iconSprite = sprite;
+		}
+
+		private void UpdateDraggingItem()
+		{
+			if (Unit.GetFirstBeingDragged() != null)
+			{
+				SetDraggingItem(Unit.GetFirstBeingDragged());
+			}
+			else if (Die.GetFirstBeingDragged() != null)
+			{
+				SetDraggingItem(Die.GetFirstBeingDragged());
+			}
+			else
+			{
+				SetDraggingItem(null);
+			}
+		}
+
+		/// <summary>
+		/// Set the dragging item by this cursor.
+		/// </summary>
+		public void SetDraggingItem(Item item)
+		{
+			draggingItem = item;
+			if (draggingItem == null)
+			{
+				unitIcon.gameObject.SetActive(false);
+				dieIcon.gameObject.SetActive(false);
+				unitIcon.sprite = null;
+				dieIcon.SetInspectingTarget(Die.Type.Unknown, 20);
+			}
+			else if (draggingItem is Unit)
+			{
+				unitIcon.gameObject.SetActive(true);
+				dieIcon.gameObject.SetActive(false);
+				unitIcon.sprite = draggingItem.iconSprite;
+				dieIcon.SetInspectingTarget(Die.Type.Unknown, 20);
+			}
+			else if (draggingItem is Die)
+			{
+				unitIcon.gameObject.SetActive(false);
+				dieIcon.gameObject.SetActive(true);
+				unitIcon.sprite = null;
+				dieIcon.SetInspectingTarget(draggingItem as Die);
+
+			}
 		}
 
 		/// <summary>

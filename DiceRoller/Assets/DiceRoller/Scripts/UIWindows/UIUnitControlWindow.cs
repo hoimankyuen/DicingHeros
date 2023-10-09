@@ -1,11 +1,17 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace DiceRoller
 {
     public class UIUnitControlWindow : UISideWindow
     {
+		[Header("Components")]
+		public Button movementButton;
+		public Button attackButton;
+		public Button cancelButton;
+
 		// ========================================================= Monobehaviour Methods =========================================================
 
 		/// <summary>
@@ -31,6 +37,7 @@ namespace DiceRoller
 		protected override void Update()
 		{
 			base.Update();
+			UpdateApparences();
 		}
 
 		/// <summary>
@@ -42,6 +49,25 @@ namespace DiceRoller
 		}
 
 		// ========================================================= UI Methods =========================================================
+
+		private void UpdateApparences()
+		{
+			Unit unit = Unit.GetFirstSelected();
+			if (unit != null)
+			{
+				if (StateMachine.current.Current == State.UnitMoveSelect)
+				{
+					movementButton.enabled = false;
+					attackButton.enabled = true;
+				}
+
+				if (StateMachine.current.Current == State.UnitAttackSelect)
+				{
+					movementButton.enabled = true;
+					attackButton.enabled = false;
+				}
+			}
+		}
 
 		public void SwapToMove()
 		{
@@ -58,6 +84,16 @@ namespace DiceRoller
 			if (unit != null)
 			{
 				unit.ChangeToAttackSelect(); 
+			}
+		}
+
+		public void Cancel()
+		{
+			Unit unit = Unit.GetFirstSelected();
+			if (unit != null)
+			{
+				unit.CancelMoveSelect();
+				unit.CancelAttackSelect();
 			}
 		}
 	}

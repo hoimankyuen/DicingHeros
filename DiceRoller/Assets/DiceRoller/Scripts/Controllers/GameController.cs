@@ -159,8 +159,8 @@ namespace DiceRoller
 		/// </summary>
 		private void RegisterStateBehaviours()
 		{
-			stateMachine.Register(this, State.StartTurn, new StartTurnSB(this));
-			stateMachine.Register(this, State.EndTurn, new EndTurnSB(this));
+			stateMachine.Register(gameObject, this, State.StartTurn, new StartTurnSB(this));
+			stateMachine.Register(gameObject, this, State.EndTurn, new EndTurnSB(this));
 		}
 
 		/// <summary>

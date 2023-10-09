@@ -86,7 +86,7 @@ namespace DiceRoller
 			{
 				// show dice information
 				dieDisplay.gameObject.SetActive(true);
-				dieDisplay.SetDisplay(targetDie);
+				dieDisplay.SetInspectingTarget(targetDie);
 
 				unitImage.gameObject.SetActive(false);
 				healthDisplay.gameObject.SetActive(false);
@@ -96,7 +96,7 @@ namespace DiceRoller
 			{
 				// show nothing selected
 				dieDisplay.gameObject.SetActive(true);
-				dieDisplay.SetDisplay(Die.Type.Unknown, -1);
+				dieDisplay.SetInspectingTarget(Die.Type.Unknown, -1);
 
 				unitImage.gameObject.SetActive(false);
 				healthDisplay.gameObject.SetActive(false);
