@@ -112,12 +112,7 @@ namespace DiceRoller
 					healthDisplay.gameObject.SetActive(false);
 					statDisplay.gameObject.SetActive(false);
 				}
-
 			}
-
-			
-
-			
 		}
 	}
 }

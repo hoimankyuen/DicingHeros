@@ -34,9 +34,9 @@ namespace DiceRoller
 			public override void OnStateEnter()
 			{
 				// show action depleted effect
-				if (self.ActionDepleted)
+				if (self.CurrentUnitState == UnitState.Depleted)
 				{
-					self.AddEffect(StatusType.Depleted);
+					self.ShowEffect(EffectType.Depleted, true);
 				}
 			}
 
@@ -58,23 +58,23 @@ namespace DiceRoller
 				// show unit info on ui
 				if (CachedValueUtils.HasValueChanged(self.IsHovering, ref lastIsHovering))
 				{
-					if (self.IsHovering)
-					{
-						self.AddToInspection();
-						self.AddEffect(self.Player == game.CurrentPlayer ? StatusType.InspectingSelf : StatusType.InspectingEnemy);
-					}
-					else
-					{
-						self.RemoveFromInspection();
-						self.RemoveEffect(self.Player == game.CurrentPlayer ? StatusType.InspectingSelf : StatusType.InspectingEnemy);
-					}
+					self.IsBeingInspected = self.IsHovering;
+					self.ShowEffect(self.Player == game.CurrentPlayer ? EffectType.InspectingSelf : EffectType.InspectingEnemy, self.IsHovering);
 				}
 
-				// go to unit movement selection state when this unit is pressed
-				if (self.Player == game.CurrentPlayer && self.IsPressed[0] && !self.ActionDepleted && self.OccupiedTiles.Count > 0)
+				// go to unit movement selection state or unit attack selection state when this unit is pressed
+				if (self.Player == game.CurrentPlayer && self.IsPressed[0] && self.OccupiedTiles.Count > 0)
 				{
-					self.AddToSelection();
-					stateMachine.ChangeState(State.UnitMoveSelect);
+					if (self.CurrentUnitState == UnitState.Standby)
+					{
+						self.IsSelected = true;
+						stateMachine.ChangeState(SMState.UnitMoveSelect);
+					}
+					else if (self.CurrentUnitState == UnitState.Moved)
+					{
+						self.IsSelected = true;
+						stateMachine.ChangeState(SMState.UnitAttackSelect);
+					}
 				}
 			}
 
@@ -84,9 +84,9 @@ namespace DiceRoller
 			public override void OnStateExit()
 			{
 				// hide action depleted effect
-				if (self.ActionDepleted)
+				if (self.CurrentUnitState == UnitState.Depleted)
 				{
-					self.RemoveEffect(StatusType.Depleted);
+					self.ShowEffect(EffectType.Depleted, false);
 				}
 
 				// hide occupied tiles on board
@@ -98,8 +98,8 @@ namespace DiceRoller
 				// hide unit info on ui
 				if (self.IsHovering)
 				{
-					self.RemoveFromInspection();
-					self.RemoveEffect(self.Player == game.CurrentPlayer ? StatusType.InspectingSelf : StatusType.InspectingEnemy);
+					self.IsBeingInspected = false;
+					self.ShowEffect(self.Player == game.CurrentPlayer ? EffectType.InspectingSelf : EffectType.InspectingEnemy, false);
 				}
 
 				// reset cache

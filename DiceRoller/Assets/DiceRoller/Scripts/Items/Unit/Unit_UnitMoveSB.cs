@@ -29,9 +29,9 @@ namespace DiceRoller
 			public override void OnStateEnter()
 			{
 				// show depleted effect
-				if (self.ActionDepleted)
+				if (self.CurrentUnitState == UnitState.Depleted)
 				{
-					self.AddEffect(StatusType.Depleted);
+					self.ShowEffect(EffectType.Depleted, true);
 				}
 
 				// execute only if the moving unit is this unit
@@ -98,15 +98,13 @@ namespace DiceRoller
 				path[path.Count - 1].UpdateDisplayAs(self, Tile.DisplayType.MoveTarget, (Tile)null);
 
 				// set flag
-				self.ActionDepleted = true;
-				self.AddEffect(StatusType.Depleted);
+				self.CurrentUnitState = UnitState.Moved;
 
 				// clear information
-				self.RemoveFromSelection();
 				self.NextMovement = null;
 
 				// change state back to navigation
-				stateMachine.ChangeState(State.Navigation);
+				stateMachine.ChangeState(SMState.UnitAttackSelect);
 			}
 
 			// ========================================================= State Update Methods =========================================================
@@ -126,9 +124,9 @@ namespace DiceRoller
 			public override void OnStateExit()
 			{
 				// hide depleted effect
-				if (self.ActionDepleted)
+				if (self.CurrentUnitState == UnitState.Depleted)
 				{
-					self.RemoveEffect(StatusType.Depleted);
+					self.ShowEffect(EffectType.Depleted, false);
 				}
 			}
 		}

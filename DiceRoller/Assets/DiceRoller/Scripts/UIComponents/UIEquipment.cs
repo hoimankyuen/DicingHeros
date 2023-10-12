@@ -7,7 +7,7 @@ using UnityEngine.EventSystems;
 
 namespace DiceRoller
 {
-    public class UIEquipment : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler
+    public class UIEquipment : UIItemComponent
     {
         [Header("Components")]
         public Image accent;
@@ -15,11 +15,17 @@ namespace DiceRoller
         public TextMeshProUGUI content;
         public List<UIEquipmentDieSlot> dieSlots;
 
-        // reference
-        protected GameController game => GameController.current;
+        // ========================================================= Inspecting Target =========================================================
 
-        // working variable
-        protected Equipment equipment = null;
+        /// <summary>
+        /// The base class reference of the inspecting target.
+        /// </summary>
+        protected override ItemComponent TargetBase => target;
+
+        /// <summary>
+        /// The inspecting target.
+        /// </summary>
+        protected Equipment target = null;
 
         // ========================================================= Monobehaviour Methods =========================================================
 
@@ -27,58 +33,33 @@ namespace DiceRoller
         /// Awake is called when the game object was created. It is always called before start and is 
         /// independent of if the game object is active or not.
         /// </summary>
-        protected void Awake()
+        protected override void Awake()
         {
+            base.Awake();
         }
 
         /// <summary>
 		/// Start is called before the first frame update and/or the game object is first active.
 		/// </summary>
-        protected void Start()
+        protected override void Start()
         {
+            base.Start();
         }
 
-        // Update is called once per frame
-        protected void Update()
+        /// <summary>
+        /// Update is called once per frame.
+        /// </summary>
+        protected override void Update()
         {
+            base.Update();
         }
 
-		// ========================================================= Mouse Event Handler ========================================================
-
-		/// <summary>
-		/// Callback triggered by mouse enter from Event System.
-		/// </summary>
-		public void OnPointerEnter(PointerEventData eventData)
-		{
-            if (equipment != null)
-                equipment.OnUIMouseEnter();
-        }
-
-		/// <summary>
-		/// Callback triggered by mouse exit from Event System.
-		/// </summary>
-		public void OnPointerExit(PointerEventData eventData)
-		{
-            if (equipment != null)
-                equipment.OnUIMouseExit();
-		}
-
-		/// <summary>
-		/// Callback triggered by mouse button down from Event System.
-		/// </summary>
-		public void OnPointerDown(PointerEventData eventData)
-		{
-            if (equipment != null)
-                equipment.OnUIMouseDown((int)eventData.button);
-        }
-
-		/// <summary>
-		/// Callback triggered by mouse button up from Event System.
-		/// </summary>
-		public void OnPointerUp(PointerEventData eventData)
-		{
-            if (equipment != null)
-                equipment.OnUIMouseUp((int)eventData.button);
+        /// <summary>
+        /// OnDestroy is called when an game object is destroyed.
+        /// </summary>
+        protected override void OnDestroy()
+        {
+            base.OnDestroy();
         }
 
         // ========================================================= UI Methods =========================================================
@@ -86,15 +67,31 @@ namespace DiceRoller
         /// <summary>
         /// Set the displayed information as an existing equipment.
         /// </summary>
-        public void SetInspectingTarget(Equipment equipment)
+        public void SetInspectingTarget(Equipment target)
         {
-            this.equipment = equipment;
+            // prevent excessive calls
+            if (this.target == target)
+                return;
             
-            for (int i = 0; i < equipment.DieSlots.Count; i++)
+            // mandatory step for changing target
+            TriggerFillerEnterExits(target);
+
+            // set values
+            this.target = target;
+            RefreshDisplay();
+
+            // setup all ui slots of this ui eqipment
+            for (int i = 0; i < target.DieSlots.Count; i++)
             {
-                dieSlots[i].SetInspectingTarget(equipment.DieSlots[i]);
+                dieSlots[i].SetInspectingTarget(target.DieSlots[i]);
             }
-           
+        }
+
+        /// <summary>
+        /// Update the displaying ui to match the current information of the inspecting object.
+        /// </summary>
+        private void RefreshDisplay()
+        {
         }
     }
 }

@@ -39,23 +39,15 @@ namespace DiceRoller
 				// show dice info on ui
 				if (CachedValueUtils.HasValueChanged(self.IsHovering, ref lastIsHovering))
 				{
-					if (self.IsHovering)
-					{
-						self.AddToInspection();
-						self.AddEffect(self.Player == game.CurrentPlayer ? StatusType.InspectingSelf : StatusType.InspectingEnemy);
-					}
-					else
-					{
-						self.RemoveFromInspection();
-						self.RemoveEffect(self.Player == game.CurrentPlayer ? StatusType.InspectingSelf : StatusType.InspectingEnemy);
-					}
+					self.IsBeingInspected = self.IsHovering;
+					self.ShowEffect(self.Player == game.CurrentPlayer ? EffectType.InspectingSelf : EffectType.InspectingEnemy, self.IsHovering);
 				}
 
 				// go to dice action selection state when this dice is pressed
 				if (game.CurrentPlayer == self.Player && self.IsPressed[0])
 				{
-					self.AddToSelection();
-					stateMachine.ChangeState(DiceRoller.State.DiceActionSelect);
+					self.IsSelected = true;
+					stateMachine.ChangeState(SMState.DiceActionSelect);
 				}
 			}
 
@@ -67,8 +59,8 @@ namespace DiceRoller
 				// hide dice info on ui
 				if (self.IsBeingInspected)
 				{
-					self.RemoveFromInspection();
-					self.RemoveEffect(self.Player == game.CurrentPlayer ? StatusType.InspectingSelf : StatusType.InspectingEnemy);
+					self.IsBeingInspected = false;
+					self.ShowEffect(self.Player == game.CurrentPlayer ? EffectType.InspectingSelf : EffectType.InspectingEnemy, false);
 				}
 
 				// reset caches

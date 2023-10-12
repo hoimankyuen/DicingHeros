@@ -414,7 +414,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 669ea342263f7cc4198edc63f99c0805, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  itemStateIcons: {fileID: 11400000, guid: 1297b4bf6d578bc48a5f0e4113ad82e0, type: 2}
+  unitStateIcons: {fileID: 11400000, guid: d692ea184618fdc4d80bcd53fade8988, type: 2}
   iconImage: {fileID: 3715862843567546041}
   outlineImage: {fileID: 2502783872130006972}
   overlayImage: {fileID: 7287464383365853705}

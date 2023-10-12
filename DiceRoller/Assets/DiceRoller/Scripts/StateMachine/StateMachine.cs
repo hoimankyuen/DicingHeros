@@ -31,11 +31,11 @@ namespace DiceRoller
 		public static StateMachine current { get; protected set; }
 
 		// working variables
-		protected Dictionary<State, List<HostedBehaviour>> stateBehaviours = new Dictionary<State, List<HostedBehaviour>>();
-		protected State nextState = State.None;
+		protected Dictionary<SMState, List<HostedBehaviour>> stateBehaviours = new Dictionary<SMState, List<HostedBehaviour>>();
+		protected SMState nextState = SMState.None;
 		//protected StateParams nextStateParams;
 
-		public State Current { get; protected set; } = State.None;
+		public SMState Current { get; protected set; } = SMState.None;
 		//public StateParams Params { get; protected set; }
 
 		// ========================================================= Monobehaviour Methods =========================================================
@@ -78,7 +78,7 @@ namespace DiceRoller
 		/// <summary>
 		/// Register a state machine behaviour to the game controller.
 		/// </summary>
-		public void Register(GameObject gameObject, object host, State state, StateBehaviour stateBehaviour)
+		public void Register(GameObject gameObject, object host, SMState state, StateBehaviour stateBehaviour)
 		{
 			if (!stateBehaviours.ContainsKey(state))
 				stateBehaviours[state] = new List<HostedBehaviour>();
@@ -90,7 +90,7 @@ namespace DiceRoller
 		/// </summary>
 		public void DeregisterAll(object host)
 		{
-			foreach (KeyValuePair<State, List<HostedBehaviour>> kvp in stateBehaviours)
+			foreach (KeyValuePair<SMState, List<HostedBehaviour>> kvp in stateBehaviours)
 			{
 				kvp.Value.RemoveAll(x => x.host == host);
 			}
@@ -100,7 +100,7 @@ namespace DiceRoller
 		/// <summary>
 		/// Request a change on the state along with the parameters if needed.
 		/// </summary>
-		public void ChangeState(State state)
+		public void ChangeState(SMState state)
 		{
 			nextState = state;
 		}
@@ -118,7 +118,7 @@ namespace DiceRoller
 		protected void RunStateMachine()
 		{
 			// state transition
-			if (nextState != State.None)
+			if (nextState != SMState.None)
 			{
 				// invoke all OnStateExit on all registered
 				if (stateBehaviours.ContainsKey(Current))
@@ -133,7 +133,7 @@ namespace DiceRoller
 				// change the current state and update params, reset flag
 				Current = nextState;
 				//Params = nextStateParams;
-				nextState = State.None;
+				nextState = SMState.None;
 
 				// invoke all OnStateEnter on all registered
 				if (stateBehaviours.ContainsKey(Current))

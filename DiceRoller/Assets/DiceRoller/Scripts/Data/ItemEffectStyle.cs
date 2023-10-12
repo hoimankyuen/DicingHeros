@@ -11,7 +11,7 @@ namespace DiceRoller
         [System.Serializable]
         public class ItemEffect
         {
-            public Item.StatusType effectType;
+            public Item.EffectType effectType;
             public Color outlineColor;
             public Color overlayColor;
         }
@@ -19,7 +19,7 @@ namespace DiceRoller
         public List<ItemEffect> itemEffectStack = new List<ItemEffect>();
 
 
-        public void ResolveEffect(IReadOnlyCollection<Item.StatusType> effectList, out Color outlineColor, out Color overlayColor)
+        public void ResolveEffect(IReadOnlyCollection<Item.EffectType> effectList, out Color outlineColor, out Color overlayColor)
         {
             // resolve outline color
             outlineColor = new Color(0, 0, 0, 0);

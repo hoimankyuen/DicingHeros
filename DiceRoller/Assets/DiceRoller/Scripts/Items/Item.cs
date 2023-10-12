@@ -10,7 +10,7 @@ namespace DiceRoller
 	public class Item : MonoBehaviour
 	{
 		[System.Serializable]
-		public enum StatusType
+		public enum EffectType
 		{
 			Depleted,
 			SelectedEnemy,
@@ -46,12 +46,6 @@ namespace DiceRoller
 		protected Rigidbody rigidBody = null;
 		protected Outline outline = null;
 		protected Overlay overlay = null;
-
-		// working variables
-		private HashSet<StatusType> statusList = new HashSet<StatusType>();
-
-		// events
-		public Action onStatusChanged = () => { };
 
 		// ========================================================= Properties =========================================================
 
@@ -274,7 +268,7 @@ namespace DiceRoller
 			}
 		}
 
-		// ========================================================= Input Interpetation =========================================================
+		// ========================================================= Input Interpretation =========================================================
 
 		/// <summary>
 		/// Detect hover events.
@@ -382,15 +376,28 @@ namespace DiceRoller
 		}
 
 		// ========================================================= Effects =========================================================
-		
-		/// <summary>
-		/// Add a new item effect to be shown.
-		/// </summary>
-		protected void AddEffect(StatusType effectType)
-		{
-			statusList.Add(effectType);
-			effectStyle.ResolveEffect(statusList, out Color outlineColor, out Color overlayColor);
 
+		/// <summary>
+		/// Show or hide an item effect.
+		/// </summary>
+		protected void ShowEffect(EffectType effectType, bool show)
+		{
+			// determine either show effect, hide effect or do nothing, preventing excessive calls
+			if (!effectSet.Contains(effectType) && show)
+			{
+				effectSet.Add(effectType);
+			}
+			else if (effectSet.Contains(effectType) && !show)
+			{
+				effectSet.Remove(effectType);
+			}
+			else
+			{
+				return;
+			}
+
+			// resolve the effects
+			effectStyle.ResolveEffect(effectSet, out Color outlineColor, out Color overlayColor);
 			if (outline.Color != outlineColor)
 			{
 				outline.enabled = outlineColor.a != 0;
@@ -403,31 +410,14 @@ namespace DiceRoller
 				overlay.Color = overlayColor;
 			}
 
-			onStatusChanged.Invoke();
+			// trigger event callback
+			onEffectSetChanged.Invoke();
 		}
+		private HashSet<EffectType> effectSet = new HashSet<EffectType>();
 
 		/// <summary>
-		/// Remove an existing item effect to be shown. 
+		/// Event raised when the effect set is changed
 		/// </summary>
-		protected void RemoveEffect(StatusType effectType)
-		{
-			statusList.Remove(effectType);
-			effectStyle.ResolveEffect(statusList, out Color outlineColor, out Color overlayColor);
-
-			if (outline.Color != outlineColor)
-			{
-				outline.enabled = outlineColor.a != 0;
-				outline.Color = outlineColor;
-			}
-
-			if (overlay.Color != overlayColor)
-			{
-				overlay.enabled = overlayColor.a != 0;
-				overlay.Color = overlayColor;
-			}
-
-			onStatusChanged.Invoke();
-		}
-
+		public Action onEffectSetChanged = () => { };
 	}
 }

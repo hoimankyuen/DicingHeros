@@ -81,7 +81,6 @@ namespace DiceRoller
 			}
 		}
 
-
 		/// <summary>
 		/// Perform an monobehaviour update, should be driven by another monobehaviour as this object is not one.
 		/// </summary>

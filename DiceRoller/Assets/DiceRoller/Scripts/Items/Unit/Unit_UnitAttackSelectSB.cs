@@ -49,7 +49,7 @@ namespace DiceRoller
 					isSelectedAtEnter = true;
 
 					// show selection effect
-					self.AddEffect(StatusType.SelectedSelf);
+					self.ShowEffect(EffectType.SelectedSelf, true);
 
 					// show occupied tiles on board, assume unit wont move during movement selection state
 					lastOccupiedTiles.AddRange(self.OccupiedTiles);
@@ -75,7 +75,7 @@ namespace DiceRoller
 								if (lastAttackArea.Intersect(unit.OccupiedTiles).Count() > 0)
 								{
 									lastTargetableUnits.Add(unit);
-									unit.AddEffect(StatusType.PossibleEnemy);
+									unit.ShowEffect(EffectType.PossibleEnemy, true);
 								}
 							}
 						}
@@ -86,9 +86,9 @@ namespace DiceRoller
 				if (!isSelectedAtEnter)
 				{
 					// show action depleted effect
-					if (self.ActionDepleted)
+					if (self.CurrentUnitState == UnitState.Depleted)
 					{
-						self.AddEffect(StatusType.Depleted);
+						self.ShowEffect(EffectType.Depleted, false);
 					}
 				}
 			}
@@ -115,8 +115,8 @@ namespace DiceRoller
 							{
 								tile.UpdateDisplayAs(previous, Tile.DisplayType.EnemyPosition, Tile.EmptyTiles);
 							}
-							previous.RemoveFromInspection();
-							previous.RemoveEffect(StatusType.InspectingEnemy);
+							previous.IsBeingInspected = false;
+							previous.ShowEffect(EffectType.InspectingEnemy, false);
 						}
 						if (target != null)
 						{
@@ -126,8 +126,8 @@ namespace DiceRoller
 							{
 								tile.UpdateDisplayAs(target, Tile.DisplayType.EnemyPosition, target.OccupiedTiles);
 							}
-							target.AddToInspection();
-							target.AddEffect(StatusType.InspectingEnemy);
+							target.IsBeingInspected = true;
+							target.ShowEffect(EffectType.InspectingEnemy, true);
 						}
 					}
 
@@ -135,24 +135,15 @@ namespace DiceRoller
 					if (target != null && target.IsPressed[0])
 					{
 						self.NextAttack = new UnitAttack(target, self.Melee * -1);
-						stateMachine.ChangeState(State.UnitAttack);
+						stateMachine.ChangeState(SMState.UnitAttack);
 					}
-
-					// detect press on anywhere other than enemy unit
-					/*
-					if (InputUtils.GetMousePress(0, ref pressedPosition0) && target == null)
-					{
-						self.RemoveFromSelection();
-						stateMachine.ChangeState(State.Navigation);
-					}
-					*/
 
 					// detect return to navitation by right mouse pressing
 					if (InputUtils.GetMousePress(1, ref pressedPosition1))
 					{
 						// return to navigation otherwise
-						self.RemoveFromSelection();
-						stateMachine.ChangeState(State.Navigation);
+						self.IsSelected = false;
+						stateMachine.ChangeState(SMState.Navigation);
 					}
 				}
 			}
@@ -168,7 +159,7 @@ namespace DiceRoller
 				if (isSelectedAtEnter)
 				{
 					// hide selection effect
-					self.RemoveEffect(StatusType.SelectedSelf);
+					self.ShowEffect(EffectType.SelectedSelf, false);
 
 					// hide occupied tiles on board
 					foreach (Tile tile in lastOccupiedTiles)
@@ -187,7 +178,7 @@ namespace DiceRoller
 					// clear targetable units
 					foreach (Unit unit in lastTargetableUnits)
 					{
-						unit.RemoveEffect(StatusType.PossibleEnemy);
+						unit.ShowEffect(EffectType.PossibleEnemy, false);
 					}
 					lastTargetableUnits.Clear();
 
@@ -200,8 +191,8 @@ namespace DiceRoller
 						{
 							tile.UpdateDisplayAs(lastTargetedUnit, Tile.DisplayType.EnemyPosition, Tile.EmptyTiles);
 						}
-						lastTargetedUnit.RemoveFromInspection();
-						lastTargetedUnit.RemoveEffect(StatusType.InspectingEnemy);
+						lastTargetedUnit.IsBeingInspected = false;
+						lastTargetedUnit.ShowEffect(EffectType.InspectingEnemy, false);
 					}
 					CachedValueUtils.ResetValueCache(ref lastTargetedUnit);
 
@@ -214,9 +205,9 @@ namespace DiceRoller
 				if (!isSelectedAtEnter)
 				{
 					// hide depleted effect
-					if (self.ActionDepleted)
+					if (self.CurrentUnitState == UnitState.Depleted)
 					{
-						self.RemoveEffect(StatusType.Depleted);
+						self.ShowEffect(EffectType.Depleted, false);
 					}
 				}
 			}
@@ -224,20 +215,33 @@ namespace DiceRoller
 
 		// ========================================================= Other Methods =========================================================
 
+		public void SkipAttackSelect()
+		{
+			if (stateMachine.Current == SMState.UnitAttackSelect)
+			{
+				CurrentUnitState = UnitState.Depleted;
+				ShowEffect(EffectType.Depleted, true);
+
+				IsSelected = false;
+
+				stateMachine.ChangeState(SMState.Navigation);
+			}
+		}
+
 		public void ChangeToMoveSelect()
 		{
-			if (stateMachine.Current == State.UnitAttackSelect)
+			if (stateMachine.Current == SMState.UnitAttackSelect && CurrentUnitState == UnitState.Standby)
 			{
-				stateMachine.ChangeState(State.UnitMoveSelect);
+				stateMachine.ChangeState(SMState.UnitMoveSelect);
 			}
 		}
 
 		public void CancelAttackSelect()
 		{
-			if (stateMachine.Current == State.UnitAttackSelect)
+			if (stateMachine.Current == SMState.UnitAttackSelect)
 			{
-				RemoveFromSelection();
-				stateMachine.ChangeState(State.Navigation);
+				IsSelected = false;
+				stateMachine.ChangeState(SMState.Navigation);
 			}
 		}
 	}

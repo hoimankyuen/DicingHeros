@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace DiceRoller
 {
-	public enum State
+	public enum SMState
 	{
 		None,
 		/*
@@ -31,7 +31,8 @@ namespace DiceRoller
 		 *     Die 
 		 * Transitions : 
 		 *     GameController -> State.EndTurn
-		 *     Unit -> State.UnitActionSelect
+		 *     Unit -> State.UnitMoveSelect
+		 *     Unit -> State.UnitAttackSelect
 		 *     Die -> State.DieActionSelect
 		 */
 		UnitMoveSelect,
@@ -64,7 +65,7 @@ namespace DiceRoller
 		 * Registered :
 		 *     Unit
 		 * Transitions : 
-		 *     Unit -> State.Navigation
+		 *     Unit -> State.AttackSelect
 		 */
 		UnitAttack,
 		/*
@@ -107,6 +108,7 @@ namespace DiceRoller
 		 * Registered : 
 		 *     GameController
 		 *     Unit
+		 *     Dice
 		 * Transitions : 
 		 *     GameController -> State.StartTurn
 		 */

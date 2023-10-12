@@ -5,6 +5,8 @@ using UnityEngine.EventSystems;
 
 public class InputUtils
 {
+	private static readonly float dragInitializeDistance = 5f;
+
 	/// <summary>
 	/// Flag for if the mouse is involved in a drag action.
 	/// </summary>
@@ -60,7 +62,7 @@ public class InputUtils
 		}
 		if (Input.GetMouseButtonUp(button) && pressedPositionCache != Vector2.negativeInfinity)
 		{
-			if (Vector2.Distance(pressedPositionCache, Input.mousePosition) < 2f)
+			if (Vector2.Distance(pressedPositionCache, Input.mousePosition) < dragInitializeDistance)
 			{
 				if (!EventSystem.current.IsPointerOverGameObject())
 				{

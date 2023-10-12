@@ -4,34 +4,29 @@ using UnityEngine;
 
 namespace DiceRoller
 {
-    public partial class Unit
-    {
-		protected class EffectOnlySB : StateBehaviour
+	public partial class Die
+	{
+		private class EndTurnSB : StateBehaviour
 		{
 			// host reference
-			protected readonly Unit self = null;
-
-			// ========================================================= Constructor =========================================================
+			private readonly Die self = null;
 
 			/// <summary>
 			/// Constructor.
 			/// </summary>
-			public EffectOnlySB(Unit self)
+			public EndTurnSB(Die self)
 			{
 				this.self = self;
 			}
-
-			// ========================================================= State Machine Methods =========================================================
 
 			/// <summary>
 			/// OnStateEnter is called when the centralized state machine is entering the current state.
 			/// </summary>
 			public override void OnStateEnter()
 			{
-				// show depleted effect
-				if (self.CurrentUnitState == UnitState.Depleted)
+				if (self.CurrentDieState == DieState.Expended)
 				{
-					self.ShowEffect(EffectType.Depleted, true);
+					self.CurrentDieState = DieState.Holding;
 				}
 			}
 
@@ -47,11 +42,6 @@ namespace DiceRoller
 			/// </summary>
 			public override void OnStateExit()
 			{
-				// hide depleted effect
-				if (self.CurrentUnitState == UnitState.Depleted)
-				{
-					self.ShowEffect(EffectType.Depleted, false);
-				}
 			}
 		}
 	}

@@ -174,8 +174,8 @@ namespace DiceRoller
         /// </summary>
         protected void RegisterStateBehaviours()
         {
-            stateMachine.Register(Unit.gameObject, this, State.UnitMoveSelect, new UnitActionSelectSB(this));
-            stateMachine.Register(Unit.gameObject, this, State.UnitAttackSelect, new UnitActionSelectSB(this));
+            stateMachine.Register(Unit.gameObject, this, SMState.UnitMoveSelect, new UnitActionSelectSB(this));
+            stateMachine.Register(Unit.gameObject, this, SMState.UnitAttackSelect, new UnitActionSelectSB(this));
         }
 
         /// <summary>

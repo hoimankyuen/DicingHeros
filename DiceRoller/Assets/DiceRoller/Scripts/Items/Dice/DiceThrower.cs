@@ -225,8 +225,8 @@ namespace DiceRoller
 		/// </summary>
 		protected void RegisterStateBehaviours()
 		{
-			stateMachine.Register(gameObject, this, State.DiceActionSelect, new DiceActionSelectSB(this));
-			stateMachine.Register(gameObject, this, State.DiceThrow, new DiceThrowSB(this));
+			stateMachine.Register(gameObject, this, SMState.DiceActionSelect, new DiceActionSelectSB(this));
+			stateMachine.Register(gameObject, this, SMState.DiceThrow, new DiceThrowSB(this));
 		}
 
 		/// <summary>
@@ -271,14 +271,14 @@ namespace DiceRoller
 				if (InputUtils.GetMousePress(1, ref pressedPosition1))
 				{
 					Die.ClearSelected();
-					stateMachine.ChangeState(State.Navigation);
+					stateMachine.ChangeState(SMState.Navigation);
 				}
 
 				// change to dice throw state if a throw is detected
 				DetectThrowResult result = self.DetectThrow(Die.GetAllSelected());
 				if (result == DetectThrowResult.Thrown)
 				{
-					stateMachine.ChangeState(State.DiceThrow);
+					stateMachine.ChangeState(SMState.DiceThrow);
 				}
 			}
 
@@ -320,7 +320,7 @@ namespace DiceRoller
 				if (Die.GetAllSelected().All(x => !x.IsMoving || x.IsFallen))
 				{
 					Die.ClearSelected();
-					stateMachine.ChangeState(State.Navigation);
+					stateMachine.ChangeState(SMState.Navigation);
 				}
 			}
 

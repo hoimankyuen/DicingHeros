@@ -55,17 +55,27 @@ namespace DiceRoller
 			Unit unit = Unit.GetFirstSelected();
 			if (unit != null)
 			{
-				if (StateMachine.current.Current == State.UnitMoveSelect)
+				if (StateMachine.current.Current == SMState.UnitMoveSelect)
 				{
 					movementButton.enabled = false;
 					attackButton.enabled = true;
 				}
 
-				if (StateMachine.current.Current == State.UnitAttackSelect)
+				if (StateMachine.current.Current == SMState.UnitAttackSelect)
 				{
 					movementButton.enabled = true;
 					attackButton.enabled = false;
 				}
+			}
+		}
+
+		public void SkipMove()
+		{
+			Unit unit = Unit.GetFirstSelected();
+			if (unit != null)
+			{
+				unit.SkipMoveSelect();
+				unit.SkipAttackSelect();
 			}
 		}
 

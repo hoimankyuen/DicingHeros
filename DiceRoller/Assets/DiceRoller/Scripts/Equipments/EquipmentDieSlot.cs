@@ -10,7 +10,6 @@ namespace DiceRoller
 		public Die.Type dieType;
 		public Requirement requirement;
 		public int parameter;
-
 		public enum Requirement
 		{
 			None,
@@ -202,8 +201,8 @@ namespace DiceRoller
 		/// </summary>
 		protected void RegisterStateBehaviours()
 		{
-			stateMachine.Register(Equipment.Unit.gameObject, this, State.UnitMoveSelect, new UnitActionSelectSB(this));
-			stateMachine.Register(Equipment.Unit.gameObject, this, State.UnitAttackSelect, new UnitActionSelectSB(this));
+			stateMachine.Register(Equipment.Unit.gameObject, this, SMState.UnitMoveSelect, new UnitActionSelectSB(this));
+			stateMachine.Register(Equipment.Unit.gameObject, this, SMState.UnitAttackSelect, new UnitActionSelectSB(this));
 		}
 
 		/// <summary>

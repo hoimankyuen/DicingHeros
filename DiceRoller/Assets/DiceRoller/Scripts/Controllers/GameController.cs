@@ -149,7 +149,7 @@ namespace DiceRoller
 		private void StartGame()
 		{
 			CurrentPlayer = players[0];
-			stateMachine.ChangeState(State.StartTurn);
+			stateMachine.ChangeState(SMState.StartTurn);
 		}
 
 		// ========================================================= State Machine Behaviour =========================================================
@@ -159,8 +159,8 @@ namespace DiceRoller
 		/// </summary>
 		private void RegisterStateBehaviours()
 		{
-			stateMachine.Register(gameObject, this, State.StartTurn, new StartTurnSB(this));
-			stateMachine.Register(gameObject, this, State.EndTurn, new EndTurnSB(this));
+			stateMachine.Register(gameObject, this, SMState.StartTurn, new StartTurnSB(this));
+			stateMachine.Register(gameObject, this, SMState.EndTurn, new EndTurnSB(this));
 		}
 
 		/// <summary>
@@ -231,7 +231,7 @@ namespace DiceRoller
 			private IEnumerator WaitForAnimationAndChangeState()
 			{
 				yield return self.uiController.prompt.StartTurnAnimation(self.CurrentPlayer, self.CurrentTurn);
-				stateMachine.ChangeState(State.Navigation);
+				stateMachine.ChangeState(SMState.Navigation);
 			}
 
 			/// <summary>
@@ -256,9 +256,9 @@ namespace DiceRoller
 		/// </summary>
 		public void ProgressTurn()
 		{
-			if (stateMachine.Current == State.Navigation)
+			if (stateMachine.Current == SMState.Navigation)
 			{
-				stateMachine.ChangeState(State.EndTurn);
+				stateMachine.ChangeState(SMState.EndTurn);
 			}
 		}
 
@@ -293,7 +293,7 @@ namespace DiceRoller
 			private IEnumerator WaitForAnimationAndChangeState()
 			{
 				yield return self.uiController.prompt.EndTurnAnimation(self.CurrentPlayer, self.CurrentTurn);
-				stateMachine.ChangeState(State.StartTurn);
+				stateMachine.ChangeState(SMState.StartTurn);
 			}
 
 			/// <summary>

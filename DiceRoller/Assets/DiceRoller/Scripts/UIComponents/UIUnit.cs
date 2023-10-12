@@ -7,10 +7,10 @@ using UnityEngine.UI;
 
 namespace DiceRoller
 {
-    public class UIUnit : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler
+    public class UIUnit : UIItem
     {
         [Header("Data")]
-        public UIItemStateIcons itemStateIcons;
+        public UIUnitStateIcons unitStateIcons;
 
         [Header("Components")]
         public Image iconImage;
@@ -20,71 +20,60 @@ namespace DiceRoller
         public TextMeshProUGUI nameText;
         public UIHealthDisplay healthDisplay;
 
-        // working variables
-        protected Unit unit;
-
+        // components
         public RectTransform rectTransform => GetComponent<RectTransform>();
+
+        // ========================================================= Inspecting Target =========================================================
+
+        /// <summary>
+        /// The base class of the inspecting target.
+        /// </summary>
+        protected override Item TargetBase => target;
+        private Unit target;
 
         // ========================================================= Monobehaviour Methods =========================================================
 
         /// <summary>
+        /// Awake is called when the game object was created. It is always called before start and is 
+        /// independent of if the game object is active or not.
+        /// </summary>
+        protected override void Awake()
+        {
+            base.Awake();
+        }
+
+        /// <summary>
 		/// Start is called before the first frame update and/or the game object is first active.
 		/// </summary>
-		protected void Start()
+		protected override void Start()
         {
+            base.Start();
+        }
+
+        /// <summary>
+        /// Update is called once per frame.
+        /// </summary>
+        protected override void Update()
+        {
+            base.Update();
         }
 
         /// <summary>
         /// OnDestroy is called when an game object is destroyed.
         /// </summary>
-        protected void OnDestroy()
+        protected override void OnDestroy()
         {
+            base.OnDestroy();
+
             // deregister all events
-            if (unit != null)
+            if (target != null)
             {
-                unit.onHealthChanged -= RefreshDisplay;
-                unit.onStatusChanged -= RefreshDisplay;
+                target.onHealthChanged -= RefreshDisplay;
+                target.onEffectSetChanged -= RefreshDisplay;
+                target.onUnitStateChange -= RefreshDisplay;
                 Unit.onInspectionChanged -= RefreshDisplay;
                 Unit.onSelectionChanged -= RefreshDisplay;
             }
-        }
-
-        // ========================================================= Mouse Event Handler ========================================================
-
-        /// <summary>
-        /// Callback triggered by mouse button enter from Event System.
-        /// </summary>
-        public void OnPointerEnter(PointerEventData eventData)
-        {
-            if (unit != null)
-                unit.OnUIMouseEnter();
-        }
-
-        /// <summary>
-        /// Callback triggered by mouse button exit from Event System.
-        /// </summary>
-        public void OnPointerExit(PointerEventData eventData)
-        {
-            if (unit != null)
-                unit.OnUIMouseExit();
-        }
-
-        /// <summary>
-        /// Callback triggered by mouse button down from Event System.
-        /// </summary>
-        public void OnPointerDown(PointerEventData eventData)
-        {
-            if (unit != null)
-                unit.OnUIMouseDown((int)eventData.button);
-        }
-
-        /// <summary>
-        /// Callback triggered by mouse button down from Event System.
-        /// </summary>
-        public void OnPointerUp(PointerEventData eventData)
-        {
-            if (unit != null)
-                unit.OnUIMouseUp((int)eventData.button);
         }
 
         // ========================================================= UI Methods =========================================================
@@ -92,54 +81,59 @@ namespace DiceRoller
         /// <summary>
         /// Set the displayed information as an existing unit.
         /// </summary>
-        public void SetDisplay(Unit unit)
+        public void SetDisplay(Unit target)
         {
             // prevent excessive calls
-            if (this.unit == unit)
+            if (this.target == target)
                 return;
 
+            // mandatory step for changing target
+            TriggerFillerEnterExits(target);
+
             // register and deregister callbacks
-            if (this.unit != null)
+            if (this.target != null)
             {
-                this.unit.onHealthChanged -= RefreshDisplay;
-                this.unit.onStatusChanged -= RefreshDisplay;
+                this.target.onHealthChanged -= RefreshDisplay;
+                this.target.onEffectSetChanged -= RefreshDisplay;
+                this.target.onUnitStateChange -= RefreshDisplay;
                 Unit.onInspectionChanged -= RefreshDisplay;
                 Unit.onSelectionChanged -= RefreshDisplay;
             }
-            if (unit != null)
+            if (target != null)
             {
-                unit.onHealthChanged += RefreshDisplay;
-                unit.onStatusChanged += RefreshDisplay;
+                target.onHealthChanged += RefreshDisplay;
+                target.onEffectSetChanged += RefreshDisplay;
+                target.onUnitStateChange += RefreshDisplay;
                 Unit.onInspectionChanged += RefreshDisplay;
                 Unit.onSelectionChanged += RefreshDisplay;
             }
 
             // set values
-            this.unit = unit;
-            healthDisplay.SetDisplay(unit);
+            this.target = target;
+            healthDisplay.SetDisplay(target);
             RefreshDisplay();
         }
 
-        /// <summary>89
+        /// <summary>
 		/// Change the current display of this ui element to either match the information of the inspecting object.
 		/// </summary>
-		protected void RefreshDisplay()
+		private void RefreshDisplay()
         {
-            if (unit != null)
+            if (target != null)
             {
                 // change die icon
-                iconImage.sprite = unit.iconSprite;
-                outlineImage.sprite = unit.outlineSprite;
-                outlineImage.enabled = unit.IsSelected;
-                overlayImage.sprite = unit.overlaySprite;
-                overlayImage.enabled = unit.IsBeingInspected;
+                iconImage.sprite = target.iconSprite;
+                outlineImage.sprite = target.outlineSprite;
+                outlineImage.enabled = target.IsSelected;
+                overlayImage.sprite = target.overlaySprite;
+                overlayImage.enabled = target.IsBeingInspected;
 
                 // change name text
-                nameText.text = unit.name;
+                nameText.text = target.name;
 
                 // change state icon
-                stateImage.enabled = unit.ActionDepleted;
-                stateImage.sprite = itemStateIcons.stateIcons[Die.DieState.Done];
+                stateImage.enabled = target.CurrentUnitState != Unit.UnitState.Standby;
+                stateImage.sprite = unitStateIcons.stateIcons[target.CurrentUnitState];
             }
         }
     }

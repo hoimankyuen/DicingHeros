@@ -55,7 +55,7 @@ namespace DiceRoller
 				if (isSelectedAtEnter)
 				{
 					// show selection effect
-					self.AddEffect(StatusType.SelectedSelf);
+					self.ShowEffect(EffectType.SelectedSelf, true);
 
 					// show occupied tiles on board, assume unit wont move during movement selection state
 					lastOccupiedTiles.AddRange(self.OccupiedTiles);
@@ -82,9 +82,9 @@ namespace DiceRoller
 				if (!isSelectedAtEnter)
 				{
 					// show action depleted effect if needed
-					if (self.ActionDepleted)
+					if (self.CurrentUnitState == UnitState.Depleted)
 					{
-						self.AddEffect(StatusType.Depleted);
+						self.ShowEffect(EffectType.Depleted, true);
 					}
 				}
 			}
@@ -215,7 +215,7 @@ namespace DiceRoller
 						{
 							// pressed on a valid tile, initiate movement
 							self.NextMovement = new UnitMovement(self.OccupiedTiles, lastPath);
-							stateMachine.ChangeState(State.UnitMove);
+							stateMachine.ChangeState(SMState.UnitMove);
 						}
 						/*
 						else
@@ -231,8 +231,8 @@ namespace DiceRoller
 					if (InputUtils.GetMousePress(1, ref pressedPosition1))
 					{
 						// return to navigation otherwise
-						self.RemoveFromSelection();
-						stateMachine.ChangeState(State.Navigation);
+						self.IsSelected = false;
+						stateMachine.ChangeState(SMState.Navigation);
 					}
 				}
 
@@ -250,7 +250,7 @@ namespace DiceRoller
 						if (isHoveringOnTiles)
 						{
 							//self.AddToInspection();
-							self.AddEffect(self.Player == game.CurrentPlayer ? StatusType.InspectingFriend : StatusType.InspectingEnemy);
+							self.ShowEffect(self.Player == game.CurrentPlayer ? EffectType.InspectingFriend : EffectType.InspectingEnemy, true);
 							foreach (Tile t in self.OccupiedTiles)
 							{
 								t.UpdateDisplayAs(self, self.Player == game.CurrentPlayer ? Tile.DisplayType.FriendPosition : Tile.DisplayType.EnemyPosition, self.OccupiedTiles);
@@ -259,7 +259,7 @@ namespace DiceRoller
 						else
 						{
 							//self.RemoveFromInspection();
-							self.RemoveEffect(self.Player == game.CurrentPlayer ? StatusType.InspectingFriend : StatusType.InspectingEnemy);
+							self.ShowEffect(self.Player == game.CurrentPlayer ? EffectType.InspectingFriend : EffectType.InspectingEnemy, false);
 							foreach (Tile t in self.OccupiedTiles)
 							{
 								t.UpdateDisplayAs(self, self.Player == game.CurrentPlayer ? Tile.DisplayType.FriendPosition : Tile.DisplayType.EnemyPosition, Tile.EmptyTiles);
@@ -280,7 +280,7 @@ namespace DiceRoller
 				if (isSelectedAtEnter)
 				{
 					// hide selection effect
-					self.RemoveEffect(StatusType.SelectedSelf);
+					self.ShowEffect(EffectType.SelectedSelf, false);
 
 					// hide occupied tiles on board
 					foreach (Tile tile in lastOccupiedTiles)
@@ -302,7 +302,7 @@ namespace DiceRoller
 							if (item is Unit)
 							{
 								Unit unit = item as Unit;
-								unit.RemoveEffect(unit.Player == game.CurrentPlayer ? StatusType.InspectingFriend : StatusType.InspectingEnemy);
+								unit.ShowEffect(unit.Player == game.CurrentPlayer ? EffectType.InspectingFriend : EffectType.InspectingEnemy, false);
 								foreach (Tile t in unit.OccupiedTiles)
 								{
 									if (!lastOccupiedTiles.Contains(t))
@@ -351,16 +351,16 @@ namespace DiceRoller
 				if (!isSelectedAtEnter)
 				{
 					// hide depleted effect
-					if (self.ActionDepleted)
+					if (self.CurrentUnitState == UnitState.Depleted)
 					{
-						self.RemoveEffect(StatusType.Depleted);
+						self.ShowEffect(EffectType.Depleted, false);
 					}
 
 					// hide hovering by tile
 					if (lastIsHoveringFromTiles)
 					{
 						//self.RemoveFromInspection();
-						self.RemoveEffect(self.Player == game.CurrentPlayer ? StatusType.InspectingFriend : StatusType.InspectingEnemy);
+						self.ShowEffect(self.Player == game.CurrentPlayer ? EffectType.InspectingFriend : EffectType.InspectingEnemy, false);
 						foreach (Tile t in self.OccupiedTiles)
 						{
 							t.UpdateDisplayAs(self, self.Player == game.CurrentPlayer ? Tile.DisplayType.FriendPosition : Tile.DisplayType.EnemyPosition, Tile.EmptyTiles);
@@ -375,20 +375,33 @@ namespace DiceRoller
 
 		// ========================================================= Other Methods =========================================================
 
+		public void SkipMoveSelect()
+		{
+			if (stateMachine.Current == SMState.UnitMoveSelect)
+			{
+				CurrentUnitState = UnitState.Depleted;
+				ShowEffect(EffectType.Depleted, true);
+
+				IsSelected = false;
+
+				stateMachine.ChangeState(SMState.Navigation);
+			}
+		}
+
 		public void ChangeToAttackSelect()
 		{
-			if (stateMachine.Current == State.UnitMoveSelect)
+			if (stateMachine.Current == SMState.UnitMoveSelect)
 			{
-				stateMachine.ChangeState(State.UnitAttackSelect);
+				stateMachine.ChangeState(SMState.UnitAttackSelect);
 			}
 		}
 
 		public void CancelMoveSelect()
 		{
-			if (stateMachine.Current == State.UnitMoveSelect)
+			if (stateMachine.Current == SMState.UnitMoveSelect)
 			{
-				RemoveFromSelection();
-				stateMachine.ChangeState(State.Navigation);
+				IsSelected = false;
+				stateMachine.ChangeState(SMState.Navigation);
 			}
 		}
 	}

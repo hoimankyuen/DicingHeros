@@ -44,9 +44,9 @@ namespace DiceRoller
 				if (!isSelectedAtEnter)
 				{
 					// show depleted effect
-					if (self.ActionDepleted)
+					if (self.CurrentUnitState == UnitState.Depleted)
 					{
-						self.AddEffect(StatusType.Depleted);
+						self.ShowEffect(EffectType.Depleted, true);
 					}
 				}
 			}
@@ -66,7 +66,7 @@ namespace DiceRoller
 				float duration = 0.5f;
 				float startTime = Time.time;
 
-				target.AddToInspection();
+				target.IsBeingInspected = true;
 
 				while (Time.time < startTime + duration)
 				{
@@ -78,24 +78,24 @@ namespace DiceRoller
 
 				yield return new WaitForSeconds(0.5f);
 
-				target.RemoveFromInspection();
+				target.IsBeingInspected = false;
 
 				// death animation
 				if (target.Health <= 0)
 				{
-
+					// implement death animation here
 				}
 
 				// set flag
-				self.ActionDepleted = true;
-				self.AddEffect(StatusType.Depleted);
+				self.CurrentUnitState = UnitState.Depleted;
+				self.ShowEffect(EffectType.Depleted, true);
+				self.IsSelected = false;
 
 				// clear data
-				self.RemoveFromSelection();
 				self.NextAttack = null;
 
 				// change state back to navigation
-				stateMachine.ChangeState(State.Navigation);
+				stateMachine.ChangeState(SMState.Navigation);
 			}
 
 			// ========================================================= State Update Methods =========================================================
@@ -117,9 +117,9 @@ namespace DiceRoller
 				// action for other units
 				if (!isSelectedAtEnter)
 				{
-					if (self.ActionDepleted)
+					if (self.CurrentUnitState == UnitState.Depleted)
 					{
-						self.RemoveEffect(StatusType.Depleted);
+						self.ShowEffect(EffectType.Depleted, false);
 					}
 				}
 			}

@@ -39,16 +39,8 @@ namespace DiceRoller
 					// show dice info on ui
 					if (CachedValueUtils.HasValueChanged(self.IsHovering, ref lastIsHovering))
 					{
-						if (self.IsHovering)
-						{
-							self.AddToInspection();
-							self.AddEffect(StatusType.InspectingSelf);
-						}
-						else
-						{
-							self.RemoveFromInspection();
-							self.RemoveEffect(StatusType.InspectingSelf);
-						}
+						self.IsBeingInspected = self.IsHovering;
+						self.ShowEffect(EffectType.InspectingSelf, self.IsHovering);
 					}
 
 					// drag dice
@@ -56,7 +48,7 @@ namespace DiceRoller
 					{	
 						if (self.IsStartedDrag[0])
 						{
-							self.AddToDrag();
+							self.IsBeingDragged = true;
 							InputUtils.StartDragging(self);
 						}
 					}
@@ -65,22 +57,17 @@ namespace DiceRoller
 						if (self.IsCompletedDrag[0])
 						{
 							//check for dragged target here
-							EquipmentDieSlot dieSlot = EquipmentDieSlot.GetFirstDragsRecipient();
-							if (dieSlot != null)
+							EquipmentDieSlot targetDieSlot = EquipmentDieSlot.GetFirstDragsRecipient();
+							if (targetDieSlot != null)
 							{
-								if (dieSlot.IsFulfillBy(self))
+								if (targetDieSlot.IsFulfillBy(self))
 								{
-									if (self.EquipmentDieSlot != null)
-									{
-										self.EquipmentDieSlot.AssignDie(null);
-									}
-									dieSlot.AssignDie(self);
-									self.EquipmentDieSlot = dieSlot;
+									self.AssignedDieSlot = targetDieSlot;
 								}
 							}
 
 							// always end drag afterwards
-							self.RemoveFromDrag();
+							self.IsBeingDragged = false;
 							InputUtils.StopDragging(self);
 						}
 					}
@@ -98,23 +85,22 @@ namespace DiceRoller
 					// hide dice info on ui
 					if (self.IsBeingInspected)
 					{
-						self.RemoveFromInspection();
-						self.RemoveEffect(self.Player == game.CurrentPlayer ? StatusType.InspectingSelf : StatusType.InspectingEnemy);
+						self.IsBeingInspected = false;
+						self.ShowEffect(EffectType.InspectingSelf, false);
+					}
+
+					// stop drag
+					if (self.IsBeingDragged)
+					{
+						self.IsBeingDragged = false;
+						InputUtils.StopDragging(self);
 					}
 
 					// reset caches
 					CachedValueUtils.ResetValueCache(ref lastIsHovering);
 				}
 
-				// stop drag
-				if (self.IsBeingDragged)
-				{
-					if (Input.GetMouseButtonUp(0))
-					{
-						self.RemoveFromDrag();
-						InputUtils.StopDragging(self);
-					}
-				}
+				
 			}
 		}
 
@@ -123,9 +109,9 @@ namespace DiceRoller
 		/// </summary>
 		public void ResignFromCurrentSlot()
 		{
-			if (EquipmentDieSlot != null)
+			if (AssignedDieSlot != null)
 			{
-				EquipmentDieSlot.AssignDie(null);
+				AssignedDieSlot = null;
 			}
 		}
 	}

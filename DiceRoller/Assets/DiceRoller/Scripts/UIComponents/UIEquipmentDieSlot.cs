@@ -7,16 +7,22 @@ using UnityEngine.EventSystems;
 
 namespace DiceRoller
 {
-    public class UIEquipmentDieSlot : MonoBehaviour
+    public class UIEquipmentDieSlot : UIItemComponent
     {
         [Header("Components")]
         public UIDie uiDie;
 
-        // reference
-        protected GameController game => GameController.current;
+        // ========================================================= Inspecting Target =========================================================
 
-        // working variable
-        protected EquipmentDieSlot equipmentDieSlot = null;
+        /// <summary>
+        /// The base class reference of the inspecting target.
+        /// </summary>
+        protected override ItemComponent TargetBase => target;
+
+        /// <summary>
+        /// The inspecting target.
+        /// </summary>
+        protected EquipmentDieSlot target = null;
 
         // ========================================================= Monobehaviour Methods =========================================================
 
@@ -24,73 +30,40 @@ namespace DiceRoller
         /// Awake is called when the game object was created. It is always called before start and is 
         /// independent of if the game object is active or not.
         /// </summary>
-        protected void Awake()
+        protected override void Awake()
         {
-
+            base.Awake();
         }
 
         /// <summary>
 		/// Start is called before the first frame update and/or the game object is first active.
 		/// </summary>
-        protected void Start()
+        protected override void Start()
         {
+            base.Start();
+
+            // setup components
             uiDie.SetAsEquipmentSlots(this);
         }
 
         // Update is called once per frame
-        protected void Update()
+        protected override void Update()
         {
-
+            base.Update();
         }
 
         /// <summary>
         /// OnDestroy is called when an game object is destroyed.
         /// </summary>
-        protected void OnDestroy()
+        protected override void OnDestroy()
         {
+            base.OnDestroy();
+
             // deregister all callbacks
-            if (equipmentDieSlot != null)
+            if (target != null)
             {
-                equipmentDieSlot.onDieChanged -= RefreshDisplay;
+                target.onDieChanged -= RefreshDisplay;
             }
-        }
-
-        // ========================================================= Mouse Event Handler ========================================================
-
-        /// <summary>
-        /// Callback triggered by mouse button enter from Event System.
-        /// </summary>
-        public void OnPointerEnter(PointerEventData eventData)
-        {
-            if (equipmentDieSlot != null)
-                equipmentDieSlot.OnUIMouseEnter();
-        }
-
-        /// <summary>
-        /// Callback triggered by mouse button exit from Event System.
-        /// </summary>
-        public void OnPointerExit(PointerEventData eventData)
-        {
-            if (equipmentDieSlot != null)
-                equipmentDieSlot.OnUIMouseExit();
-        }
-
-        /// <summary>
-        /// Callback triggered by mouse button down from Event System.
-        /// </summary>
-        public void OnPointerDown(PointerEventData eventData)
-        {
-            if (equipmentDieSlot != null)
-                equipmentDieSlot.OnUIMouseDown((int)eventData.button);
-        }
-
-        /// <summary>
-        /// Callback triggered by mouse button down from Event System.
-        /// </summary>
-        public void OnPointerUp(PointerEventData eventData)
-        {
-            if (equipmentDieSlot != null)
-                equipmentDieSlot.OnUIMouseUp((int)eventData.button);
         }
 
         // ========================================================= UI Methods =========================================================
@@ -98,24 +71,27 @@ namespace DiceRoller
         /// <summary>
         /// Set the displayed information as an existing equipment.
         /// </summary>
-        public void SetInspectingTarget(EquipmentDieSlot equipmentDieSlot)
+        public void SetInspectingTarget(EquipmentDieSlot target)
         {
             // prevent excessive calls
-            if (this.equipmentDieSlot == equipmentDieSlot)
+            if (this.target == target)
                 return;
 
+            // mandatory step for changing target
+            TriggerFillerEnterExits(target);
+
             // register and deregister callbacks
-            if (this.equipmentDieSlot != null)
+            if (this.target != null)
             {
-                this.equipmentDieSlot.onDieChanged -= RefreshDisplay;
+                this.target.onDieChanged -= RefreshDisplay;
             }
-            if (equipmentDieSlot != null)
+            if (target != null)
             {
-                equipmentDieSlot.onDieChanged += RefreshDisplay;
+                target.onDieChanged += RefreshDisplay;
             }
 
             // set value
-            this.equipmentDieSlot = equipmentDieSlot;
+            this.target = target;
             RefreshDisplay();
         }
 
@@ -124,15 +100,15 @@ namespace DiceRoller
         /// </summary>
         private void RefreshDisplay()
         {
-            if (equipmentDieSlot != null)
+            if (target != null)
             {
-                if (equipmentDieSlot.Die != null)
+                if (target.Die != null)
                 {
-                    uiDie.SetInspectingTarget(equipmentDieSlot.Die);
+                    uiDie.SetInspectingTarget(target.Die);
                 }
                 else
                 {
-                    uiDie.SetDisplayedValue(equipmentDieSlot.dieType, equipmentDieSlot.parameter, equipmentDieSlot.requirement);
+                    uiDie.SetDisplayedValue(target.dieType, target.parameter, target.requirement);
                 }
             }
             else

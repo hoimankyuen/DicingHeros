@@ -32,7 +32,7 @@ namespace DiceRoller
 				if (self.IsSelected)
 				{
 					isSelectedAtStateEnter = true;
-					self.AddEffect(StatusType.SelectedSelf);
+					self.ShowEffect(EffectType.SelectedSelf, true);
 				}
 			}
 
@@ -47,37 +47,22 @@ namespace DiceRoller
 					// show dice info on ui
 					if (CachedValueUtils.HasValueChanged(self.IsHovering, ref lastIsHovering))
 					{
-						if (self.IsHovering)
-						{
-							self.AddToInspection();
-							self.AddEffect(StatusType.InspectingSelf);
-						}
-						else
-						{
-							self.RemoveFromInspection();
-							self.RemoveEffect(StatusType.InspectingSelf);
-						}
+						self.IsBeingInspected = self.IsHovering;
+						self.ShowEffect(EffectType.InspectingSelf, self.IsHovering);
 					}
 
-					// go to dice action selection state or navigation state when this dice is pressed
+					// toggle selection, and go to dice action selection state or navigation state when this dice is pressed
 					if (self.IsPressed[0])
 					{
-						if (self.IsSelected)
-						{
-							self.RemoveFromSelection();
-						}
-						else
-						{
-							self.AddToSelection();
-						}
+						self.IsSelected = !self.IsSelected;
 
 						if (GetFirstSelected() != null)
 						{
-							stateMachine.ChangeState(State.DiceActionSelect);
+							stateMachine.ChangeState(SMState.DiceActionSelect);
 						}
 						else
 						{
-							stateMachine.ChangeState(State.Navigation);
+							stateMachine.ChangeState(SMState.Navigation);
 						}
 					}
 				}
@@ -92,14 +77,14 @@ namespace DiceRoller
 				if (isSelectedAtStateEnter)
 				{
 					isSelectedAtStateEnter = false;
-					self.RemoveEffect(StatusType.SelectedSelf);
+					self.ShowEffect(EffectType.SelectedSelf, false);
 				}
 
 				// revert display as inspecting
 				if (self.IsBeingInspected)
 				{
-					self.RemoveFromInspection();
-					self.RemoveEffect(StatusType.InspectingSelf);
+					self.IsBeingInspected = false;
+					self.ShowEffect(EffectType.InspectingSelf, false);
 				}
 
 				// reset caches
