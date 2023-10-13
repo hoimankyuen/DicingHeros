@@ -44,7 +44,7 @@ namespace DiceRoller
 				}
 
 				// go to dice action selection state when this dice is pressed
-				if (game.CurrentPlayer == self.Player && self.IsPressed[0])
+				if (game.CurrentPlayer == self.Player && self.IsPressed[0] && self.CurrentDieState != DieState.Expended)
 				{
 					self.IsSelected = true;
 					stateMachine.ChangeState(SMState.DiceActionSelect);

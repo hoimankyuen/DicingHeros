@@ -126,8 +126,8 @@ namespace DiceRoller
 			{
 				// change effects
 				outlineImage.enabled = target.IsActivated;
-				overlayImage.enabled = target.IsBeingInspected || !target.IsRequirementFulfilled;
 
+				overlayImage.enabled = target.IsBeingInspected || !target.IsRequirementFulfilled;
 				if (target.IsBeingInspected)
 					overlayImage.color = new Color(0, 1, 0, 0.5f);
 				else if (!target.IsRequirementFulfilled)

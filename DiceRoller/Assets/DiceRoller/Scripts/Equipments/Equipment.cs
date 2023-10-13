@@ -12,6 +12,7 @@ namespace DiceRoller
 		{
 			AtMove,
 			AtAttack,
+			AtDefend,
 			AtActivation,
 		}
 
@@ -267,6 +268,7 @@ namespace DiceRoller
 		{
 			stateMachine.Register(Unit.gameObject, this, SMState.UnitMoveSelect, new UnitActionSelectSB(this));
 			stateMachine.Register(Unit.gameObject, this, SMState.UnitAttackSelect, new UnitActionSelectSB(this));
+			stateMachine.Register(Unit.gameObject, this, SMState.UnitDepletedSelect, new UnitActionSelectSB(this));
 		}
 
 		/// <summary>

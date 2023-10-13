@@ -33,6 +33,8 @@ namespace DiceRoller
 		 *     GameController -> State.EndTurn
 		 *     Unit -> State.UnitMoveSelect
 		 *     Unit -> State.UnitAttackSelect
+		 *     Unit -> State.UnitDepletedSelect
+		 *     Unit -> State.UnitInspection
 		 *     Die -> State.DieActionSelect
 		 */
 		UnitMoveSelect,
@@ -59,6 +61,25 @@ namespace DiceRoller
 		 * Transitions :
 		 *     Unit -> State.Navigation
 		 *     Unit -> State.UnitMoveSelect
+		 */
+		UnitDepletedSelect,
+		/*
+		 * Registered :
+		 *		UIController
+		 *		Unit
+		 *		Equipment
+		 *		EquipmentDieSlot
+		 *		Die
+		 * Transitions :
+		 *		Unit -> State.Navigation
+		 */
+		UnitInspection,
+		/*
+		 * Registered :
+		 *		UIController
+		 *		Unit
+		 * Transitions :
+		 *		Unit -> State.Navigation
 		 */
 		UnitMove,
 		/*

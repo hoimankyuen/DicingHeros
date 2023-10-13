@@ -57,7 +57,7 @@ namespace DiceRoller
 					self.ShowEffect(self.Player == game.CurrentPlayer ? EffectType.InspectingSelf : EffectType.InspectingEnemy, self.IsHovering);
 				}
 
-				// go to unit movement selection state or unit attack selection state when this unit is pressed
+				// go to unit movement selection state, unit attack selection state or unit depleted select staet when this unit is pressed
 				if (self.Player == game.CurrentPlayer && self.IsPressed[0] && self.OccupiedTiles.Count > 0)
 				{
 					if (self.CurrentUnitState == UnitState.Standby)
@@ -70,6 +70,18 @@ namespace DiceRoller
 						self.IsSelected = true;
 						stateMachine.ChangeState(SMState.UnitAttackSelect);
 					}
+					else if (self.CurrentUnitState == UnitState.Depleted)
+					{
+						self.IsSelected = true;
+						stateMachine.ChangeState(SMState.UnitDepletedSelect);
+					}
+				}
+
+				// go to unit inspection state when this unit as not a player unit is pressed
+				if (self.Player != game.CurrentPlayer && self.IsPressed[0])
+				{
+					self.IsSelected = true;
+					stateMachine.ChangeState(SMState.UnitInspection);
 				}
 			}
 

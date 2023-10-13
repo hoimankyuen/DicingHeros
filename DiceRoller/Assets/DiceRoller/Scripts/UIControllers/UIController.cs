@@ -15,18 +15,28 @@ namespace DiceRoller
 		// references
 		private StateMachine stateMachine { get { return StateMachine.current; } }
 
-		[Header("Screen Space Components")]
+		[Header("Screen Space Components (Top)")]
 		public UIInfoWindow infoWindow;
+
+		[Header("Screen Space Components (Bottom)")]
 		public UIGeneralControlWindow generalControlWindow;
 		public UIUnitControlWindow unitControlWindow;
-		public UIInspectedItemWindow inspectedItemWindow;
-		public UIDiceListWindow diceListWindow;
-		public UIUnitListWindow unitListWindow;
-		public UIDiceDetailWindow diceDetailWindow;
-		public UIUnitDetailWindow unitDetailWindow;
+		public UIInspectionControlWindow inspectionControlWindow;
 
+		[Header("Screen Space Components (Left)")]
+		public UIUnitListWindow unitListWindow;
+		public UIUnitDetailWindow unitDetailSelfWindow;
+
+		[Header("Screen Space Components (Right)")]
+		public UIUnitDetailWindow unitDetailOtherWindow;
+		public UIDiceListWindow diceListWindow;
+		public UIDiceDetailWindow diceDetailWindow;
+
+		[Header("Screen Space Components (Center)")]
 		public UIPrompt prompt;
 
+		[Header("Screen Space Components (Floating)")]
+		public UIInspectedItemWindow inspectedItemWindow;
 		public UICursor cursor;
 		public UIUnitIndicator unitIndicator;
 
@@ -80,6 +90,8 @@ namespace DiceRoller
 			stateMachine.Register(gameObject, this, SMState.Navigation, new NavigationSB(this));
 			stateMachine.Register(gameObject, this, SMState.UnitMoveSelect, new UnitMoveSelectSB(this));
 			stateMachine.Register(gameObject, this, SMState.UnitAttackSelect, new UnitAttackSelectSB(this));
+			stateMachine.Register(gameObject, this, SMState.UnitDepletedSelect, new UnitDepletedSelectSB(this));
+			stateMachine.Register(gameObject, this, SMState.UnitInspection, new UnitInspectionSB(this));
 			stateMachine.Register(gameObject, this, SMState.DiceActionSelect, new DiceActionSB(this));
 		}
 
@@ -106,7 +118,8 @@ namespace DiceRoller
 			diceListWindow.Show = false;
 			unitListWindow.Show = false;
 			diceDetailWindow.Show = false;
-			unitDetailWindow.Show = false;
+			unitDetailSelfWindow.Show = false;
+			unitDetailOtherWindow.Show = false;
 		}
 
 		// ========================================================= Start Turn State =========================================================
@@ -212,7 +225,7 @@ namespace DiceRoller
 			{
 				self.infoWindow.Show = true;
 				self.inspectedItemWindow.Show = true;
-				self.unitDetailWindow.Show = true;
+				self.unitDetailSelfWindow.Show = true;
 				self.diceListWindow.Show = true;
 				self.unitControlWindow.Show = true;
 
@@ -234,7 +247,7 @@ namespace DiceRoller
 			{
 				self.infoWindow.Show = false;
 				self.inspectedItemWindow.Show = false;
-				self.unitDetailWindow.Show = false;
+				self.unitDetailSelfWindow.Show = false;
 				self.diceListWindow.Show = false;
 				self.unitControlWindow.Show = false;
 
@@ -264,7 +277,7 @@ namespace DiceRoller
 			{
 				self.infoWindow.Show = true;
 				self.inspectedItemWindow.Show = true;
-				self.unitDetailWindow.Show = true;
+				self.unitDetailSelfWindow.Show = true;
 				self.diceListWindow.Show = true;
 				self.unitControlWindow.Show = true;
 
@@ -286,11 +299,107 @@ namespace DiceRoller
 			{
 				self.infoWindow.Show = false;
 				self.inspectedItemWindow.Show = false;
-				self.unitDetailWindow.Show = false;
+				self.unitDetailSelfWindow.Show = false;
 				self.diceListWindow.Show = false;
 				self.unitControlWindow.Show = false;
 
 				self.cursor.SetIcon(UICursor.IconType.None);
+				//self.targetIndicator.Setup(UITargetIndicator.Mode.None, UICursor.IconType.None);
+			}
+		}
+
+		// ========================================================= Unit Depleted Select State =========================================================
+
+		private class UnitDepletedSelectSB : StateBehaviour
+		{
+			private readonly UIController self = null;
+
+			/// <summary>
+			/// Constructor.
+			/// </summary>
+			public UnitDepletedSelectSB(UIController self)
+			{
+				this.self = self;
+			}
+
+			/// <summary>
+			/// OnStateEnter is called when the centralized state machine is entering the current state.
+			/// </summary>
+			public override void OnStateEnter()
+			{
+				self.infoWindow.Show = true;
+				self.inspectedItemWindow.Show = true;
+				self.unitDetailSelfWindow.Show = true;
+				self.diceListWindow.Show = true;
+				self.unitControlWindow.Show = true;
+
+				//self.targetIndicator.Setup(UITargetIndicator.Mode.Mouse, UICursor.IconType.SimpleMelee);
+			}
+
+			/// <summary>
+			/// OnStateUpdate is called each frame when the centralized state machine is in the current state.
+			/// </summary>
+			public override void OnStateUpdate()
+			{
+			}
+
+			/// <summary>
+			/// OnStateExit is called when the centralized state machine is leaving the current state.
+			/// </summary>
+			public override void OnStateExit()
+			{
+				self.infoWindow.Show = false;
+				self.inspectedItemWindow.Show = false;
+				self.unitDetailSelfWindow.Show = false;
+				self.diceListWindow.Show = false;
+				self.unitControlWindow.Show = false;
+
+				//self.targetIndicator.Setup(UITargetIndicator.Mode.None, UICursor.IconType.None);
+			}
+		}
+
+		// ========================================================= Unit Depleted Select State =========================================================
+
+		private class UnitInspectionSB : StateBehaviour
+		{
+			private readonly UIController self = null;
+
+			/// <summary>
+			/// Constructor.
+			/// </summary>
+			public UnitInspectionSB(UIController self)
+			{
+				this.self = self;
+			}
+
+			/// <summary>
+			/// OnStateEnter is called when the centralized state machine is entering the current state.
+			/// </summary>
+			public override void OnStateEnter()
+			{
+				self.infoWindow.Show = true;
+				self.unitDetailOtherWindow.Show = true;
+				self.inspectionControlWindow.Show = true;
+
+				//self.targetIndicator.Setup(UITargetIndicator.Mode.Mouse, UICursor.IconType.SimpleMelee);
+			}
+
+			/// <summary>
+			/// OnStateUpdate is called each frame when the centralized state machine is in the current state.
+			/// </summary>
+			public override void OnStateUpdate()
+			{
+			}
+
+			/// <summary>
+			/// OnStateExit is called when the centralized state machine is leaving the current state.
+			/// </summary>
+			public override void OnStateExit()
+			{
+				self.infoWindow.Show = false;
+				self.unitDetailOtherWindow.Show = false;
+				self.inspectionControlWindow.Show = false;
+
 				//self.targetIndicator.Setup(UITargetIndicator.Mode.None, UICursor.IconType.None);
 			}
 		}

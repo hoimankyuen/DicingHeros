@@ -586,6 +586,7 @@ namespace DiceRoller
 			stateMachine.Register(gameObject, this, SMState.Navigation, new NavigationSB(this));
 			stateMachine.Register(gameObject, this, SMState.UnitMoveSelect, new UnitActionSelectSB(this));
 			stateMachine.Register(gameObject, this, SMState.UnitAttackSelect, new UnitActionSelectSB(this));
+			stateMachine.Register(gameObject, this, SMState.UnitDepletedSelect, new UnitActionSelectSB(this));
 			stateMachine.Register(gameObject, this, SMState.DiceActionSelect, new DiceActionSelectSB(this));
 			stateMachine.Register(gameObject, this, SMState.DiceThrow, new DiceThrowSB(this));
 			stateMachine.Register(gameObject, this, SMState.EndTurn, new EndTurnSB(this));
