@@ -61,329 +61,6 @@ namespace DiceRoller
 		private Transform effectTransform = null;	  
 		private LineRenderer lineRenderer = null;
 
-		// ========================================================= Properties (IsBeingInspected) =========================================================
-	
-		/// <summary>
-		/// Flag for if this die is currently being inspected.
-		/// </summary>
-		public bool IsBeingInspected
-		{
-			get
-			{
-				return inspectingDice.Contains(this);
-			}
-			private set
-			{
-				if (!inspectingDice.Contains(this) && value)
-				{
-					inspectingDice.Add(this);
-					onInspectionChanged.Invoke();
-				}
-				if (inspectingDice.Contains(this) && !value)
-				{
-					inspectingDice.Remove(this);
-					onInspectionChanged.Invoke();
-				}
-			}
-		}
-		private static UniqueList<Die> inspectingDice = new UniqueList<Die>();
-
-		/// <summary>
-		/// Event raised when the inspection status of any die is changed.
-		/// </summary>
-		public static event Action onInspectionChanged = () => { };
-
-		/// <summary>
-		/// Retrieve the first die being currently inspected, return null if none is being inspected.
-		/// </summary>
-		public static Die GetFirstBeingInspected()
-		{
-			return inspectingDice.Count > 0 ? inspectingDice[0] : null;
-		}
-
-		// ========================================================= Properties (IsSelected) =========================================================
-
-		/// <summary>
-		/// Flag for if this die is currently selected.
-		/// </summary>
-		public bool IsSelected
-		{
-			get 
-			{
-				return selectedDice.Contains(this);
-			}
-			private set
-			{
-				if (!selectedDice.Contains(this) && value)
-				{
-					selectedDice.Add(this);
-					onSelectionChanged.Invoke();
-				}
-				if (selectedDice.Contains(this) && !value)
-				{
-					selectedDice.Remove(this);
-					onSelectionChanged.Invoke();
-				}
-			}
-		}
-		private static UniqueList<Die> selectedDice = new UniqueList<Die>();
-
-		/// <summary>
-		/// Event raised when the selection status of any die is changed.
-		/// </summary>
-		public static event Action onSelectionChanged = () => { };
-
-		/// <summary>
-		/// Retrieve the first currently selected die, return null if none is selected.
-		/// </summary>
-		public static Die GetFirstSelected()
-		{
-			return selectedDice.Count > 0 ? selectedDice[0] : null;
-		}
-
-		/// <summary>
-		/// Retrieve all currently selected die.
-		/// </summary>
-		public static IReadOnlyCollection<Die> GetAllSelected()
-		{
-			return selectedDice.AsReadOnly();
-		}
-
-		/// <summary>
-		/// Clear the list of selected die. 
-		/// /// </summary>
-		public static void ClearSelected()
-		{
-			for (int i = selectedDice.Count - 1; i >= 0; i--)
-			{
-				selectedDice[i].IsSelected = false;
-			}
-		}
-
-		// ========================================================= Properties (IsBeingDragged) =========================================================
-
-		/// <summary>
-		/// Flag for if this die is currently begin dragged.
-		/// </summary>
-		public bool IsBeingDragged
-		{
-			get
-			{
-				return draggingDice.Contains(this);
-			}
-			private set
-			{
-				if (!draggingDice.Contains(this) && value)
-				{
-					draggingDice.Add(this);
-					onDragChanged.Invoke();
-				}
-				if (draggingDice.Contains(this) && !value)
-				{
-					draggingDice.Remove(this);
-					onDragChanged.Invoke();
-				}
-			}
-		}
-		private static UniqueList<Die> draggingDice = new UniqueList<Die>();
-
-		/// <summary>
-		/// Event raised when the drag status of any die is changed.
-		/// </summary>
-		public static event Action onDragChanged = () => { };
-
-		/// <summary>
-		/// Retrieve the first die being currently dragged, return null if none is selected.
-		/// </summary>
-		public static Die GetFirstBeingDragged()
-		{
-			return draggingDice.Count > 0 ? draggingDice[0] : null;
-		}
-
-		// ========================================================= Properties (IsRolling) =========================================================
-
-		/// <summary>
-		/// Flag for if this die is still rolling.
-		/// </summary>
-		public bool IsRolling
-		{
-			get
-			{
-				return IsMoving && rollInitiating;
-			}
-		}
-		private bool rollInitiating = false;
-		private float lastRotatingTime = 0;
-
-		// ========================================================= Properties (Value) =========================================================
-
-		/// <summary>
-		/// The current value of this die, -1 if value is invalid.
-		/// </summary>
-		public int Value
-		{ 
-			get
-			{
-				return _Value; 
-			}
-			private set
-			{
-				if (_Value != value)
-				{
-					_Value = value;
-					onValueChanged.Invoke();
-				}
-			}
-		}
-		private int _Value = -1;
-		private Quaternion lastRotation = Quaternion.identity;
-
-		/// <summary>
-		/// Event raised when the value of this die is changed.
-		/// </summary>
-		public event Action onValueChanged = () => { };
-
-		/// <summary>
-		/// Detect the current displayed value of this die.
-		/// </summary>
-		private void DetectValue()
-		{
-			// record last moving time for stationary checking
-			if (rigidBody.velocity.sqrMagnitude > 0.01f || rigidBody.angularVelocity.sqrMagnitude > 0.01f)
-			{
-				lastRotatingTime = Time.time;
-			}
-
-			// determine the value of this die
-			int lastValue = Value;
-			if (IsRolling || Time.time - lastRotatingTime < 0.25f)
-			{
-				// die is stiill moving, set value to invalid
-				Value = -1;
-			}
-			else if (Value == -1 || Quaternion.Angle(transform.rotation, lastRotation) < 1f)
-			{
-				// die is stationary and either value is invalid or the rotation is changed, calculate the current value
-				float nearestAngle = float.MaxValue;
-				int foundValue = 0;
-				foreach (Face face in faces)
-				{
-					float angle = Vector3.Angle(transform.rotation * Quaternion.Euler(face.euler) * Vector3.up, Vector3.up);
-					if (angle < nearestAngle)
-					{
-						nearestAngle = angle;
-						foundValue = face.value;
-					}
-				}
-				lastRotation = transform.rotation;
-				Value = foundValue;
-			}
-		}
-
-		// ========================================================= Properties (CurrentDieState) =========================================================
-
-		/// <summary>
-		/// The current state of this die.
-		/// </summary>
-		public DieState CurrentDieState 
-		{
-			get
-			{
-				return _CurrentDieState;
-			}
-			private set 
-			{
-				if (_CurrentDieState != value)
-				{
-					switch (value)
-					{
-						case DieState.Holding:
-							rigidBody.isKinematic = true;
-							modelTransform.gameObject.SetActive(false);
-							effectTransform.gameObject.SetActive(false);
-							break;
-						case DieState.Casted:
-							rigidBody.isKinematic = false;
-							modelTransform.gameObject.SetActive(true);
-							effectTransform.gameObject.SetActive(true);
-							break;
-						case DieState.Assigned:
-							rigidBody.isKinematic = false;
-							modelTransform.gameObject.SetActive(true);
-							effectTransform.gameObject.SetActive(true);
-							break;
-						case DieState.Expended:
-							rigidBody.isKinematic = true;
-							modelTransform.gameObject.SetActive(false);
-							effectTransform.gameObject.SetActive(false);
-							break;
-					}
-					_CurrentDieState = value;
-					onDieStateChanged.Invoke();
-				}
-			}
-		}
-		private DieState _CurrentDieState = DieState.Casted;
-
-		/// <summary>
-		/// Event raised when the current die state or this die is changed.
-		/// </summary>
-		public event Action onDieStateChanged = () => { };
-
-		// ========================================================= Properties (EquipmentDieSlot) =========================================================
-
-		/// <summary>
-		/// The Equipment that this die is assigned to.
-		/// </summary>
-		public EquipmentDieSlot AssignedDieSlot {
-			get
-			{
-				return _AssignedDieSlot;
-			}
-			private set
-			{
-				if (_AssignedDieSlot != value)
-				{
-					// modify previous die slot
-					if (_AssignedDieSlot != null)
-					{
-						_AssignedDieSlot.AssignDie(null);
-					}
-					// modify next die slot
-					if (value != null)
-					{
-						if (value.Die != null)
-						{
-							value.Die.AssignedDieSlot = null;
-						}
-
-						value.AssignDie(this);
-					}
-					// modify self
-					_AssignedDieSlot = value;
-					onAssignedDieSlotChanged.Invoke();
-				}
-			}
-		}
-		private EquipmentDieSlot _AssignedDieSlot = null;
-
-		/// <summary>
-		/// The unit that this die is indirectly assigned to.
-		/// </summary>
-		public Unit AssignedUnit
-		{
-			get
-			{
-				return AssignedDieSlot != null ? AssignedDieSlot.Equipment.Unit : null;
-			}
-		}
-		
-		/// <summary>
-		/// Event raised when this die is assigned to another die slot.
-		/// </summary>
-		public event Action onAssignedDieSlotChanged = () => { };
-
-
 		// ========================================================= Monobehaviour Methods =========================================================
 
 		/// <summary>
@@ -521,6 +198,383 @@ namespace DiceRoller
 				Player.dice.Remove(this);
 			}
 		}
+
+		// ========================================================= Properties (IsBeingInspected) =========================================================
+
+		/// <summary>
+		/// Flag for if this die is currently being inspected.
+		/// </summary>
+		public bool IsBeingInspected
+		{
+			get
+			{
+				return _InspectingDice.Contains(this);
+			}
+			private set
+			{
+				if (!_InspectingDice.Contains(this) && value)
+				{
+					_InspectingDice.Add(this);
+					OnInspectionChanged.Invoke();
+					OnItemBeingInspectedChanged.Invoke();
+				}
+				else if (_InspectingDice.Contains(this) && !value)
+				{
+					_InspectingDice.Remove(this);
+					OnInspectionChanged.Invoke();
+					OnItemBeingInspectedChanged.Invoke();
+				}
+			}
+		}
+		private static UniqueList<Die> _InspectingDice = new UniqueList<Die>();
+
+		/// <summary>
+		/// Event raised when the inspection status of this die is changed.
+		/// </summary>
+		public event Action OnInspectionChanged = () => { };
+
+		/// <summary>
+		/// Event raised when the the list of dice being inspected is changed.
+		/// </summary>
+		public static event Action OnItemBeingInspectedChanged = () => { };
+
+		/// <summary>
+		/// Retrieve the first die being currently inspected, return null if none is being inspected.
+		/// </summary>
+		public static Die GetFirstBeingInspected()
+		{
+			return _InspectingDice.Count > 0 ? _InspectingDice[0] : null;
+		}
+
+		// ========================================================= Properties (IsSelected) =========================================================
+
+		/// <summary>
+		/// Flag for if this die is currently selected.
+		/// </summary>
+		public bool IsSelected
+		{
+			get 
+			{
+				return _SelectedDice.Contains(this);
+			}
+			private set
+			{
+				if (!_SelectedDice.Contains(this) && value)
+				{
+					_SelectedDice.Add(this);
+					OnSelectionChanged.Invoke();
+					OnItemSelectedChanged.Invoke();
+				}
+				else if(_SelectedDice.Contains(this) && !value)
+				{
+					_SelectedDice.Remove(this);
+					OnSelectionChanged.Invoke();
+					OnItemSelectedChanged.Invoke();
+				}
+			}
+		}
+		private static UniqueList<Die> _SelectedDice = new UniqueList<Die>();
+
+		/// <summary>
+		/// Event raised when the selection status of this die is changed.
+		/// </summary>
+		public event Action OnSelectionChanged = () => { };
+
+		/// <summary>
+		/// Event raised when the list of dice selected is changed.
+		/// </summary>
+		public static event Action OnItemSelectedChanged = () => { };
+
+		/// <summary>
+		/// Retrieve the first currently selected die, return null if none is selected.
+		/// </summary>
+		public static Die GetFirstSelected()
+		{
+			return _SelectedDice.Count > 0 ? _SelectedDice[0] : null;
+		}
+
+		/// <summary>
+		/// Retrieve all currently selected die.
+		/// </summary>
+		public static IReadOnlyCollection<Die> GetAllSelected()
+		{
+			return _SelectedDice.AsReadOnly();
+		}
+
+		/// <summary>
+		/// Clear the list of selected die. 
+		/// </summary>
+		public static void ClearSelected()
+		{
+			for (int i = _SelectedDice.Count - 1; i >= 0; i--)
+			{
+				_SelectedDice[i].IsSelected = false;
+			}
+		}
+
+		// ========================================================= Properties (IsBeingDragged) =========================================================
+
+		/// <summary>
+		/// Flag for if this die is currently begin dragged.
+		/// </summary>
+		public bool IsBeingDragged
+		{
+			get
+			{
+				return _DraggingDice.Contains(this);
+			}
+			private set
+			{
+				if (!_DraggingDice.Contains(this) && value)
+				{
+					_DraggingDice.Add(this);
+					OnDragChanged.Invoke();
+					OnItemBeingDraggedChanged.Invoke();
+				}
+				else if(_DraggingDice.Contains(this) && !value)
+				{
+					_DraggingDice.Remove(this);
+					OnDragChanged.Invoke();
+					OnItemBeingDraggedChanged.Invoke();
+				}
+			}
+		}
+		private static UniqueList<Die> _DraggingDice = new UniqueList<Die>();
+
+		/// <summary>
+		/// Event raised when the drag status of this die is changed.
+		/// </summary>
+		public event Action OnDragChanged = () => { };
+
+		/// <summary>
+		/// Event raised when the list of dice being dragged is changed.
+		/// </summary>
+		public static event Action OnItemBeingDraggedChanged = () => { };
+
+		/// <summary>
+		/// Retrieve the first die being currently dragged, return null if none is selected.
+		/// </summary>
+		public static Die GetFirstBeingDragged()
+		{
+			return _DraggingDice.Count > 0 ? _DraggingDice[0] : null;
+		}
+
+		// ========================================================= Properties (IsRolling) =========================================================
+
+		/// <summary>
+		/// Flag for if this die is still rolling.
+		/// </summary>
+		public bool IsRolling
+		{
+			get
+			{
+				return IsMoving && rollInitiating;
+			}
+		}
+		private bool rollInitiating = false;
+		private float lastRotatingTime = 0;
+
+		// ========================================================= Properties (Value) =========================================================
+
+		/// <summary>
+		/// The current value of this die, -1 if value is invalid.
+		/// </summary>
+		public int Value
+		{ 
+			get
+			{
+				return _Value; 
+			}
+			private set
+			{
+				if (_Value != value)
+				{
+					_Value = value;
+					onValueChanged.Invoke();
+				}
+			}
+		}
+		private int _Value = -1;
+		private Quaternion lastRotation = Quaternion.identity;
+
+		/// <summary>
+		/// Event raised when the value of this die is changed.
+		/// </summary>
+		public event Action onValueChanged = () => { };
+
+		/// <summary>
+		/// Detect the current displayed value of this die.
+		/// </summary>
+		private void DetectValue()
+		{
+			// record last moving time for stationary checking
+			if (rigidBody.velocity.sqrMagnitude > 0.01f || rigidBody.angularVelocity.sqrMagnitude > 0.01f)
+			{
+				lastRotatingTime = Time.time;
+			}
+
+			// determine the value of this die
+			int lastValue = Value;
+			if (IsRolling || Time.time - lastRotatingTime < 0.25f)
+			{
+				// die is stiill moving, set value to invalid
+				Value = -1;
+			}
+			else if (Value == -1 || Quaternion.Angle(transform.rotation, lastRotation) < 1f)
+			{
+				// die is stationary and either value is invalid or the rotation is changed, calculate the current value
+				float nearestAngle = float.MaxValue;
+				int foundValue = 0;
+				foreach (Face face in faces)
+				{
+					float angle = Vector3.Angle(transform.rotation * Quaternion.Euler(face.euler) * Vector3.up, Vector3.up);
+					if (angle < nearestAngle)
+					{
+						nearestAngle = angle;
+						foundValue = face.value;
+					}
+				}
+				lastRotation = transform.rotation;
+				Value = foundValue;
+			}
+		}
+
+		// ========================================================= Properties (CurrentDieState) =========================================================
+
+		/// <summary>
+		/// The current state of this die.
+		/// </summary>
+		public DieState CurrentDieState 
+		{
+			get
+			{
+				return _CurrentDieState;
+			}
+			private set 
+			{
+				if (_CurrentDieState != value)
+				{
+					switch (value)
+					{
+						case DieState.Holding:
+							rigidBody.isKinematic = true;
+							modelTransform.gameObject.SetActive(false);
+							effectTransform.gameObject.SetActive(false);
+							break;
+						case DieState.Casted:
+							rigidBody.isKinematic = false;
+							modelTransform.gameObject.SetActive(true);
+							effectTransform.gameObject.SetActive(true);
+							break;
+						case DieState.Assigned:
+							rigidBody.isKinematic = false;
+							modelTransform.gameObject.SetActive(true);
+							effectTransform.gameObject.SetActive(true);
+							break;
+						case DieState.Expended:
+							rigidBody.isKinematic = true;
+							modelTransform.gameObject.SetActive(false);
+							effectTransform.gameObject.SetActive(false);
+							break;
+					}
+					_CurrentDieState = value;
+					onDieStateChanged.Invoke();
+				}
+			}
+		}
+		private DieState _CurrentDieState = DieState.Casted;
+
+		/// <summary>
+		/// Event raised when the current die state or this die is changed.
+		/// </summary>
+		public event Action onDieStateChanged = () => { };
+
+		/// <summary>
+		/// Change a holding die to a casted die.
+		/// </summary>
+		public void RetieveFromHold()
+		{
+			if (CurrentDieState == DieState.Holding)
+			{
+				CurrentDieState = DieState.Casted;
+			}
+		}
+
+		/// <summary>
+		/// Expend a die that is either casted or assigned to an equipment die slot.
+		/// </summary>
+		public void Expend()
+		{
+			if (CurrentDieState == DieState.Casted || CurrentDieState == DieState.Assigned)
+			{
+				CurrentDieState = DieState.Expended;
+			}
+		}
+
+		// ========================================================= Properties (EquipmentDieSlot) =========================================================
+
+		/// <summary>
+		/// The Equipment that this die is assigned to.
+		/// </summary>
+		public EquipmentDieSlot AssignedDieSlot
+		{
+			get
+			{
+				return _AssignedDieSlot;
+			}
+			private set
+			{
+				if (_AssignedDieSlot != value)
+				{
+					// modify previous die slot
+					if (_AssignedDieSlot != null)
+					{
+						_AssignedDieSlot.AssignDie(null);
+					}
+
+					// modify next die slot
+					if (value != null)
+					{
+						if (value.Die != null)
+						{
+							value.Die.AssignedDieSlot = null;
+						}
+
+						value.AssignDie(this);
+					}
+
+					// modify self
+					_AssignedDieSlot = value;
+					if (value != null)
+					{
+						CurrentDieState = DieState.Assigned;
+					}
+					else
+					{
+						CurrentDieState = DieState.Casted;
+					}
+
+					onAssignedDieSlotChanged.Invoke();
+				}
+			}
+		}
+		private EquipmentDieSlot _AssignedDieSlot = null;
+
+		/// <summary>
+		/// The unit that this die is indirectly assigned to.
+		/// </summary>
+		public Unit AssignedUnit
+		{
+			get
+			{
+				return AssignedDieSlot != null ? AssignedDieSlot.Equipment.Unit : null;
+			}
+		}
+		
+		/// <summary>
+		/// Event raised when this die is assigned to another die slot.
+		/// </summary>
+		public event Action onAssignedDieSlotChanged = () => { };
 
 		// ========================================================= State Machine Behaviour =========================================================
 

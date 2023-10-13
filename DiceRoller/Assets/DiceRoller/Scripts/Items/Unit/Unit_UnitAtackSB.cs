@@ -39,16 +39,6 @@ namespace DiceRoller
 				{
 					self.StartCoroutine(AttackSequence());
 				}
-
-				// action for other units
-				if (!isSelectedAtEnter)
-				{
-					// show depleted effect
-					if (self.CurrentUnitState == UnitState.Depleted)
-					{
-						self.ShowEffect(EffectType.Depleted, true);
-					}
-				}
 			}
 
 			/// <summary>
@@ -88,7 +78,6 @@ namespace DiceRoller
 
 				// set flag
 				self.CurrentUnitState = UnitState.Depleted;
-				self.ShowEffect(EffectType.Depleted, true);
 				self.IsSelected = false;
 
 				// clear data
@@ -114,14 +103,6 @@ namespace DiceRoller
 			/// </summary>
 			public override void OnStateExit()
 			{
-				// action for other units
-				if (!isSelectedAtEnter)
-				{
-					if (self.CurrentUnitState == UnitState.Depleted)
-					{
-						self.ShowEffect(EffectType.Depleted, false);
-					}
-				}
 			}
 		}
 	}

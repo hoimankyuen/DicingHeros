@@ -331,7 +331,7 @@ MonoBehaviour:
   effectStyle: {fileID: 11400000, guid: a259e5d099e63654e82a558feaab5487, type: 2}
   type: 0
   faces: []
-  connectedUnit: {fileID: 0}
+  startAsHolding: 0
 --- !u!54 &9223114719087962077
 Rigidbody:
   m_ObjectHideFlags: 0

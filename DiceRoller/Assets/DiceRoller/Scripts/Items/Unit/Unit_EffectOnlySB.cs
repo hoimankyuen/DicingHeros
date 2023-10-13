@@ -28,11 +28,6 @@ namespace DiceRoller
 			/// </summary>
 			public override void OnStateEnter()
 			{
-				// show depleted effect
-				if (self.CurrentUnitState == UnitState.Depleted)
-				{
-					self.ShowEffect(EffectType.Depleted, true);
-				}
 			}
 
 			/// <summary>
@@ -47,11 +42,6 @@ namespace DiceRoller
 			/// </summary>
 			public override void OnStateExit()
 			{
-				// hide depleted effect
-				if (self.CurrentUnitState == UnitState.Depleted)
-				{
-					self.ShowEffect(EffectType.Depleted, false);
-				}
 			}
 		}
 	}

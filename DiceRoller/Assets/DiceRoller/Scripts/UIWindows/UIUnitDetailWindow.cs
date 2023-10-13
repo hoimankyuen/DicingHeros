@@ -39,7 +39,7 @@ namespace DiceRoller
 		{
 			base.Start();
 
-			Unit.onSelectionChanged += RefreshDisplay;
+			Unit.OnItemSelectedChanged += RefreshDisplay;
 			RefreshDisplay();
 		}
 
@@ -57,7 +57,7 @@ namespace DiceRoller
 		protected override void OnDestroy()
 		{
 			base.OnDestroy();
-			Unit.onSelectionChanged -= RefreshDisplay;
+			Unit.OnItemSelectedChanged -= RefreshDisplay;
 		}
 
 		/// <summary>

@@ -23,10 +23,6 @@ namespace DiceRoller
 			/// </summary>
 			public override void OnStateEnter()
 			{
-				if (self.CurrentUnitState == UnitState.Depleted)
-				{
-					self.ShowEffect(EffectType.Depleted, false);
-				}
 				self.CurrentUnitState = UnitState.Standby;
 			}
 

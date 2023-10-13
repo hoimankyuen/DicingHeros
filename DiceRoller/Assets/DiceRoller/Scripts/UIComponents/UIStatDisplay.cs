@@ -30,7 +30,7 @@ namespace DiceRoller
         {
             if (unit != null)
             {
-                unit.onStatChanged += RefreshDisplay;
+                unit.OnStatChanged += RefreshDisplay;
             }
         }
 
@@ -42,7 +42,7 @@ namespace DiceRoller
             // deregister all events
             if (unit != null)
             {
-                unit.onStatChanged -= RefreshDisplay;
+                unit.OnStatChanged -= RefreshDisplay;
             }
         }
 
@@ -56,11 +56,11 @@ namespace DiceRoller
             // register and deregister callbacks
             if (this.unit != null)
             {
-                this.unit.onStatChanged -= RefreshDisplay;
+                this.unit.OnStatChanged -= RefreshDisplay;
             }
             if (unit != null)
             {
-                unit.onStatChanged += RefreshDisplay;
+                unit.OnStatChanged += RefreshDisplay;
             }
 
             // set values

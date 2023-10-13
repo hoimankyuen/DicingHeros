@@ -28,12 +28,6 @@ namespace DiceRoller
 			/// </summary>
 			public override void OnStateEnter()
 			{
-				// show depleted effect
-				if (self.CurrentUnitState == UnitState.Depleted)
-				{
-					self.ShowEffect(EffectType.Depleted, true);
-				}
-
 				// execute only if the moving unit is this unit
 				if (self.IsSelected)
 				{
@@ -123,11 +117,6 @@ namespace DiceRoller
 			/// </summary>
 			public override void OnStateExit()
 			{
-				// hide depleted effect
-				if (self.CurrentUnitState == UnitState.Depleted)
-				{
-					self.ShowEffect(EffectType.Depleted, false);
-				}
 			}
 		}
 	}

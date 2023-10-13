@@ -59,8 +59,8 @@ namespace DiceRoller
 			SetIcon(IconType.None);
 			SetDraggingItem(null);
 
-			Unit.onDragChanged += UpdateDraggingItem;
-			Die.onDragChanged += UpdateDraggingItem;
+			Unit.OnItemBeingDraggedChanged += UpdateDraggingItem;
+			Die.OnItemBeingDraggedChanged += UpdateDraggingItem;
 		}
 
 		/// <summary>
@@ -76,8 +76,8 @@ namespace DiceRoller
 		/// </summary>
 		private void OnDestroy()
 		{
-			Unit.onDragChanged -= UpdateDraggingItem;
-			Die.onDragChanged -= UpdateDraggingItem;
+			Unit.OnItemBeingDraggedChanged -= UpdateDraggingItem;
+			Die.OnItemBeingDraggedChanged -= UpdateDraggingItem;
 		}
 
 		// ========================================================= Behaviour Methods =========================================================

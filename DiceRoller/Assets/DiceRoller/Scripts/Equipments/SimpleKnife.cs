@@ -13,9 +13,9 @@ namespace DiceRoller
         /// </summary>
         public override IReadOnlyList<EquipmentDieSlot> DieSlots
         {
-            get { return _slotTypes.AsReadOnly(); }
+            get { return _DieSlots.AsReadOnly(); }
         }
-        private List<EquipmentDieSlot> _slotTypes = new List<EquipmentDieSlot>();
+        private List<EquipmentDieSlot> _DieSlots = new List<EquipmentDieSlot>();
 
         // ========================================================= Constructor =========================================================
 
@@ -27,14 +27,27 @@ namespace DiceRoller
 
         }
 
-        // ========================================================= Functionality =========================================================
+        // ========================================================= Die Assignment =========================================================
 
         /// <summary>
         /// Fill in all die slots. This will be called in the constructor.
         /// </summary>
         protected override void FillDieSlots()
         {
-            _slotTypes.Add(new EquipmentDieSlot(this, Die.Type.Unknown, EquipmentDieSlot.Requirement.GreaterThan, 4));
+            _DieSlots.Add(new EquipmentDieSlot(this, Die.Type.Unknown, EquipmentDieSlot.Requirement.GreaterThan, 4));
+        }
+
+        // ========================================================= Activation =========================================================
+
+        /// <summary>
+        /// The time of which should this eqipment apply its effect.
+        /// </summary>
+        public override EffectApplyTime ApplyTime
+        { 
+            get
+            {
+                return EffectApplyTime.AtAttack;
+            }
         }
 
         /// <summary>

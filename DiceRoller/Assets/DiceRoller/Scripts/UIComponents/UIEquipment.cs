@@ -7,91 +7,132 @@ using UnityEngine.EventSystems;
 
 namespace DiceRoller
 {
-    public class UIEquipment : UIItemComponent
-    {
-        [Header("Components")]
-        public Image accent;
-        public TextMeshProUGUI title;
-        public TextMeshProUGUI content;
-        public List<UIEquipmentDieSlot> dieSlots;
+	public class UIEquipment : UIItemComponent
+	{
+		[Header("Components")]
+		public Image outlineImage;
+		public Image overlayImage;
+		public TextMeshProUGUI titleText;
+		public TextMeshProUGUI contentText;
+		public List<UIEquipmentDieSlot> dieSlots;
 
-        // ========================================================= Inspecting Target =========================================================
+		// ========================================================= Inspecting Target =========================================================
 
-        /// <summary>
-        /// The base class reference of the inspecting target.
-        /// </summary>
-        protected override ItemComponent TargetBase => target;
+		/// <summary>
+		/// The base class reference of the inspecting target.
+		/// </summary>
+		protected override ItemComponent TargetBase => target;
 
-        /// <summary>
-        /// The inspecting target.
-        /// </summary>
-        protected Equipment target = null;
+		/// <summary>
+		/// The inspecting target.
+		/// </summary>
+		protected Equipment target = null;
 
-        // ========================================================= Monobehaviour Methods =========================================================
+		// ========================================================= Monobehaviour Methods =========================================================
 
-        /// <summary>
-        /// Awake is called when the game object was created. It is always called before start and is 
-        /// independent of if the game object is active or not.
-        /// </summary>
-        protected override void Awake()
-        {
-            base.Awake();
-        }
+		/// <summary>
+		/// Awake is called when the game object was created. It is always called before start and is 
+		/// independent of if the game object is active or not.
+		/// </summary>
+		protected override void Awake()
+		{
+			base.Awake();
+		}
 
-        /// <summary>
+		/// <summary>
 		/// Start is called before the first frame update and/or the game object is first active.
 		/// </summary>
-        protected override void Start()
-        {
-            base.Start();
-        }
+		protected override void Start()
+		{
+			base.Start();
+		}
 
-        /// <summary>
-        /// Update is called once per frame.
-        /// </summary>
-        protected override void Update()
-        {
-            base.Update();
-        }
+		/// <summary>
+		/// Update is called once per frame.
+		/// </summary>
+		protected override void Update()
+		{
+			base.Update();
+		}
 
-        /// <summary>
-        /// OnDestroy is called when an game object is destroyed.
-        /// </summary>
-        protected override void OnDestroy()
-        {
-            base.OnDestroy();
-        }
+		/// <summary>
+		/// OnDestroy is called when an game object is destroyed.
+		/// </summary>
+		protected override void OnDestroy()
+		{
+			base.OnDestroy();
 
-        // ========================================================= UI Methods =========================================================
+			// deregister all events
+			if (target != null)
+			{
+				target.OnInspectionChanged -= RefreshDisplay;
+				target.OnFulfillmentChanged -= RefreshDisplay;
+				target.onActivationChanged -= RefreshDisplay;
+			}
+		}
 
-        /// <summary>
-        /// Set the displayed information as an existing equipment.
-        /// </summary>
-        public void SetInspectingTarget(Equipment target)
-        {
-            // prevent excessive calls
-            if (this.target == target)
-                return;
-            
-            // mandatory step for changing target
-            TriggerFillerEnterExits(target);
+		// ========================================================= UI Methods =========================================================
 
-            // set values
-            this.target = target;
-            RefreshDisplay();
+		/// <summary>
+		/// Set the displayed information as an existing equipment.
+		/// </summary>
+		public void SetInspectingTarget(Equipment target)
+		{
+			// prevent excessive calls
+			if (this.target == target)
+				return;
 
-            // setup all ui slots of this ui eqipment
-            for (int i = 0; i < target.DieSlots.Count; i++)
-            {
-                dieSlots[i].SetInspectingTarget(target.DieSlots[i]);
-            }
-        }
+			// mandatory step for changing target
+			TriggerFillerEnterExits(target);
 
-        /// <summary>
-        /// Update the displaying ui to match the current information of the inspecting object.
-        /// </summary>
-        private void RefreshDisplay()
-        {
-        }
-    }
+			// register and deregister callbacks
+			if (this.target != null)
+			{
+				this.target.OnInspectionChanged -= RefreshDisplay;
+				this.target.OnFulfillmentChanged -= RefreshDisplay;
+				this.target.onActivationChanged -= RefreshDisplay;
+			}
+			if (target != null)
+			{
+				target.OnInspectionChanged += RefreshDisplay;
+				target.OnFulfillmentChanged += RefreshDisplay;
+				target.onActivationChanged += RefreshDisplay;
+			}
+
+			// set values
+			this.target = target;
+			RefreshDisplay();
+
+			// setup all ui slots of this ui eqipment
+			for (int i = 0; i < dieSlots.Count; i++)
+			{
+				if (i < target.DieSlots.Count)
+				{
+					dieSlots[i].SetInspectingTarget(target.DieSlots[i]);
+				}
+				else
+				{
+					dieSlots[i].gameObject.SetActive(false);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Update the displaying ui to match the current information of the inspecting object.
+		/// </summary>
+		private void RefreshDisplay()
+		{
+			if (target != null)
+			{
+				// change effects
+				outlineImage.enabled = target.IsActivated;
+				overlayImage.enabled = target.IsBeingInspected || !target.IsRequirementFulfilled;
+
+				if (target.IsBeingInspected)
+					overlayImage.color = new Color(0, 1, 0, 0.5f);
+				else if (!target.IsRequirementFulfilled)
+					overlayImage.color = new Color(0, 0, 0, 0.5f);
+			}
+		}
+	}
 }

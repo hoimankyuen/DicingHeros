@@ -6,224 +6,350 @@ using UnityEngine;
 
 namespace DiceRoller
 {
-    public abstract class Equipment : ItemComponent
-    {
-        // working variables
-        protected bool activated = false;
+	public abstract class Equipment : ItemComponent
+	{
+		public enum EffectApplyTime
+		{
+			AtMove,
+			AtAttack,
+			AtActivation,
+		}
 
-        // events
-        public event Action onFulfillmentChanged = () => { };
+		// ========================================================= Constructor =========================================================
 
-        // ========================================================= Properties =========================================================
+		/// <summary>
+		/// Constructor.+
+		/// </summary>
+		public Equipment(Unit unit)
+		{
+			Unit = unit;
 
-        /// <summary>
-        /// The unit that owns this equipment.
-        /// </summary>
-        public Unit Unit { get; private set; } = null;
+			// setup die slots
+			FillDieSlots();
+			foreach (EquipmentDieSlot dieSlot in DieSlots)
+			{
+				dieSlot.onFulfillmentChanged += CheckAllSlotFulfilled;
+			}
 
-        /// <summary>
-        /// The list of all slots and their requiremnts.
-        /// </summary>
-        public abstract IReadOnlyList<EquipmentDieSlot> DieSlots { get; }
+			RegisterStateBehaviours();
+		}
 
-        /// <summary>
-        /// Flag for if this equipment has all its requirements fulfilled.
-        /// </summary>
-		public bool IsRequirementFulfilled { get; private set; } = false;
+		/// <summary>
+		/// Destructor.
+		/// </summary>
+		~Equipment()
+		{
+			// revert die slots
+			foreach (EquipmentDieSlot dieSlot in DieSlots)
+			{
+				dieSlot.onFulfillmentChanged -= CheckAllSlotFulfilled;
+			}
 
-        // ========================================================= Constructor =========================================================
+			DeregisterStateBehaviours();
+		}
 
-        /// <summary>
-        /// Constructor.+
-        /// </summary>
-        public Equipment(Unit unit)
-        {
-            Unit = unit;
+		// ========================================================= Message From External =========================================================
 
-            // setup die slots
-            FillDieSlots();
-            foreach (EquipmentDieSlot dieSlot in DieSlots)
-            {
-                dieSlot.onFulfillmentChanged += CheckAllSlotFulfilled;
-            }
+		/// <summary>
+		/// Perform an monobehaviour update, should be driven by another monobehaviour as this object is not one.
+		/// </summary>
+		public override void Update()
+		{
+			base.Update();
 
-            RegisterStateBehaviours();
-        }
+			foreach (EquipmentDieSlot dieSlot in DieSlots)
+			{
+				dieSlot.Update();
+			}
+		}
 
-        /// <summary>
-        /// Destructor.
-        /// </summary>
-        ~Equipment()
-        {
-            // revert die slots
-            foreach (EquipmentDieSlot dieSlot in DieSlots)
-            {
-                dieSlot.onFulfillmentChanged -= CheckAllSlotFulfilled;
-            }
+		// ========================================================= Properties (IsBeingInspected) =========================================================
 
-            DeregisterStateBehaviours();
-        }
+		/// <summary>
+		/// Flag for if this equipment is currently being inspected.
+		/// </summary>
+		public bool IsBeingInspected
+		{
+			get 
+			{
+				return _InspectingEquipment.Contains(this);
+			}
+			private set 
+			{
+				if (!_InspectingEquipment.Contains(this) && value)
+				{
+					_InspectingEquipment.Add(this);
+					OnInspectionChanged.Invoke();
+					OnItemBeingInspectedChange.Invoke();
+				}
+				else if (_InspectingEquipment.Contains(this) && !value)
+				{
+					_InspectingEquipment.Remove(this);
+					OnInspectionChanged.Invoke();
+					OnItemBeingInspectedChange.Invoke();
+				}
+			}
+		}
+		private static UniqueList<Equipment> _InspectingEquipment = new UniqueList<Equipment>();
 
-        // ========================================================= Message From External =========================================================
+		/// <summary>
+		/// Event raised when the inspection status of this equipment is changed.
+		/// </summary>
+		public event Action OnInspectionChanged = () => { };
 
-        /// <summary>
-        /// Perform an monobehaviour update, should be driven by another monobehaviour as this object is not one.
-        /// </summary>
-        public override void Update()
-        {
-            base.Update();
+		/// <summary>
+		/// Event raised when the list of equipments being inspected is changed.
+		/// </summary>
+		public static event Action OnItemBeingInspectedChange = () => { };
 
-            foreach (EquipmentDieSlot dieSlot in DieSlots)
-            {
-                dieSlot.Update();
-            }
-        }
+		public static Equipment GetFirstBeingInspected()
+		{
+			return _InspectingEquipment.Count > 0 ? _InspectingEquipment[0] : null;
+		}
 
-        // ========================================================= Functionality =========================================================
+		// ========================================================= Properties (Unit) =========================================================
 
-        /// <summary>
-        /// Assign a die to a specific slot.
-        /// </summary>
-        public void AssignDie(int slotNo, Die die)
-        {
-            if (slotNo >= DieSlots.Count)
-                return;
+		/// <summary>
+		/// The unit that owns this equipment.
+		/// </summary>
+		public Unit Unit { get; private set; } = null;
 
-            DieSlots[slotNo].AssignDie(die);
-        }
+		// ========================================================= Properties (DieSlots) =========================================================
 
-        /// <summary>
-        /// Clear all assigned dice of all slots.
-        /// </summary>
-        public void ClearAssignedDie()
-        {
-            foreach (EquipmentDieSlot dieSlot in DieSlots)
-            {
-                dieSlot.AssignDie(null);
-                CheckAllSlotFulfilled();
-            }
-        }
+		/// <summary>
+		/// The list of all slots and their requiremnts.
+		/// </summary>
+		public abstract IReadOnlyList<EquipmentDieSlot> DieSlots { get; }
 
-        /// <summary>
-        /// Notify that a die slot has its die changed.
-        /// </summary>
-        private void CheckAllSlotFulfilled()
-        {
-            // check if all requirement is fulfilled, activate or deactivate effect when changed
-            bool fulfilled = DieSlots.Aggregate(true, (acc, dieSlot) => acc && dieSlot.IsRequirementFulfilled);
-            if (IsRequirementFulfilled != fulfilled)
-            {
-                if (fulfilled)
-                {
-                    Activate();
-                }
-                else
-                {
-                    Deactivate();
-                }
-                IsRequirementFulfilled = fulfilled;
-            }
-            onFulfillmentChanged.Invoke();
-        }
+		/// <summary>
+		/// Fill in all die slots. This will be called in the constructor.
+		/// </summary>
+		protected abstract void FillDieSlots();
 
-        /// <summary>
-        /// Activate the effect of this equipment.
-        /// </summary>
-        private void Activate()
-        {
-            if (!activated)
-            {
-                AddEffect();
-                activated = true;
-            }
-        }
+		/// <summary>
+		/// Assign a die to a specific slot.
+		/// </summary>
+		public void AssignDie(int slotNo, Die die)
+		{
+			if (slotNo >= DieSlots.Count)
+				return;
 
-        /// <summary>
-        /// Deactivate the effect of this equipment.
-        /// </summary>
-        private void Deactivate()
-        {
-            if (activated)
-            {
-                RemoveEffect();
-                activated = false;
-            }
-        }
+			DieSlots[slotNo].AssignDie(die);
+		}
 
-        // ========================================================= Abstract Functionalities =========================================================
+		/// <summary>
+		/// Clear all assigned dice of all slots.
+		/// </summary>
+		public void ClearAssignedDie()
+		{
+			foreach (EquipmentDieSlot dieSlot in DieSlots)
+			{
+				dieSlot.AssignDie(null);
+			}
+		}
 
-        /// <summary>
-        /// Fill in all die slots. This will be called in the constructor.
-        /// </summary>
-        protected abstract void FillDieSlots();
+		// ========================================================= Properties (IsRequirementFulfilled) =========================================================
 
-        /// <summary>
-        /// Forward implementation of the effect of this equipment.
-        /// </summary>
-        protected abstract void AddEffect();
+		/// <summary>
+		/// Flag for if this equipment has all its requirements fulfilled.
+		/// </summary>
+		public bool IsRequirementFulfilled 
+		{ 
+			get
+			{
+				return _IsRequirementFulfilled;
+			}
+			private set
+			{
+				if (_IsRequirementFulfilled != value)
+				{
+					_IsRequirementFulfilled = value;
+					OnFulfillmentChanged.Invoke();
+				}
+			}
+		} 
+		private bool _IsRequirementFulfilled = false;
 
-        /// <summary>
-        /// Backward implementation of the effect of this equipment.
-        /// </summary>
-        protected abstract void RemoveEffect();
+		/// <summary>
+		/// Fmag for if this equipment has its all slots requirement fulfulled.
+		/// </summary>
+		public event Action OnFulfillmentChanged = () => {};
 
-        // ========================================================= State Machine Behaviour =========================================================
+		/// <summary>
+		/// Notify that a die slot has its die changed.
+		/// </summary>
+		private void CheckAllSlotFulfilled()
+		{
+			// check if all requirement is fulfilled, activate or deactivate effect when changed
+			bool fulfilled = DieSlots.Aggregate(true, (acc, dieSlot) => acc && dieSlot.IsRequirementFulfilled);
+			if (IsRequirementFulfilled != fulfilled)
+			{
+				if (!fulfilled && IsActivated)
+				{
+					IsActivated = false;
+				}
+				IsRequirementFulfilled = fulfilled;
+			}
+		}
 
-        /// <summary>
-        /// Register all state behaviour to the centralized state machine.
-        /// </summary>
-        protected void RegisterStateBehaviours()
-        {
-            stateMachine.Register(Unit.gameObject, this, SMState.UnitMoveSelect, new UnitActionSelectSB(this));
-            stateMachine.Register(Unit.gameObject, this, SMState.UnitAttackSelect, new UnitActionSelectSB(this));
-        }
+		// ========================================================= Properties (Activated) =========================================================
 
-        /// <summary>
-        /// Deregister all state behaviours to the centralized state machine.
-        /// </summary>
-        protected void DeregisterStateBehaviours()
-        {
-            if (stateMachine != null)
-            {
-                stateMachine.DeregisterAll(this);
-            }
-        }
+		/// <summary>
+		/// Flag for if this equipment is activated.
+		/// </summary>
+		public bool IsActivated
+		{
+			get
+			{
+				return _IsActivated;
+			}
+			private set
+			{
+				if (_IsActivated != value)
+				{
+					_IsActivated = value;
+					if (value)
+					{
+						AddEffect();
+					}
+					else
+					{
+						RemoveEffect();
+					}
+					onActivationChanged.Invoke();
+				}
+			}
+		}
+		private bool _IsActivated = false;
 
-        // ========================================================= UnitActionSelectSB State =========================================================
+		/// <summary>
+		/// Event raised when activated on this equipment is changed.
+		/// </summary>
+		public event Action onActivationChanged = () => { };
 
-        protected class UnitActionSelectSB : StateBehaviour
-        {
-            // host reference
-            private readonly Equipment self = null;
+		/// <summary>
+		/// Apply tje effect of this equipment and expend all dice assigned.
+		/// </summary>
+		public void Apply()
+		{
+			if (IsActivated)
+			{
+				foreach (EquipmentDieSlot dieSlot in DieSlots)
+				{
+					dieSlot.Die.Expend();
+					dieSlot.AssignDie(null);
+				}
+				IsActivated = false;
+			}
+		}
 
-            /// <summary>
-            /// Constructor.
-            /// </summary>
-            public UnitActionSelectSB(Equipment self)
-            {
-                this.self = self;
-            }
+		/// <summary>
+		/// The time of which should this eqipment apply its effect.
+		/// </summary>
+		public abstract EffectApplyTime ApplyTime { get; }
 
-            /// <summary>
-            /// OnStateEnter is called when the centralized state machine is entering the current state.
-            /// </summary>
-            public override void OnStateEnter()
-            {
-            }
+		/// <summary>
+		/// Forward implementation of the effect of this equipment.
+		/// </summary>
+		protected abstract void AddEffect();
 
-            /// <summary>
-            /// OnStateUpdate is called each frame when the centralized state machine is in the current state.
-            /// </summary>
-            public override void OnStateUpdate()
-            {
-            }
+		/// <summary>
+		/// Backward implementation of the effect of this equipment.
+		/// </summary>
+		protected abstract void RemoveEffect();
 
-            /// <summary>
-            /// OnStateExit is called when the centralized state machine is leaving the current state.
-            /// </summary>
-            public override void OnStateExit()
-            {
-            }
-        }
-    }
+		// ========================================================= State Machine Behaviour =========================================================
+
+		/// <summary>
+		/// Register all state behaviour to the centralized state machine.
+		/// </summary>
+		protected void RegisterStateBehaviours()
+		{
+			stateMachine.Register(Unit.gameObject, this, SMState.UnitMoveSelect, new UnitActionSelectSB(this));
+			stateMachine.Register(Unit.gameObject, this, SMState.UnitAttackSelect, new UnitActionSelectSB(this));
+		}
+
+		/// <summary>
+		/// Deregister all state behaviours to the centralized state machine.
+		/// </summary>
+		protected void DeregisterStateBehaviours()
+		{
+			if (stateMachine != null)
+			{
+				stateMachine.DeregisterAll(this);
+			}
+		}
+
+		// ========================================================= UnitActionSelectSB State =========================================================
+
+		protected class UnitActionSelectSB : StateBehaviour
+		{
+			// host reference
+			private readonly Equipment self = null;
+
+			// cache
+			private bool lastIsHovering = false;
+
+			/// <summary>
+			/// Constructor.
+			/// </summary>
+			public UnitActionSelectSB(Equipment self)
+			{
+				this.self = self;
+			}
+
+			/// <summary>
+			/// OnStateEnter is called when the centralized state machine is entering the current state.
+			/// </summary>
+			public override void OnStateEnter()
+			{
+			}
+
+			/// <summary>
+			/// OnStateUpdate is called each frame when the centralized state machine is in the current state.
+			/// </summary>
+			public override void OnStateUpdate()
+			{
+				if (self.Unit.Player == game.CurrentPlayer)
+				{
+					// inspection
+					if (CachedValueUtils.HasValueChanged(self.IsHovering, ref lastIsHovering))
+					{
+						self.IsBeingInspected = self.IsHovering;
+					}
+
+					// activation
+					if (self.IsPressed[0])
+					{
+						if (!self.IsActivated && self.IsRequirementFulfilled)
+						{
+							self.IsActivated = true;
+						}
+						else if (self.IsActivated)
+						{
+							self.IsActivated = false;
+						}
+					}
+				}
+			}
+
+			/// <summary>
+			/// OnStateExit is called when the centralized state machine is leaving the current state.
+			/// </summary>
+			public override void OnStateExit()
+			{
+				if (self.Unit.Player == game.CurrentPlayer)
+				{
+					// inspection
+					if (lastIsHovering)
+					{
+						self.IsBeingInspected = false;
+					}
+
+					// reset cache
+					CachedValueUtils.ResetValueCache(ref lastIsHovering);
+				}
+			}
+		}
+	}
 }

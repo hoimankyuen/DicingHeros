@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 1240324787327534876}
   - component: {fileID: 4929253749892285910}
   m_Layer: 0
-  m_Name: UIDiceDisplay
+  m_Name: UIDie
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

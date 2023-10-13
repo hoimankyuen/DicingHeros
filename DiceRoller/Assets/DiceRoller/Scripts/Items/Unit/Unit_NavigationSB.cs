@@ -33,11 +33,6 @@ namespace DiceRoller
 			/// </summary>
 			public override void OnStateEnter()
 			{
-				// show action depleted effect
-				if (self.CurrentUnitState == UnitState.Depleted)
-				{
-					self.ShowEffect(EffectType.Depleted, true);
-				}
 			}
 
 			/// <summary>
@@ -83,12 +78,6 @@ namespace DiceRoller
 			/// </summary>
 			public override void OnStateExit()
 			{
-				// hide action depleted effect
-				if (self.CurrentUnitState == UnitState.Depleted)
-				{
-					self.ShowEffect(EffectType.Depleted, false);
-				}
-
 				// hide occupied tiles on board
 				foreach (Tile tile in lastOccupiedTiles)
 				{

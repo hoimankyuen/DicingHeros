@@ -371,7 +371,7 @@ GameObject:
   - component: {fileID: 5420395572234060049}
   - component: {fileID: 1622907914011136499}
   m_Layer: 0
-  m_Name: UnitDisplay
+  m_Name: UIUnit
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

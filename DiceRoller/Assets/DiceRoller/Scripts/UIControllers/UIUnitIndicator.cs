@@ -50,8 +50,8 @@ namespace DiceRoller
 
 			if (targetUnit != null)
 			{
-				targetUnit.onHealthChanged += RefreshDisplay;
-				targetUnit.onPendingHealthDeltaChange += RefreshDisplay;
+				targetUnit.OnHealthChanged += RefreshDisplay;
+				targetUnit.OnPendingHealthDeltaChange += RefreshDisplay;
 			}
 		}
 
@@ -72,8 +72,8 @@ namespace DiceRoller
 		{
 			if (targetUnit != null)
 			{
-				targetUnit.onHealthChanged -= RefreshDisplay;
-				targetUnit.onPendingHealthDeltaChange -= RefreshDisplay;
+				targetUnit.OnHealthChanged -= RefreshDisplay;
+				targetUnit.OnPendingHealthDeltaChange -= RefreshDisplay;
 			}
 		}
 
@@ -96,13 +96,13 @@ namespace DiceRoller
 			// register and deregister callbacks
 			if (targetUnit != null)
 			{
-				targetUnit.onHealthChanged -= RefreshDisplay;
-				targetUnit.onPendingHealthDeltaChange -= RefreshDisplay;
+				targetUnit.OnHealthChanged -= RefreshDisplay;
+				targetUnit.OnPendingHealthDeltaChange -= RefreshDisplay;
 			}
 			if (unit != null)
 			{
-				unit.onHealthChanged += RefreshDisplay;
-				unit.onPendingHealthDeltaChange += RefreshDisplay;
+				unit.OnHealthChanged += RefreshDisplay;
+				unit.OnPendingHealthDeltaChange += RefreshDisplay;
 			}
 
 			// set values

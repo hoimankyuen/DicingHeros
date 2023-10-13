@@ -77,16 +77,6 @@ namespace DiceRoller
 						}
 					}
 				}
-
-				// actions for other units
-				if (!isSelectedAtEnter)
-				{
-					// show action depleted effect if needed
-					if (self.CurrentUnitState == UnitState.Depleted)
-					{
-						self.ShowEffect(EffectType.Depleted, true);
-					}
-				}
 			}
 
 			// ========================================================= State Update Methods =========================================================
@@ -215,16 +205,15 @@ namespace DiceRoller
 						{
 							// pressed on a valid tile, initiate movement
 							self.NextMovement = new UnitMovement(self.OccupiedTiles, lastPath);
+
+							// use any activated equipment that are used at move state
+							foreach (Equipment equipment in self.Equipments.Where(x => x.ApplyTime == Equipment.EffectApplyTime.AtMove && x.IsActivated))
+							{
+								equipment.Apply();
+							}
+
 							stateMachine.ChangeState(SMState.UnitMove);
 						}
-						/*
-						else
-						{
-							// return to navigation otherwise
-							self.RemoveFromSelection();
-							stateMachine.ChangeState(State.Navigation);
-						}
-						*/
 					}
 
 					// detect return to navitation by right mouse pressing
@@ -350,12 +339,6 @@ namespace DiceRoller
 				// action for other units
 				if (!isSelectedAtEnter)
 				{
-					// hide depleted effect
-					if (self.CurrentUnitState == UnitState.Depleted)
-					{
-						self.ShowEffect(EffectType.Depleted, false);
-					}
-
 					// hide hovering by tile
 					if (lastIsHoveringFromTiles)
 					{
@@ -380,8 +363,6 @@ namespace DiceRoller
 			if (stateMachine.Current == SMState.UnitMoveSelect)
 			{
 				CurrentUnitState = UnitState.Depleted;
-				ShowEffect(EffectType.Depleted, true);
-
 				IsSelected = false;
 
 				stateMachine.ChangeState(SMState.Navigation);

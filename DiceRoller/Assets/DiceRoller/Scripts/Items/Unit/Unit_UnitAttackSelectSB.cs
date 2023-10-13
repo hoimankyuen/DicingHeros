@@ -81,16 +81,6 @@ namespace DiceRoller
 						}
 					}
 				}
-
-				// action for other units
-				if (!isSelectedAtEnter)
-				{
-					// show action depleted effect
-					if (self.CurrentUnitState == UnitState.Depleted)
-					{
-						self.ShowEffect(EffectType.Depleted, false);
-					}
-				}
 			}
 
 			// ========================================================= State Update Methods =========================================================
@@ -135,6 +125,13 @@ namespace DiceRoller
 					if (target != null && target.IsPressed[0])
 					{
 						self.NextAttack = new UnitAttack(target, self.Melee * -1);
+
+						// use any activated equipment that are used at move state
+						foreach (Equipment equipment in self.Equipments.Where(x => x.ApplyTime == Equipment.EffectApplyTime.AtAttack && x.IsActivated))
+						{
+							equipment.Apply();
+						}
+
 						stateMachine.ChangeState(SMState.UnitAttack);
 					}
 
@@ -200,16 +197,6 @@ namespace DiceRoller
 					InputUtils.ResetPressCache(ref pressedPosition0);
 					InputUtils.ResetPressCache(ref pressedPosition1);
 				}
-
-				// action for other units
-				if (!isSelectedAtEnter)
-				{
-					// hide depleted effect
-					if (self.CurrentUnitState == UnitState.Depleted)
-					{
-						self.ShowEffect(EffectType.Depleted, false);
-					}
-				}
 			}
 		}
 
@@ -220,8 +207,6 @@ namespace DiceRoller
 			if (stateMachine.Current == SMState.UnitAttackSelect)
 			{
 				CurrentUnitState = UnitState.Depleted;
-				ShowEffect(EffectType.Depleted, true);
-
 				IsSelected = false;
 
 				stateMachine.ChangeState(SMState.Navigation);

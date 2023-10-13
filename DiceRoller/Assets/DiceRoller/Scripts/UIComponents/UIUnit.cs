@@ -68,11 +68,10 @@ namespace DiceRoller
             // deregister all events
             if (target != null)
             {
-                target.onHealthChanged -= RefreshDisplay;
-                target.onEffectSetChanged -= RefreshDisplay;
-                target.onUnitStateChange -= RefreshDisplay;
-                Unit.onInspectionChanged -= RefreshDisplay;
-                Unit.onSelectionChanged -= RefreshDisplay;
+                target.OnHealthChanged -= RefreshDisplay;
+                target.OnUnitStateChange -= RefreshDisplay;
+                target.OnInspectionChanged -= RefreshDisplay;
+                target.OnSelectionChanged -= RefreshDisplay;
             }
         }
 
@@ -93,19 +92,17 @@ namespace DiceRoller
             // register and deregister callbacks
             if (this.target != null)
             {
-                this.target.onHealthChanged -= RefreshDisplay;
-                this.target.onEffectSetChanged -= RefreshDisplay;
-                this.target.onUnitStateChange -= RefreshDisplay;
-                Unit.onInspectionChanged -= RefreshDisplay;
-                Unit.onSelectionChanged -= RefreshDisplay;
+                this.target.OnHealthChanged -= RefreshDisplay;
+                this.target.OnUnitStateChange -= RefreshDisplay;
+                this.target.OnInspectionChanged -= RefreshDisplay;
+                this.target.OnSelectionChanged -= RefreshDisplay;
             }
             if (target != null)
             {
-                target.onHealthChanged += RefreshDisplay;
-                target.onEffectSetChanged += RefreshDisplay;
-                target.onUnitStateChange += RefreshDisplay;
-                Unit.onInspectionChanged += RefreshDisplay;
-                Unit.onSelectionChanged += RefreshDisplay;
+                target.OnHealthChanged += RefreshDisplay;
+                target.OnUnitStateChange += RefreshDisplay;
+                target.OnInspectionChanged += RefreshDisplay;
+                target.OnSelectionChanged += RefreshDisplay;
             }
 
             // set values
@@ -123,6 +120,8 @@ namespace DiceRoller
             {
                 // change die icon
                 iconImage.sprite = target.iconSprite;
+                
+                // change effects
                 outlineImage.sprite = target.outlineSprite;
                 outlineImage.enabled = target.IsSelected;
                 overlayImage.sprite = target.overlaySprite;

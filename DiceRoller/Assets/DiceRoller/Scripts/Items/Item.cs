@@ -409,15 +409,7 @@ namespace DiceRoller
 				overlay.enabled = overlayColor.a != 0;
 				overlay.Color = overlayColor;
 			}
-
-			// trigger event callback
-			onEffectSetChanged.Invoke();
 		}
 		private HashSet<EffectType> effectSet = new HashSet<EffectType>();
-
-		/// <summary>
-		/// Event raised when the effect set is changed
-		/// </summary>
-		public Action onEffectSetChanged = () => { };
 	}
 }

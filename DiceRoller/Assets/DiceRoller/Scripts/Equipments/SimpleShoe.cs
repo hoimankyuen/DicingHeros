@@ -27,7 +27,7 @@ namespace DiceRoller
 
         }
 
-        // ========================================================= Functionality =========================================================
+        // ========================================================= Die Assignment =========================================================
 
         /// <summary>
         /// Fill in all die slots. This will be called in the constructor.
@@ -35,6 +35,19 @@ namespace DiceRoller
         protected override void FillDieSlots()
         {
             _slotTypes.Add(new EquipmentDieSlot(this, Die.Type.Unknown, EquipmentDieSlot.Requirement.GreaterThan, 5));
+        }
+
+        // ========================================================= Activation =========================================================
+
+        /// <summary>
+        /// The time of which should this eqipment apply its effect.
+        /// </summary>
+        public override EffectApplyTime ApplyTime
+        {
+            get
+            {
+                return EffectApplyTime.AtMove;
+            }
         }
 
         /// <summary>

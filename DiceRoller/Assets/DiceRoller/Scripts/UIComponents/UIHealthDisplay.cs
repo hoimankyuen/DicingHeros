@@ -24,7 +24,7 @@ namespace DiceRoller
 		{
 			if (unit != null)
 			{
-				unit.onHealthChanged += RefreshDisplay;
+				unit.OnHealthChanged += RefreshDisplay;
 			}
 		}
 
@@ -36,7 +36,7 @@ namespace DiceRoller
 			// deregister all events
 			if (unit != null)
 			{
-				unit.onHealthChanged -= RefreshDisplay;
+				unit.OnHealthChanged -= RefreshDisplay;
 			}
 		}
 
@@ -50,11 +50,11 @@ namespace DiceRoller
 			// register and deregister callbacks
 			if (this.unit != null)
 			{
-				this.unit.onHealthChanged -= RefreshDisplay;
+				this.unit.OnHealthChanged -= RefreshDisplay;
 			}
 			if (unit != null)
 			{
-				unit.onHealthChanged += RefreshDisplay;
+				unit.OnHealthChanged += RefreshDisplay;
 			}
 
 			// set values

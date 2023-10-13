@@ -99,9 +99,8 @@ namespace DiceRoller
 			{
 				target.onValueChanged -= RefreshDisplay;
 				target.onDieStateChanged -= RefreshDisplay;
-				target.onEffectSetChanged -= RefreshDisplay;
-				Die.onInspectionChanged -= RefreshDisplay;
-				Die.onSelectionChanged -= RefreshDisplay;
+				target.OnInspectionChanged -= RefreshDisplay;
+				target.OnSelectionChanged -= RefreshDisplay;
 			}
 
 			// stop running animations
@@ -126,6 +125,8 @@ namespace DiceRoller
 		/// </summary>
 		public override void OnPointerEnter(PointerEventData eventData)
 		{
+			pointerEntered1 = true;
+
 			if ((mode == Mode.Default || mode == Mode.Equipment) && target != null)
 				target.OnUIMouseEnter();
 			if (mode == Mode.Equipment && dieSlot != null)
@@ -137,6 +138,8 @@ namespace DiceRoller
 		/// </summary>
 		public override void OnPointerExit(PointerEventData eventData)
 		{
+			pointerEntered1 = false;
+
 			if ((mode == Mode.Default || mode == Mode.Equipment) && target != null)
 				target.OnUIMouseExit();
 			if (mode == Mode.Equipment && dieSlot != null)
@@ -174,6 +177,8 @@ namespace DiceRoller
 		{
 			mode = Mode.Equipment;
 			this.dieSlot = dieSlot;
+
+			RefreshDisplay();
 		}
 
 		/// <summary>
@@ -186,14 +191,16 @@ namespace DiceRoller
 			{
 				graphic.raycastTarget = false;
 			}
+
+			RefreshDisplay();
 		}
 
 		/// <summary>
 		/// Set the displayed information as an existing die.
 		/// </summary>
-		public void SetInspectingTarget(Die die)
+		public void SetInspectingTarget(Die target)
 		{
-			SetTargetOrValue(die, type, value, requirement);
+			SetTargetOrValue(target, type, value, requirement);
 		}
 
 		/// <summary>
@@ -215,10 +222,10 @@ namespace DiceRoller
 		/// <summary>
 		/// Combined method of either setting the inspecting target die, or some preset value.
 		/// </summary>
-		private void SetTargetOrValue(Die die, Die.Type type, int value, EquipmentDieSlot.Requirement requirement)
+		private void SetTargetOrValue(Die target, Die.Type type, int value, EquipmentDieSlot.Requirement requirement)
 		{
 			// prevent excessive calls
-			if (die != null && this.target == die)
+			if (target != null && this.target == target)
 				return;
 
 			// register and deregister callbacks, also trigger the missing pointer exit and enter
@@ -234,32 +241,30 @@ namespace DiceRoller
 
 				this.target.onValueChanged -= RefreshDisplay;
 				this.target.onDieStateChanged -= RefreshDisplay;
-				this.target.onEffectSetChanged -= RefreshDisplay;
-				Die.onInspectionChanged -= RefreshDisplay;
-				Die.onSelectionChanged -= RefreshDisplay;
+				this.target.OnInspectionChanged -= RefreshDisplay;
+				this.target.OnSelectionChanged -= RefreshDisplay;
 			}
-			if (die != null)
+			if (target != null)
 			{
 				if (pointerEntered1)
 				{
-					if ((mode == Mode.Default || mode == Mode.Equipment) && die != null)
-						die.OnUIMouseEnter();
+					if ((mode == Mode.Default || mode == Mode.Equipment) && target != null)
+						target.OnUIMouseEnter();
 					if (mode == Mode.Equipment && dieSlot != null)
 						dieSlot.OnPointerEnter(null);
 				}
 
-				die.onValueChanged += RefreshDisplay;
-				die.onDieStateChanged += RefreshDisplay;
-				die.onEffectSetChanged += RefreshDisplay;
-				Die.onInspectionChanged += RefreshDisplay;
-				Die.onSelectionChanged += RefreshDisplay;
+				target.onValueChanged += RefreshDisplay;
+				target.onDieStateChanged += RefreshDisplay;
+				target.OnInspectionChanged += RefreshDisplay;
+				target.OnSelectionChanged += RefreshDisplay;
 			}
 
 			// stop running animations
 			rolling = false;
 
 			// set values
-			this.target = die;
+			this.target = target;
 			this.type = type;
 			this.value = value;
 			this.requirement = requirement;
@@ -278,10 +283,17 @@ namespace DiceRoller
 			{
 				// change die icon
 				iconImage.sprite = target.iconSprite;
+				
 				outlineImage.sprite = target.outlineSprite;
 				outlineImage.enabled = displayStatus && target.IsSelected;
+				
 				overlayImage.sprite = target.overlaySprite;
-				overlayImage.enabled = displayStatus && target.IsBeingInspected;
+				overlayImage.enabled = displayStatus && (target.IsBeingInspected || target.CurrentDieState == Die.DieState.Holding || target.CurrentDieState == Die.DieState.Expended);
+				if (displayStatus && target.IsBeingInspected)
+					overlayImage.color = new Color(0, 1, 0, 0.5f);
+				else if (displayStatus && (target.CurrentDieState == Die.DieState.Holding || target.CurrentDieState == Die.DieState.Expended))
+					overlayImage.color = new Color(0, 0, 0, 0.5f);
+
 
 				// change value text
 				valueText.text = target.Value == -1 ? "?" : target.Value.ToString();
@@ -304,7 +316,7 @@ namespace DiceRoller
 				}
 
 				// change state icon
-				stateImage.enabled = displayStatus && !rolling && target.CurrentDieState != Die.DieState.Casted;
+				stateImage.enabled = (mode == Mode.Default) && (displayStatus) && (!rolling) && (target.CurrentDieState != Die.DieState.Casted);
 				stateImage.sprite = itemStateIcons.stateIcons[target.CurrentDieState];
 			}
 

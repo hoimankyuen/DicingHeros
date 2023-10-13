@@ -36,39 +36,42 @@ namespace DiceRoller
 			{
 				if (self.Player == game.CurrentPlayer)
 				{
-					// show dice info on ui
-					if (CachedValueUtils.HasValueChanged(self.IsHovering, ref lastIsHovering))
+					if (self.CurrentDieState == DieState.Casted || self.CurrentDieState == DieState.Assigned)
 					{
-						self.IsBeingInspected = self.IsHovering;
-						self.ShowEffect(EffectType.InspectingSelf, self.IsHovering);
-					}
-
-					// drag dice
-					if (!self.IsBeingDragged)
-					{	
-						if (self.IsStartedDrag[0])
+						// show dice info on ui
+						if (CachedValueUtils.HasValueChanged(self.IsHovering, ref lastIsHovering))
 						{
-							self.IsBeingDragged = true;
-							InputUtils.StartDragging(self);
+							self.IsBeingInspected = self.IsHovering;
+							self.ShowEffect(EffectType.InspectingSelf, self.IsHovering);
 						}
-					}
-					if (self.IsBeingDragged)
-					{
-						if (self.IsCompletedDrag[0])
-						{
-							//check for dragged target here
-							EquipmentDieSlot targetDieSlot = EquipmentDieSlot.GetFirstDragsRecipient();
-							if (targetDieSlot != null)
-							{
-								if (targetDieSlot.IsFulfillBy(self))
-								{
-									self.AssignedDieSlot = targetDieSlot;
-								}
-							}
 
-							// always end drag afterwards
-							self.IsBeingDragged = false;
-							InputUtils.StopDragging(self);
+						// drag dice
+						if (!self.IsBeingDragged)
+						{
+							if (self.IsStartedDrag[0])
+							{
+								self.IsBeingDragged = true;
+								InputUtils.StartDragging(self);
+							}
+						}
+						if (self.IsBeingDragged)
+						{
+							if (self.IsCompletedDrag[0])
+							{
+								//check for dragged target here
+								EquipmentDieSlot targetDieSlot = EquipmentDieSlot.GetFirstDragsRecipient();
+								if (targetDieSlot != null)
+								{
+									if (targetDieSlot.IsFulfillBy(self))
+									{
+										self.AssignedDieSlot = targetDieSlot;
+									}
+								}
+
+								// always end drag afterwards
+								self.IsBeingDragged = false;
+								InputUtils.StopDragging(self);
+							}
 						}
 					}
 					
@@ -82,18 +85,21 @@ namespace DiceRoller
 			{
 				if (self.Player == game.CurrentPlayer)
 				{
-					// hide dice info on ui
-					if (self.IsBeingInspected)
+					if (self.CurrentDieState == DieState.Casted || self.CurrentDieState == DieState.Assigned)
 					{
-						self.IsBeingInspected = false;
-						self.ShowEffect(EffectType.InspectingSelf, false);
-					}
+						// hide dice info on ui
+						if (self.IsBeingInspected)
+						{
+							self.IsBeingInspected = false;
+							self.ShowEffect(EffectType.InspectingSelf, false);
+						}
 
-					// stop drag
-					if (self.IsBeingDragged)
-					{
-						self.IsBeingDragged = false;
-						InputUtils.StopDragging(self);
+						// stop drag
+						if (self.IsBeingDragged)
+						{
+							self.IsBeingDragged = false;
+							InputUtils.StopDragging(self);
+						}
 					}
 
 					// reset caches
