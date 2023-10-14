@@ -104,7 +104,7 @@ namespace DiceRoller
 
 		public void CancelDepletedSelect()
 		{
-			if (stateMachine.Current == SMState.UnitDepletedSelect)
+			if (stateMachine.State == SMState.UnitDepletedSelect)
 			{
 				IsSelected = false;
 				stateMachine.ChangeState(SMState.Navigation);

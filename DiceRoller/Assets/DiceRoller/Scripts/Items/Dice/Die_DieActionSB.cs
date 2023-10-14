@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace DiceRoller
@@ -89,6 +90,36 @@ namespace DiceRoller
 
 				// reset caches
 				CachedValueUtils.ResetValueCache(ref lastIsHovering);
+			}
+		}
+
+		public static void SelectAll_DieActionSelect()
+		{
+			if (StateMachine.current.State == SMState.DiceActionSelect)
+			{
+				IEnumerable<Die> dice = GameController.current.CurrentPlayer.dice.Where(x => x.CurrentDieState != DieState.Expended);
+				if (dice.All(x => x.IsSelected))
+				{
+					foreach (Die die in GameController.current.CurrentPlayer.dice)
+					{
+						if (die.CurrentDieState != DieState.Expended)
+						{
+							die.IsSelected = false;
+						}
+					}
+					StateMachine.current.ChangeState(SMState.Navigation);
+				}
+				else
+				{
+					foreach (Die die in GameController.current.CurrentPlayer.dice)
+					{
+						if (die.CurrentDieState != DieState.Expended)
+						{
+							die.IsSelected = true;
+						}
+					}
+					StateMachine.current.ChangeState(SMState.DiceActionSelect);
+				}
 			}
 		}
 	}

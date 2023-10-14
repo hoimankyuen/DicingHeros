@@ -104,7 +104,7 @@ namespace DiceRoller
 
 		public void CancelInspection()
 		{
-			if (stateMachine.Current == SMState.UnitInspection)
+			if (stateMachine.State == SMState.UnitInspection)
 			{
 				IsSelected = false;
 				stateMachine.ChangeState(SMState.Navigation);

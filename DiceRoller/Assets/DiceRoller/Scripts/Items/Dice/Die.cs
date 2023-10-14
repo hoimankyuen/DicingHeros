@@ -163,7 +163,6 @@ namespace DiceRoller
 		/// </summary>
 		private void RetrieveComponentReferences()
 		{
-			rigidBody = GetComponent<Rigidbody>();
 			modelTransform = transform.Find("Model");
 			effectTransform = transform.Find("Effect");
 			lineRenderer = transform.Find("Effect/Line").GetComponent<LineRenderer>();

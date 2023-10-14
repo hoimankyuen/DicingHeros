@@ -40,48 +40,52 @@ namespace DiceRoller
 			/// </summary>
 			public override void OnStateUpdate()
 			{
-				// show occupied tiles on the board
-				IReadOnlyCollection<Tile> tiles = self.IsHovering ? self.OccupiedTiles : Tile.EmptyTiles;
-				if (CachedValueUtils.HasCollectionChanged(tiles, lastOccupiedTiles, affectedOccupiedTiles))
+				// only work on still alive units
+				if (self.CurrentUnitState != UnitState.Defeated)
 				{
-					foreach (Tile tile in affectedOccupiedTiles)
+					// show occupied tiles on the board
+					IReadOnlyCollection<Tile> tiles = self.IsHovering ? self.OccupiedTiles : Tile.EmptyTiles;
+					if (CachedValueUtils.HasCollectionChanged(tiles, lastOccupiedTiles, affectedOccupiedTiles))
 					{
-						tile.UpdateDisplayAs(self, self.Player == game.CurrentPlayer ? Tile.DisplayType.SelfPosition : Tile.DisplayType.EnemyPosition, tiles);
+						foreach (Tile tile in affectedOccupiedTiles)
+						{
+							tile.UpdateDisplayAs(self, self.Player == game.CurrentPlayer ? Tile.DisplayType.SelfPosition : Tile.DisplayType.EnemyPosition, tiles);
+						}
 					}
-				}
 
-				// show unit info on ui
-				if (CachedValueUtils.HasValueChanged(self.IsHovering, ref lastIsHovering))
-				{
-					self.IsBeingInspected = self.IsHovering;
-					self.ShowEffect(self.Player == game.CurrentPlayer ? EffectType.InspectingSelf : EffectType.InspectingEnemy, self.IsHovering);
-				}
+					// show unit info on ui
+					if (CachedValueUtils.HasValueChanged(self.IsHovering, ref lastIsHovering))
+					{
+						self.IsBeingInspected = self.IsHovering;
+						self.ShowEffect(self.Player == game.CurrentPlayer ? EffectType.InspectingSelf : EffectType.InspectingEnemy, self.IsHovering);
+					}
 
-				// go to unit movement selection state, unit attack selection state or unit depleted select staet when this unit is pressed
-				if (self.Player == game.CurrentPlayer && self.IsPressed[0] && self.OccupiedTiles.Count > 0)
-				{
-					if (self.CurrentUnitState == UnitState.Standby)
+					// go to unit movement selection state, unit attack selection state or unit depleted select staet when this unit is pressed
+					if (self.Player == game.CurrentPlayer && self.IsPressed[0] && self.OccupiedTiles.Count > 0)
+					{
+						if (self.CurrentUnitState == UnitState.Standby)
+						{
+							self.IsSelected = true;
+							stateMachine.ChangeState(SMState.UnitMoveSelect);
+						}
+						else if (self.CurrentUnitState == UnitState.Moved)
+						{
+							self.IsSelected = true;
+							stateMachine.ChangeState(SMState.UnitAttackSelect);
+						}
+						else if (self.CurrentUnitState == UnitState.Depleted)
+						{
+							self.IsSelected = true;
+							stateMachine.ChangeState(SMState.UnitDepletedSelect);
+						}
+					}
+
+					// go to unit inspection state when this unit as not a player unit is pressed
+					if (self.Player != game.CurrentPlayer && self.IsPressed[0])
 					{
 						self.IsSelected = true;
-						stateMachine.ChangeState(SMState.UnitMoveSelect);
+						stateMachine.ChangeState(SMState.UnitInspection);
 					}
-					else if (self.CurrentUnitState == UnitState.Moved)
-					{
-						self.IsSelected = true;
-						stateMachine.ChangeState(SMState.UnitAttackSelect);
-					}
-					else if (self.CurrentUnitState == UnitState.Depleted)
-					{
-						self.IsSelected = true;
-						stateMachine.ChangeState(SMState.UnitDepletedSelect);
-					}
-				}
-
-				// go to unit inspection state when this unit as not a player unit is pressed
-				if (self.Player != game.CurrentPlayer && self.IsPressed[0])
-				{
-					self.IsSelected = true;
-					stateMachine.ChangeState(SMState.UnitInspection);
 				}
 			}
 

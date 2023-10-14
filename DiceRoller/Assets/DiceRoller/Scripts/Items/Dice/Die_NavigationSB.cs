@@ -67,5 +67,25 @@ namespace DiceRoller
 				CachedValueUtils.ResetValueCache(ref lastIsHovering);
 			}
 		}
+
+		public static void SelectAll_Navigation()
+		{
+			if (StateMachine.current.State == SMState.Navigation)
+			{
+				IEnumerable<Die> dice = GameController.current.CurrentPlayer.dice.Where(x => x.CurrentDieState != DieState.Expended);
+				if (dice.Count() > 0)
+				{
+					foreach (Die die in GameController.current.CurrentPlayer.dice)
+					{
+						if (die.CurrentDieState != DieState.Expended)
+						{
+							die.IsSelected = true;
+						}
+					}
+					StateMachine.current.ChangeState(SMState.DiceActionSelect);
+				}
+				
+			}
+		}
 	}
 }

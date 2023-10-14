@@ -8,9 +8,13 @@ namespace DiceRoller
     public class UIUnitControlWindow : UISideWindow
     {
 		[Header("Components")]
+		public Button skipButton;
 		public Button movementButton;
 		public Button attackButton;
 		public Button cancelButton;
+
+		// reference
+		private StateMachine stateMachine => StateMachine.current;
 
 		// ========================================================= Monobehaviour Methods =========================================================
 
@@ -55,16 +59,25 @@ namespace DiceRoller
 			Unit unit = Unit.GetFirstSelected();
 			if (unit != null)
 			{
-				if (StateMachine.current.Current == SMState.UnitMoveSelect)
+				if (stateMachine.State == SMState.UnitMoveSelect)
 				{
-					movementButton.enabled = false;
-					attackButton.enabled = true;
+					skipButton.interactable = true;
+					movementButton.interactable = false;
+					attackButton.interactable = true;
 				}
 
-				if (StateMachine.current.Current == SMState.UnitAttackSelect)
+				if (stateMachine.State == SMState.UnitAttackSelect)
 				{
-					movementButton.enabled = true;
-					attackButton.enabled = false;
+					skipButton.interactable = true;
+					movementButton.interactable = true;
+					attackButton.interactable = false;
+				}
+
+				if (stateMachine.State == SMState.UnitDepletedSelect)
+				{
+					skipButton.interactable = false;
+					movementButton.interactable = false;
+					attackButton.interactable = false;
 				}
 			}
 		}

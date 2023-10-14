@@ -14,6 +14,7 @@ namespace DiceRoller
 			Standby,
 			Moved,
 			Depleted,
+			Defeated,
 		}
 
 		// parameters
@@ -27,6 +28,10 @@ namespace DiceRoller
 		// readonly
 		private readonly float moveTimePerTile = 0.2f;
 
+		// components
+		private Transform modelTransform = null;
+		private Transform effectTransform = null;
+
 		// ========================================================= Monobehaviour Methods =========================================================
 
 		/// <summary>
@@ -36,6 +41,7 @@ namespace DiceRoller
 		protected override void Awake()
 		{
 			base.Awake();
+			RetrieveComponentReferences();
 		}
 
 		/// <summary>
@@ -95,6 +101,17 @@ namespace DiceRoller
 		public bool Equals(Unit other)
 		{
 			return this == other;
+		}
+
+		// ========================================================= General Behaviour =========================================================
+
+		/// <summary>
+		/// Retrieve component references for this unit.
+		/// </summary>
+		private void RetrieveComponentReferences()
+		{
+			modelTransform = transform.Find("Model");
+			effectTransform = transform.Find("Effect");
 		}
 
 		// ========================================================= Team Behaviour =========================================================
@@ -514,13 +531,28 @@ namespace DiceRoller
 					{
 						case UnitState.Standby:
 							ShowEffect(EffectType.Depleted, false);
+							rigidBody.isKinematic = false;
+							modelTransform.gameObject.SetActive(true);
+							effectTransform.gameObject.SetActive(true);
 							break;
 						case UnitState.Moved:
 							ShowEffect(EffectType.Depleted, false);
+							rigidBody.isKinematic = false;
+							modelTransform.gameObject.SetActive(true);
+							effectTransform.gameObject.SetActive(true);
 							break;
 						case UnitState.Depleted:
 							ShowEffect(EffectType.Depleted, true);
-							break;	
+							rigidBody.isKinematic = false;
+							modelTransform.gameObject.SetActive(true);
+							effectTransform.gameObject.SetActive(true);
+							break;
+						case UnitState.Defeated:
+							ShowEffect(EffectType.Depleted, false);
+							rigidBody.isKinematic = true;
+							modelTransform.gameObject.SetActive(false);
+							effectTransform.gameObject.SetActive(false);
+							break;
 					}
 
 					_CurrentUnitState = value;

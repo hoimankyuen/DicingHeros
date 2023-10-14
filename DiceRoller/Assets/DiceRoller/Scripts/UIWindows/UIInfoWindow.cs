@@ -37,8 +37,8 @@ namespace DiceRoller
 
 			if (game != null)
 			{
-				game.onPlayerChanged += RefreshPlayerDisplay;
-				game.onTurnChanged += RefreshTurnDisplay;
+				game.OnPlayerChanged += RefreshPlayerDisplay;
+				game.OnTurnChanged += RefreshTurnDisplay;
 				diceThrower.onRemainingThrowChanged += RefreshRemainingThrowDisplay;
 
 				RefreshPlayerDisplay();
@@ -64,8 +64,8 @@ namespace DiceRoller
 
 			if (game != null)
 			{
-				game.onPlayerChanged -= RefreshPlayerDisplay;
-				game.onTurnChanged -= RefreshRemainingThrowDisplay;
+				game.OnPlayerChanged -= RefreshPlayerDisplay;
+				game.OnTurnChanged -= RefreshRemainingThrowDisplay;
 				diceThrower.onRemainingThrowChanged -= RefreshRemainingThrowDisplay;
 			}
 		}

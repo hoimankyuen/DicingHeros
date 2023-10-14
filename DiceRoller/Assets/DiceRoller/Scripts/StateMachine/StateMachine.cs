@@ -35,7 +35,8 @@ namespace DiceRoller
 		protected SMState nextState = SMState.None;
 		//protected StateParams nextStateParams;
 
-		public SMState Current { get; protected set; } = SMState.None;
+		public SMState State { get; protected set; } = SMState.None;
+		public event Action OnStateChanged = () => { };
 		//public StateParams Params { get; protected set; }
 
 		// ========================================================= Monobehaviour Methods =========================================================
@@ -121,9 +122,9 @@ namespace DiceRoller
 			if (nextState != SMState.None)
 			{
 				// invoke all OnStateExit on all registered
-				if (stateBehaviours.ContainsKey(Current))
+				if (stateBehaviours.ContainsKey(State))
 				{
-					stateBehaviours[Current].ForEach(x =>
+					stateBehaviours[State].ForEach(x =>
 					{
 						if (x.gameObject != null && x.gameObject.activeInHierarchy)
 							x.stateBehaviour.OnStateExit();
@@ -131,25 +132,27 @@ namespace DiceRoller
 				}
 
 				// change the current state and update params, reset flag
-				Current = nextState;
+				State = nextState;
 				//Params = nextStateParams;
 				nextState = SMState.None;
 
 				// invoke all OnStateEnter on all registered
-				if (stateBehaviours.ContainsKey(Current))
+				if (stateBehaviours.ContainsKey(State))
 				{
-					stateBehaviours[Current].ForEach(x =>
+					stateBehaviours[State].ForEach(x =>
 					{
 						if (x.gameObject != null && x.gameObject.activeInHierarchy)
 							x.stateBehaviour.OnStateEnter();
 					});
 				}
+
+				OnStateChanged.Invoke();
 			}
 
 			// state update
-			if (stateBehaviours.ContainsKey(Current))
+			if (stateBehaviours.ContainsKey(State))
 			{
-				stateBehaviours[Current].ForEach(x =>
+				stateBehaviours[State].ForEach(x =>
 				{
 					if (x.gameObject != null && x.gameObject.activeInHierarchy)
 						x.stateBehaviour.OnStateUpdate();

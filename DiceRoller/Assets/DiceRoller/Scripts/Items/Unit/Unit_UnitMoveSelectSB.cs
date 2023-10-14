@@ -360,7 +360,7 @@ namespace DiceRoller
 
 		public void SkipMoveSelect()
 		{
-			if (stateMachine.Current == SMState.UnitMoveSelect)
+			if (stateMachine.State == SMState.UnitMoveSelect)
 			{
 				CurrentUnitState = UnitState.Depleted;
 				IsSelected = false;
@@ -371,7 +371,7 @@ namespace DiceRoller
 
 		public void ChangeToAttackSelect()
 		{
-			if (stateMachine.Current == SMState.UnitMoveSelect)
+			if (stateMachine.State == SMState.UnitMoveSelect)
 			{
 				stateMachine.ChangeState(SMState.UnitAttackSelect);
 			}
@@ -379,7 +379,7 @@ namespace DiceRoller
 
 		public void CancelMoveSelect()
 		{
-			if (stateMachine.Current == SMState.UnitMoveSelect)
+			if (stateMachine.State == SMState.UnitMoveSelect)
 			{
 				IsSelected = false;
 				stateMachine.ChangeState(SMState.Navigation);

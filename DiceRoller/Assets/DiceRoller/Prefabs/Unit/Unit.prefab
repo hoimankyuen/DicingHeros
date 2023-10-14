@@ -60,7 +60,7 @@ MonoBehaviour:
   baseMelee: 3
   baseDefence: 4
   baseMagic: 1
-  baseMovement: 4
+  baseMovement: 6
 --- !u!54 &2284104210925587976
 Rigidbody:
   m_ObjectHideFlags: 0

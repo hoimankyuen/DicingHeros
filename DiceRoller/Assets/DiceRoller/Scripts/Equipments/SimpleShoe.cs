@@ -34,7 +34,7 @@ namespace DiceRoller
         /// </summary>
         protected override void FillDieSlots()
         {
-            _slotTypes.Add(new EquipmentDieSlot(this, Die.Type.Unknown, EquipmentDieSlot.Requirement.GreaterThan, 5));
+            _slotTypes.Add(new EquipmentDieSlot(this, Die.Type.Unknown, EquipmentDieSlot.Requirement.GreaterThan, 3));
         }
 
         // ========================================================= Activation =========================================================
@@ -55,7 +55,7 @@ namespace DiceRoller
         /// </summary>
         protected override void AddEffect()
         {
-            Unit.ChangeStat(movementDelta: 2);
+            Unit.ChangeStat(movementDelta: 3);
         }
 
         /// <summary>
@@ -63,7 +63,7 @@ namespace DiceRoller
         /// </summary>
         protected override void RemoveEffect()
         {
-            Unit.ChangeStat(movementDelta: -2);
+            Unit.ChangeStat(movementDelta: -3);
         }
     }
 }

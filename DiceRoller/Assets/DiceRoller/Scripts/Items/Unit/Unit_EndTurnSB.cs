@@ -23,7 +23,10 @@ namespace DiceRoller
 			/// </summary>
 			public override void OnStateEnter()
 			{
-				self.CurrentUnitState = UnitState.Standby;
+				if (self.CurrentUnitState != UnitState.Defeated)
+				{
+					self.CurrentUnitState = UnitState.Standby;
+				}
 			}
 
 			/// <summary>

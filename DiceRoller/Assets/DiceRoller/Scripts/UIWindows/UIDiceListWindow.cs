@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace DiceRoller
 {
@@ -11,9 +12,11 @@ namespace DiceRoller
 		public TextMeshProUGUI title;
 		public RectTransform diceFrame;
         public GameObject uiDiePrefab;
+		public Button allButton;
 
 		// reference
 		protected GameController game => GameController.current;
+		protected StateMachine stateMachine => StateMachine.current;
 
 		// working variables
 		protected List<UIDie> uiDice = new List<UIDie>();
@@ -40,7 +43,8 @@ namespace DiceRoller
 
 			if (game != null)
 			{
-				game.onPlayerChanged += Populate;
+				game.OnPlayerChanged += Populate;
+				stateMachine.OnStateChanged += RefreshButton;
 				Populate();
 			}
 		}
@@ -62,7 +66,8 @@ namespace DiceRoller
 
 			if (game != null)
 			{
-				game.onPlayerChanged -= Populate;
+				game.OnPlayerChanged -= Populate;
+				stateMachine.OnStateChanged -= RefreshButton;
 			}
 		}
 
@@ -96,6 +101,17 @@ namespace DiceRoller
 				uiDie.rectTransform.anchoredPosition = new Vector2(0, i / 2 * -uiDie.rectTransform.rect.height);	
 				uiDice.Add(uiDie);
 			}
+		}
+
+		protected void RefreshButton()
+		{
+			allButton.interactable = stateMachine.State == SMState.Navigation || stateMachine.State == SMState.DiceActionSelect;
+		}
+
+		public void SelectAll()
+		{
+			Die.SelectAll_Navigation();
+			Die.SelectAll_DieActionSelect();
 		}
 	}
 }

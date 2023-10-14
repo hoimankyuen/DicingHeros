@@ -8,6 +8,7 @@ namespace DiceRoller
     {
 		// references
 		private GameController game => GameController.current;
+		private StateMachine stateMaching => StateMachine.current;
 
 		// ========================================================= Monobehaviour Methods =========================================================
 

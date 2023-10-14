@@ -41,7 +41,7 @@ namespace DiceRoller
 
 			if (game != null)
 			{
-				game.onPlayerChanged += Populate;
+				game.OnPlayerChanged += Populate;
 				Populate();
 			}
 		}
@@ -63,7 +63,7 @@ namespace DiceRoller
 
 			if (game != null)
 			{
-				game.onPlayerChanged -= Populate;
+				game.OnPlayerChanged -= Populate;
 			}
 		}
 

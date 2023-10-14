@@ -70,10 +70,14 @@ namespace DiceRoller
 
 				target.IsBeingInspected = false;
 
-				// death animation
+				// trigger death of target unit if target has no health
 				if (target.Health <= 0)
 				{
-					// implement death animation here
+					target.CurrentUnitState = UnitState.Defeated;
+					foreach (Equipment equipment in target.Equipments)
+					{
+						equipment.ClearAssignedDie();
+					}
 				}
 
 				// set flag

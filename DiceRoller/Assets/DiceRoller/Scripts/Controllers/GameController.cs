@@ -28,8 +28,8 @@ namespace DiceRoller
 		private List<Turn> previousTurns = new List<Turn>();
 
 		// events
-		public Action onPlayerChanged = () => { };
-		public Action onTurnChanged = () => { };
+		public event Action OnPlayerChanged = () => { };
+		public event Action OnTurnChanged = () => { };
 
 		// ========================================================= Properties =========================================================
 		
@@ -47,7 +47,7 @@ namespace DiceRoller
 				if (_currentPlayer != value)
 				{
 					_currentPlayer = value;
-					onPlayerChanged.Invoke();
+					OnPlayerChanged.Invoke();
 				}
 			}
 		}
@@ -67,7 +67,7 @@ namespace DiceRoller
 				if (_currentTurn != value)
 				{
 					_currentTurn = value;
-					onTurnChanged.Invoke();
+					OnTurnChanged.Invoke();
 				}
 			}
 		}
@@ -256,7 +256,7 @@ namespace DiceRoller
 		/// </summary>
 		public void ProgressTurn()
 		{
-			if (stateMachine.Current == SMState.Navigation)
+			if (stateMachine.State == SMState.Navigation)
 			{
 				stateMachine.ChangeState(SMState.EndTurn);
 			}
