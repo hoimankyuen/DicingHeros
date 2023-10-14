@@ -61,6 +61,7 @@ MonoBehaviour:
   baseDefence: 4
   baseMagic: 1
   baseMovement: 6
+  baseKnockbackForce: 0.25
 --- !u!54 &2284104210925587976
 Rigidbody:
   m_ObjectHideFlags: 0

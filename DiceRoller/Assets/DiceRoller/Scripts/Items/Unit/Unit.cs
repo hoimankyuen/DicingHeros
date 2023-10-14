@@ -24,6 +24,7 @@ namespace DiceRoller
 		public int baseDefence = 4;
 		public int baseMagic = 1;
 		public int baseMovement = 4;
+		public float baseKnockbackForce = 0.25f;
 
 		// readonly
 		private readonly float moveTimePerTile = 0.2f;
@@ -452,6 +453,24 @@ namespace DiceRoller
 		}
 		private int _Movement = 0;
 
+		public float KnockbackForce
+		{
+			get
+			{
+				return _KnockbackForce;
+			}
+			private set
+			{
+				float clampedValue = value < 0 ? 0 : value;
+				if (_KnockbackForce != clampedValue)
+				{
+					_KnockbackForce = clampedValue;
+					//OnStatChanged.Invoke();
+				}
+			}
+		}
+		private float _KnockbackForce = 0;
+
 		/// <summary>
 		/// Event raised when either stat of this unit is changed.
 		/// </summary>
@@ -466,17 +485,19 @@ namespace DiceRoller
 			Defence = baseDefence;
 			Magic = baseMagic;
 			Movement = baseMovement;
+			KnockbackForce = baseKnockbackForce;
 		}
 
 		/// <summary>
 		/// Apply a change on one or more stat variables.
 		/// </summary>
-		public void ChangeStat(int meleeDelta = 0, int defenceDelta = 0, int magicDelta = 0, int movementDelta = 0)
+		public void ChangeStat(int meleeDelta = 0, int defenceDelta = 0, int magicDelta = 0, int movementDelta = 0, float knockbackForceDelta = 0)
 		{
 			Melee += meleeDelta;
 			Defence += defenceDelta;
 			Magic += magicDelta;
 			Movement += movementDelta;
+			KnockbackForce += knockbackForceDelta;
 		}
 
 		// ========================================================= Properties (Equipment) =========================================================

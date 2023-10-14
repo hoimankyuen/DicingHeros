@@ -52,6 +52,10 @@ namespace DiceRoller
 				int healthFrom = target.Health;
 				int healthTo = target.Health + healthDelta;
 
+				// add knockback
+				Vector3 knockbackDirection = (target.transform.position - self.transform.position).normalized;
+				target.rigidBody.AddForce(knockbackDirection * self.NextAttack.knockbackForce, ForceMode.Impulse);
+
 				// hit and damage animation
 				float duration = 0.5f;
 				float startTime = Time.time;

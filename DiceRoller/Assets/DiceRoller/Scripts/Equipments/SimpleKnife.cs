@@ -55,7 +55,7 @@ namespace DiceRoller
         /// </summary>
         protected override void AddEffect()
         {
-            Unit.ChangeStat(meleeDelta: 6);
+            Unit.ChangeStat(meleeDelta: 6, knockbackForceDelta: 0.25f);
         }
 
         /// <summary>
@@ -63,7 +63,7 @@ namespace DiceRoller
         /// </summary>
         protected override void RemoveEffect()
         {
-            Unit.ChangeStat(meleeDelta: -6);
+            Unit.ChangeStat(meleeDelta: -6, knockbackForceDelta: -0.25f);
         }
     }
 }

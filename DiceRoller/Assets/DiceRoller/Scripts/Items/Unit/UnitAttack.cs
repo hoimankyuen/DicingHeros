@@ -9,11 +9,13 @@ namespace DiceRoller
 	{
 		public Unit target;
 		public int healthDelta;
+		public float knockbackForce;
 
-		public UnitAttack(Unit target, int healthDelta)
+		public UnitAttack(Unit target, int healthDelta, float knockbackForce)
 		{
 			this.target = target;
 			this.healthDelta = healthDelta;
+			this.knockbackForce = knockbackForce;
 		}
 	}
 }

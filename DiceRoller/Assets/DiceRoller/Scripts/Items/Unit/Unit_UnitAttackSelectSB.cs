@@ -124,7 +124,7 @@ namespace DiceRoller
 					// detect press on enemy unit
 					if (target != null && target.IsPressed[0])
 					{
-						self.NextAttack = new UnitAttack(target, self.Melee * -1);
+						self.NextAttack = new UnitAttack(target, self.Melee * -1, self.KnockbackForce);
 
 						// use any activated equipment that are used at move state
 						foreach (Equipment equipment in self.Equipments.Where(x => x.ApplyTime == Equipment.EffectApplyTime.AtAttack && x.IsActivated))

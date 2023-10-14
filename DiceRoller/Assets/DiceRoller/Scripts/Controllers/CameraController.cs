@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace DiceRoller
 {
@@ -114,7 +115,7 @@ namespace DiceRoller
 		protected void MouseControls()
 		{
 			// detect mouse input
-			if (Input.GetMouseButtonDown(2))
+			if (Input.GetMouseButtonDown(2) && !EventSystem.current.IsPointerOverGameObject())
             {
 				midDragging = true;
 				midDraggingLastPos = Main.ScreenToViewportPoint(Input.mousePosition);
@@ -123,7 +124,7 @@ namespace DiceRoller
             {
 				midDragging = false;
             }
-			if (Input.GetMouseButtonDown(1))
+			if (Input.GetMouseButtonDown(1) && !EventSystem.current.IsPointerOverGameObject())
 			{
 				rightDragging = true;
 				rightDraggingLastPos = Main.ScreenToViewportPoint(Input.mousePosition);

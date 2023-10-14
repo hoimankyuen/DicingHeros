@@ -67,7 +67,6 @@ namespace DiceRoller
 
 		protected void Populate()
 		{
-
 			bool changed = false;
 			changed |= CachedValueUtils.HasValueChanged(Unit.GetFirstBeingInspected(), ref inspectingUnit);
 			changed |= CachedValueUtils.HasValueChanged(Die.GetFirstBeingInspected(), ref inspectingDie);
