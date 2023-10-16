@@ -364,7 +364,7 @@ MonoBehaviour:
   color: {r: 0, g: 0, b: 0, a: 0}
   width: 3
   show: 1
-  smoothNormals: 1
+  smoothNormals: 0
   precomputeOutline: 0
   bakeKeys: []
   bakeValues: []

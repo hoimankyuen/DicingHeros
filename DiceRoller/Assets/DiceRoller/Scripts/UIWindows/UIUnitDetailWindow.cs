@@ -104,6 +104,10 @@ namespace DiceRoller
 							{
 								prefab = Resources.Load("UISimpleShoe") as GameObject;
 							}
+							else if (inspectingUnit.Equipments[i] is Fireball)
+							{
+								prefab = Resources.Load("UIFireball") as GameObject;
+							}
 
 							// spawn the equipment ui
 							if (prefab != null)

@@ -8,13 +8,13 @@ namespace DiceRoller
 	public class UnitAttack
 	{
 		public Unit target;
-		public int healthDelta;
+		public int damage;
 		public float knockbackForce;
 
-		public UnitAttack(Unit target, int healthDelta, float knockbackForce)
+		public UnitAttack(Unit target, int damage, float knockbackForce)
 		{
 			this.target = target;
-			this.healthDelta = healthDelta;
+			this.damage = damage;
 			this.knockbackForce = knockbackForce;
 		}
 	}

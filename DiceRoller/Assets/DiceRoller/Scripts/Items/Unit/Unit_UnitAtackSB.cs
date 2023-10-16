@@ -48,7 +48,7 @@ namespace DiceRoller
 			{
 				// setup
 				Unit target = self.NextAttack.target;
-				int healthDelta = self.NextAttack.healthDelta;
+				int healthDelta = self.NextAttack.damage * -1;
 				int healthFrom = target.Health;
 				int healthTo = target.Health + healthDelta;
 

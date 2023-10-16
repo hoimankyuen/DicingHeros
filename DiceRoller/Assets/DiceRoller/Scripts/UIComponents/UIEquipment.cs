@@ -62,13 +62,7 @@ namespace DiceRoller
 		{
 			base.OnDestroy();
 
-			// deregister all events
-			if (target != null)
-			{
-				target.OnInspectionChanged -= RefreshDisplay;
-				target.OnFulfillmentChanged -= RefreshDisplay;
-				target.onActivationChanged -= RefreshDisplay;
-			}
+			DeregisterCallbacks(target);
 		}
 
 		// ========================================================= UI Methods =========================================================
@@ -86,18 +80,8 @@ namespace DiceRoller
 			TriggerFillerEnterExits(target);
 
 			// register and deregister callbacks
-			if (this.target != null)
-			{
-				this.target.OnInspectionChanged -= RefreshDisplay;
-				this.target.OnFulfillmentChanged -= RefreshDisplay;
-				this.target.onActivationChanged -= RefreshDisplay;
-			}
-			if (target != null)
-			{
-				target.OnInspectionChanged += RefreshDisplay;
-				target.OnFulfillmentChanged += RefreshDisplay;
-				target.onActivationChanged += RefreshDisplay;
-			}
+			DeregisterCallbacks(this.target);
+			RegisterCallbacks(target);
 
 			// set values
 			this.target = target;
@@ -115,6 +99,32 @@ namespace DiceRoller
 					dieSlots[i].gameObject.SetActive(false);
 				}
 			}
+		}
+
+		/// <summary>
+		/// Register all necssary callbacks to a target object.
+		/// </summary>
+		private void RegisterCallbacks(Equipment target)
+		{
+			if (target == null)
+				return;
+
+			target.OnInspectionChanged += RefreshDisplay;
+			target.OnFulfillmentChanged += RefreshDisplay;
+			target.onActivationChanged += RefreshDisplay;
+		}
+
+		/// <summary>
+		/// Deregister all necssary callbacks from a target object.
+		/// </summary>
+		private void DeregisterCallbacks(Equipment target)
+		{
+			if (target == null)
+				return;
+
+			this.target.OnInspectionChanged -= RefreshDisplay;
+			this.target.OnFulfillmentChanged -= RefreshDisplay;
+			this.target.onActivationChanged -= RefreshDisplay;
 		}
 
 		/// <summary>

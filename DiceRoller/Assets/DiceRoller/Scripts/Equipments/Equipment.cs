@@ -8,6 +8,14 @@ namespace DiceRoller
 {
 	public abstract class Equipment : ItemComponent
 	{
+		public enum EquipmentType
+		{
+			Movement,
+			Melee,
+			Magic,
+			Buff,
+		}
+
 		public enum EffectApplyTime
 		{
 			AtMove,
@@ -229,9 +237,9 @@ namespace DiceRoller
 		public event Action onActivationChanged = () => { };
 
 		/// <summary>
-		/// Apply tje effect of this equipment and expend all dice assigned.
+		/// Apply the effect of this equipment and expend all dice assigned.
 		/// </summary>
-		public void Apply()
+		public void ApplyEffect()
 		{
 			if (IsActivated)
 			{
@@ -243,6 +251,11 @@ namespace DiceRoller
 				IsActivated = false;
 			}
 		}
+
+		/// <summary>
+		/// What type this equipment belongs to.
+		/// </summary>
+		public abstract EquipmentType Type { get; }
 
 		/// <summary>
 		/// The time of which should this eqipment apply its effect.
@@ -325,6 +338,28 @@ namespace DiceRoller
 					{
 						if (!self.IsActivated && self.IsRequirementFulfilled)
 						{
+							// deactivate all other incompatible equipments first
+							if (self.Type == EquipmentType.Movement)
+							{
+								foreach (Equipment equipment in self.Unit.Equipments)
+								{
+									if (equipment != self && equipment.Type == EquipmentType.Movement && equipment.IsActivated)
+									{
+										equipment.IsActivated = false;
+									}
+								}
+							}
+							else if (self.Type == EquipmentType.Melee || self.Type == EquipmentType.Magic)
+							{
+								foreach (Equipment equipment in self.Unit.Equipments)
+								{
+									if (equipment != self && (equipment.Type == EquipmentType.Melee || equipment.Type == EquipmentType.Magic) && equipment.IsActivated)
+									{
+										equipment.IsActivated = false;
+									}
+								}
+							}
+
 							self.IsActivated = true;
 						}
 						else if (self.IsActivated)

@@ -60,7 +60,7 @@ MonoBehaviour:
   baseMelee: 3
   baseDefence: 4
   baseMagic: 1
-  baseMovement: 6
+  baseMovement: 4
   baseKnockbackForce: 0.25
 --- !u!54 &2284104210925587976
 Rigidbody:

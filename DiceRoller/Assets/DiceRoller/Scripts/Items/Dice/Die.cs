@@ -506,6 +506,7 @@ namespace DiceRoller
 		{
 			if (CurrentDieState == DieState.Casted || CurrentDieState == DieState.Assigned)
 			{
+				AssignedDieSlot = null;
 				CurrentDieState = DieState.Expended;
 			}
 		}

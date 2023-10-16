@@ -130,6 +130,10 @@ namespace DiceRoller
 		/// </summary>
 		private void Update()
 		{
+			if (Input.GetKeyDown(KeyCode.Escape))
+			{
+				Application.Quit();
+			}
 		}
 
 		/// <summary>
@@ -148,7 +152,6 @@ namespace DiceRoller
 		/// </summary>
 		private void StartGame()
 		{
-			CurrentPlayer = players[0];
 			stateMachine.ChangeState(SMState.StartTurn);
 		}
 

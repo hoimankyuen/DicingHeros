@@ -91,6 +91,8 @@ namespace DiceRoller
 
 		// ========================================================= Editor =========================================================
 
+#if UNITY_EDITOR
+
 		/// <summary>
 		/// Regenerate all components related to this board. Should only be called in editor.
 		/// </summary>
@@ -134,6 +136,8 @@ namespace DiceRoller
 			}
 		}
 
+#endif
+
 		// ========================================================= Position Conversion =========================================================
 
 		/// <summary>
@@ -165,7 +169,7 @@ namespace DiceRoller
 		protected void DetectTileHover()
 		{
 			// find the target tile that the mouse is pointing to
-			if (!EventSystem.current.IsPointerOverGameObject() && !InputUtils.IsDragging)
+			if (!EventSystem.current.IsPointerOverGameObject() && Die.GetFirstBeingInspected() == null && Unit.GetFirstBeingInspected() == null && !InputUtils.IsDragging)
 			{
 				if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, Camera.main.farClipPlane, LayerMask.GetMask("Tile")))
 				{
@@ -233,6 +237,40 @@ namespace DiceRoller
 						result.Add(tiles[pos]);
 				}
 			}	
+		}
+
+		/// <summary>
+		/// Get all tiles that fulfills a given rule in relative to the starting tiles reguardless of connectivity, and return them in the supplied list.
+		/// </summary>
+		public void GetTilesByRule(IReadOnlyCollection<Tile> startingTiles, AttackAreaRule rule, in List<Tile> result)
+		{
+			// prepare containers
+			result.Clear();
+
+			// calculate the bound of starting tiles
+			Int2 min = Int2.MaxValue;
+			Int2 max = Int2.MinValue;
+			min.x = startingTiles.Select(tile => tile.boardPos.x).Min();
+			min.z = startingTiles.Select(tile => tile.boardPos.z).Min();
+			max.x = startingTiles.Select(tile => tile.boardPos.x).Max();
+			max.z = startingTiles.Select(tile => tile.boardPos.z).Max();
+
+			// search for tiles within range on a subset of all tiles
+			for (int x = min.x - rule.GetRange(); x <= max.x + rule.GetRange(); x++)
+			{
+				for (int z = min.z - rule.GetRange(); z <= max.z + rule.GetRange(); z++)
+				{
+					Int2 pos = new Int2(x, z);
+					if (tiles.ContainsKey(pos))
+					{
+						Tile target = tiles[pos];
+						if (startingTiles.Any(starting => rule.Evaulate(target, starting)))
+						{
+							result.Add(target);
+						}
+					}
+				}
+			}
 		}
 
 		/// <summary>

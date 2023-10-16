@@ -1,10 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace DiceRoller
 {
-	public class SimpleShoe : Equipment
+	public class Fireball : Equipment
 	{
 		// ========================================================= Properties =========================================================
 
@@ -13,16 +14,16 @@ namespace DiceRoller
 		/// </summary>
 		public override IReadOnlyList<EquipmentDieSlot> DieSlots
 		{
-			get { return _slotTypes.AsReadOnly(); }
+			get { return _DieSlots.AsReadOnly(); }
 		}
-		private List<EquipmentDieSlot> _slotTypes = new List<EquipmentDieSlot>();
+		private List<EquipmentDieSlot> _DieSlots = new List<EquipmentDieSlot>();
 
 		// ========================================================= Constructor =========================================================
 
 		/// <summary>
 		/// Construcddtor.
 		/// </summary>
-		public SimpleShoe(Unit unit) : base(unit)
+		public Fireball(Unit unit) : base(unit)
 		{
 
 		}
@@ -34,10 +35,16 @@ namespace DiceRoller
 		/// </summary>
 		protected override void FillDieSlots()
 		{
-			_slotTypes.Add(new EquipmentDieSlot(
-				this, 
+			_DieSlots.Add(new EquipmentDieSlot(
+				this,
 				Die.Type.Unknown,
-				EquipmentDieSlot.Requirement.GreaterThan, 
+				EquipmentDieSlot.Requirement.GreaterThan,
+				4));
+
+			_DieSlots.Add(new EquipmentDieSlot(
+				this,
+				Die.Type.Unknown,
+				EquipmentDieSlot.Requirement.LesserThan,
 				3));
 		}
 
@@ -46,11 +53,11 @@ namespace DiceRoller
 		/// <summary>
 		/// What type this equipment belongs to.
 		/// </summary>
-		public override EquipmentType Type
-		{
+		public override EquipmentType Type 
+		{ 
 			get
 			{
-				return EquipmentType.Movement;
+				return EquipmentType.Magic;
 			}
 		}
 
@@ -61,7 +68,7 @@ namespace DiceRoller
 		{
 			get
 			{
-				return EffectApplyTime.AtMove;
+				return EffectApplyTime.AtAttack;
 			}
 		}
 
@@ -70,7 +77,9 @@ namespace DiceRoller
 		/// </summary>
 		protected override void AddEffect()
 		{
-			Unit.ChangeStat(movementDelta: 3);
+			Unit.ChangeAttackType(Unit.AttackType.Magical);
+			Unit.ChangeStat(magicDelta: 12, knockbackForceDelta: 0.25f);
+			Unit.ChangeAttackAreaRule(attackRule);
 		}
 
 		/// <summary>
@@ -78,7 +87,17 @@ namespace DiceRoller
 		/// </summary>
 		protected override void RemoveEffect()
 		{
-			Unit.ChangeStat(movementDelta: -3);
+			Unit.ChangeAttackType(Unit.AttackType.Physical);
+			Unit.ChangeStat(magicDelta: -12, knockbackForceDelta: -0.25f);
+			Unit.ResetAttackAreaRule();
 		}
+
+		private static AttackAreaRule attackRule = new AttackAreaRule(
+			(target, starting) =>
+			{
+				return (Mathf.Abs(target.boardPos.x - starting.boardPos.x) <= 3 && target.boardPos.z == starting.boardPos.z) ||
+					(Mathf.Abs(target.boardPos.z - starting.boardPos.z) <= 3 && target.boardPos.x == starting.boardPos.x);
+			},
+			3);
 	}
 }

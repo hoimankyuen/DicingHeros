@@ -17,6 +17,14 @@ namespace DiceRoller
 			Defeated,
 		}
 
+		public enum AttackType
+		{ 
+			None,
+			Physical,
+			Magical,
+		}
+
+
 		// parameters
 		[Header("Unit Parameters")]
 		public int maxHealth = 20;
@@ -58,6 +66,8 @@ namespace DiceRoller
 
 			SetupInitialHealth();
 			SetupInitalStat();
+			SetupInitalAttackType();
+			ResetAttackAreaRule();
 		}
 
 		/// <summary>
@@ -347,7 +357,7 @@ namespace DiceRoller
 				if (_PendingHealthDelta != value)
 				{
 					_PendingHealthDelta = value;
-					OnPendingHealthDeltaChange.Invoke();
+					OnPendingHealthDeltaChanged.Invoke();
 				}
 			}
 		}
@@ -356,7 +366,31 @@ namespace DiceRoller
 		/// <summary>
 		/// Event raised when pending health delta of this unit is changed.
 		/// </summary>
-		public event Action OnPendingHealthDeltaChange = () => { };
+		public event Action OnPendingHealthDeltaChanged = () => { };
+
+		/// <summary>
+		/// Flag for if this unit is recieving damage from and other source, regardless of damage value.
+		/// </summary>
+		public bool IsRecievingDamage
+		{
+			get
+			{
+				return _IsRecievingDamage;
+			}
+			private set
+			{
+				if (_IsRecievingDamage != value)
+				{
+					_IsRecievingDamage = value;
+				}
+			}
+		}
+		private bool _IsRecievingDamage = false;
+
+		/// <summary>
+		/// Event raised when the flag for is reciving damage is changed.
+		/// </summary>
+		public event Action OnIsRecievingDamageChanged = () => { };
 
 		/// <summary>
 		/// Set the health value to the inital value.
@@ -453,6 +487,9 @@ namespace DiceRoller
 		}
 		private int _Movement = 0;
 
+		/// <summary>
+		/// The current knockback force of this unit.
+		/// </summary>
 		public float KnockbackForce
 		{
 			get
@@ -519,6 +556,7 @@ namespace DiceRoller
 		{
 			Equipments.Add(new SimpleKnife(this));
 			Equipments.Add(new SimpleShoe(this));
+			Equipments.Add(new Fireball(this));
 			OnEquipmentChanged.Invoke();
 		}
 
@@ -531,6 +569,99 @@ namespace DiceRoller
 			{
 				equipment.Update();
 			}
+		}
+
+		// ========================================================= Properties (AttackRangeRule) =========================================================
+
+		/// <summary>
+		/// The current attack type to be performed by this unit.
+		/// </summary>
+		public AttackType CurrentAttackType
+		{
+			get
+			{
+				return _CurrentAttackType;
+			}
+			private set
+			{
+				if (_CurrentAttackType != value)
+				{
+					_CurrentAttackType = value;
+					OnCurrentAttackTypeChanged.Invoke();
+				}
+			}
+		}
+		private AttackType _CurrentAttackType = AttackType.None;
+
+		/// <summary>
+		/// Event raised when the current attack type to be performed by this unit is changed.
+		/// </summary>
+		public event Action OnCurrentAttackTypeChanged = () => {};
+
+
+		/// <summary>
+		/// Set the attack type to the inital value.
+		/// </summary>
+		public void SetupInitalAttackType()
+		{
+			CurrentAttackType = AttackType.Physical;
+		}
+
+		/// <summary>
+		/// Change the attack type to something else.
+		/// </summary>
+		public void ChangeAttackType(AttackType type)
+		{
+			CurrentAttackType = type;
+		}
+
+		// ========================================================= Properties (AttackRangeRule) =========================================================
+
+		/// <summary>
+		/// The Rule that dictates the attack area of this unit.
+		/// </summary>
+		public AttackAreaRule AttackAreaRule
+		{ 
+			get
+			{
+				return _AttackAreaRule;
+			}
+			private set
+			{
+				if (_AttackAreaRule != value)
+				{
+					_AttackAreaRule = value;
+					OnAttackAreaRuleChanged.Invoke();
+				}
+			}
+		}
+		private AttackAreaRule _AttackAreaRule = null;
+
+		/// <summary>
+		/// Event raised when the rule that dictates the attack area of this unit is changed. 
+		/// </summary>
+		public event Action OnAttackAreaRuleChanged = () => { };
+	
+
+		private static readonly AttackAreaRule _DefaultMeleeRule =
+			new AttackAreaRule(
+				(target, starting) => Int2.GridDistance(target.boardPos, starting.boardPos) <= 1,
+				 1);
+
+		/// <summary>
+		/// Reset the rule to determine which tiles are attackable to the basic melee form.
+		/// </summary>
+		public void ResetAttackAreaRule()
+		{
+			_AttackAreaRule = _DefaultMeleeRule;
+		}
+
+		/// <summary>
+		/// Apply a different attack area rule tooo this unit.
+		/// </summary>
+		public void ChangeAttackAreaRule(AttackAreaRule rule)
+		{
+			AttackAreaRule = rule;
 		}
 
 		// ========================================================= Properties (CurrentUnitState) =========================================================

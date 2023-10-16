@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +17,8 @@ namespace DiceRoller
 			private bool isSelectedAtEnter = false;
 
 			private List<Tile> lastOccupiedTiles = new List<Tile>();
+
+			private AttackAreaRule lastAttackAreaRule = null;
 			private List<Tile> lastAttackArea = new List<Tile>();
 			private List<Unit> lastTargetableUnits = new List<Unit>();
 
@@ -57,29 +60,6 @@ namespace DiceRoller
 					{
 						tile.UpdateDisplayAs(self, Tile.DisplayType.SelfPosition, lastOccupiedTiles);
 					}
-
-					// show possible movement area on board, assume unit wont move during movement selection state
-					board.GetTilesInRange(self.OccupiedTiles, 1, lastAttackArea);
-					foreach (Tile tile in lastAttackArea)
-					{
-						tile.UpdateDisplayAs(self, Tile.DisplayType.Attack, lastAttackArea);
-					}
-
-					// find all targetable units
-					foreach (Player player in game.GetAllPlayers())
-					{
-						if (player != self.Player)
-						{
-							foreach (Unit unit in player.units)
-							{
-								if (lastAttackArea.Intersect(unit.OccupiedTiles).Count() > 0)
-								{
-									lastTargetableUnits.Add(unit);
-									unit.ShowEffect(EffectType.PossibleEnemy, true);
-								}
-							}
-						}
-					}
 				}
 			}
 
@@ -93,14 +73,48 @@ namespace DiceRoller
 				// actions for the selected unit
 				if (isSelectedAtEnter)
 				{
+					// update attack area if needed
+					if (CachedValueUtils.HasValueChanged(self.AttackAreaRule, ref lastAttackAreaRule))
+					{
+						foreach (Tile tile in lastAttackArea)
+						{
+							tile.RemoveDisplay(self, Tile.DisplayType.Attack);
+						}
+						board.GetTilesByRule(self.OccupiedTiles, self.AttackAreaRule, lastAttackArea);
+						foreach (Tile tile in lastAttackArea)
+						{
+							tile.UpdateDisplayAs(self, Tile.DisplayType.Attack, lastAttackArea);
+						}
+
+						// find all targetable units
+						lastTargetableUnits.Clear();
+						foreach (Player player in game.GetAllPlayers())
+						{
+							if (player != self.Player)
+							{
+								foreach (Unit unit in player.units)
+								{
+									if (lastAttackArea.Intersect(unit.OccupiedTiles).Count() > 0)
+									{
+										lastTargetableUnits.Add(unit);
+										unit.ShowEffect(EffectType.PossibleEnemy, true);
+									}
+								}
+							}
+						}
+					}
+
 					// detect hovering on enemy units
 					Unit target = lastTargetableUnits.FirstOrDefault(x => x.IsHovering);
 					if (CachedValueUtils.HasValueChanged(target, ref lastTargetedUnit, out Unit previous))
 					{
 						if (previous != null)
 						{
+							// remove previous pending damage and status from previous target
 							previous.PendingHealthDelta = 0;
+							previous.IsRecievingDamage = false;
 
+							// hide tiles and effect
 							foreach (Tile tile in previous.OccupiedTiles)
 							{
 								tile.UpdateDisplayAs(previous, Tile.DisplayType.EnemyPosition, Tile.EmptyTiles);
@@ -108,10 +122,25 @@ namespace DiceRoller
 							previous.IsBeingInspected = false;
 							previous.ShowEffect(EffectType.InspectingEnemy, false);
 						}
+						
 						if (target != null)
 						{
-							target.PendingHealthDelta = self.Melee * -1;
+							// calculate damage
+							int damage = 0;
+							if (self.CurrentAttackType == AttackType.Physical)
+							{
+								damage = Mathf.Max(self.Melee - target.Defence, 0);
+							}
+							else if (self.CurrentAttackType == AttackType.Magical)
+							{
+								damage = Mathf.Max(self.Magic - target.Defence, 0);
+							}
 
+							// add pending damage and status to new target
+							target.PendingHealthDelta = damage * -1;
+							target.IsRecievingDamage = true;
+
+							// show tiles and effect
 							foreach (Tile tile in target.OccupiedTiles)
 							{
 								tile.UpdateDisplayAs(target, Tile.DisplayType.EnemyPosition, target.OccupiedTiles);
@@ -124,12 +153,23 @@ namespace DiceRoller
 					// detect press on enemy unit
 					if (target != null && target.IsPressed[0])
 					{
-						self.NextAttack = new UnitAttack(target, self.Melee * -1, self.KnockbackForce);
+						// calculate damage
+						int damage = 0;
+						if (self.CurrentAttackType == AttackType.Physical)
+						{
+							damage = Mathf.Max(self.Melee - target.Defence, 0);
+						}
+						else if (self.CurrentAttackType == AttackType.Magical)
+						{
+							damage = Mathf.Max(self.Magic - target.Defence, 0);
+						}
+						// fill in attack parameters
+						self.NextAttack = new UnitAttack(target, damage, self.KnockbackForce);
 
 						// use any activated equipment that are used at move state
 						foreach (Equipment equipment in self.Equipments.Where(x => x.ApplyTime == Equipment.EffectApplyTime.AtAttack && x.IsActivated))
 						{
-							equipment.Apply();
+							equipment.ApplyEffect();
 						}
 
 						stateMachine.ChangeState(SMState.UnitAttack);
@@ -165,12 +205,13 @@ namespace DiceRoller
 					}
 					lastOccupiedTiles.Clear();
 
-					// hide possible movement area on board
+					// hide possible attack area on board
 					foreach (Tile tile in lastAttackArea)
 					{
 						tile.UpdateDisplayAs(self, Tile.DisplayType.Attack, Tile.EmptyTiles);
 					}
 					lastAttackArea.Clear();
+					CachedValueUtils.ResetValueCache(ref lastAttackAreaRule);
 
 					// clear targetable units
 					foreach (Unit unit in lastTargetableUnits)
@@ -183,6 +224,7 @@ namespace DiceRoller
 					if (lastTargetedUnit != null)
 					{
 						lastTargetedUnit.PendingHealthDelta = 0;
+						lastTargetedUnit.IsRecievingDamage = false;
 
 						foreach (Tile tile in lastTargetedUnit.OccupiedTiles)
 						{

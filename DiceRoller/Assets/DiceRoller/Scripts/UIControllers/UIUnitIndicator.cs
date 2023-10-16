@@ -15,6 +15,7 @@ namespace DiceRoller
 		public RectTransform solidRectTransform;
 		public Image iconImage;
 		public TextMeshProUGUI valueText;
+		public TextMeshProUGUI damageText;
 
 		public RectTransform healthRectTransform;
 		public Image pointerImage;
@@ -27,7 +28,7 @@ namespace DiceRoller
 		*/
 
 		// references
-		private Unit targetUnit;
+		private Unit target;
 
 
 		// ========================================================= Monobehaviour Methods =========================================================
@@ -48,10 +49,10 @@ namespace DiceRoller
 		{
 			SetDisplay(null);
 
-			if (targetUnit != null)
+			if (target != null)
 			{
-				targetUnit.OnHealthChanged += RefreshDisplay;
-				targetUnit.OnPendingHealthDeltaChange += RefreshDisplay;
+				target.OnHealthChanged += RefreshDisplay;
+				target.OnPendingHealthDeltaChanged += RefreshDisplay;
 			}
 		}
 
@@ -70,11 +71,7 @@ namespace DiceRoller
 		/// </summary>
 		private void OnDestroy()
 		{
-			if (targetUnit != null)
-			{
-				targetUnit.OnHealthChanged -= RefreshDisplay;
-				targetUnit.OnPendingHealthDeltaChange -= RefreshDisplay;
-			}
+			DeregisterCallbacks(target);
 		}
 
 
@@ -82,7 +79,7 @@ namespace DiceRoller
 
 		private void RetrieveTarget()
 		{
-			if (Unit.GetFirstBeingInspected() != targetUnit)
+			if (Unit.GetFirstBeingInspected() != target)
 			{
 				SetDisplay(Unit.GetFirstBeingInspected());
 			}
@@ -91,50 +88,73 @@ namespace DiceRoller
 		/// <summary>
 		/// Set the displayed information as an existing unit.
 		/// </summary>
-		public void SetDisplay(Unit unit)
+		public void SetDisplay(Unit target)
 		{
 			// register and deregister callbacks
-			if (targetUnit != null)
-			{
-				targetUnit.OnHealthChanged -= RefreshDisplay;
-				targetUnit.OnPendingHealthDeltaChange -= RefreshDisplay;
-			}
-			if (unit != null)
-			{
-				unit.OnHealthChanged += RefreshDisplay;
-				unit.OnPendingHealthDeltaChange += RefreshDisplay;
-			}
+			DeregisterCallbacks(this.target);
+			RegisterCallbacks(target);
 
 			// set values
-			targetUnit = unit;
+			this.target = target;
 			RefreshDisplay();
 		}
+
+		/// <summary>
+		/// Register all necssary callbacks to a target object.
+		/// </summary>
+		private void RegisterCallbacks(Unit target)
+		{
+			if (target == null)
+				return;
+
+			target.OnHealthChanged += RefreshDisplay;
+			target.OnPendingHealthDeltaChanged += RefreshDisplay;
+			target.OnIsRecievingDamageChanged += RefreshDisplay;
+		}
+
+		/// <summary>
+		/// Deregister all necssary callbacks from a target object.
+		/// </summary>
+		private void DeregisterCallbacks(Unit target)
+		{
+			if (target == null)
+				return;
+
+			target.OnHealthChanged -= RefreshDisplay;
+			target.OnPendingHealthDeltaChanged -= RefreshDisplay;
+			target.OnIsRecievingDamageChanged -= RefreshDisplay;
+		}
+
 
 		/// <summary>
 		/// Change the current display of this ui element to either match the information of the inspecting object.
 		/// </summary>
 		private void RefreshDisplay()
 		{
-			if (targetUnit != null)
+			if (target != null)
 			{
+				damageText.gameObject.SetActive(target.IsRecievingDamage);
 				healthRectTransform.gameObject.SetActive(true);
 				pointerImage.gameObject.SetActive(true);
 
-				valueText.text = string.Format("{0}/{1}", Mathf.Clamp(targetUnit.Health, 0, targetUnit.maxHealth), targetUnit.maxHealth);
+				damageText.text = target.PendingHealthDelta == 0 ? "-0" : target.PendingHealthDelta.ToString();
+				valueText.text = string.Format("{0}/{1}", Mathf.Clamp(target.Health, 0, target.maxHealth), target.maxHealth);
 
-				float solidPercentage = Mathf.Clamp(1f * (targetUnit.PendingHealthDelta < 0 ? (targetUnit.Health + targetUnit.PendingHealthDelta) : targetUnit.Health) / targetUnit.maxHealth, 0f, 1f);
+				float solidPercentage = Mathf.Clamp(1f * (target.PendingHealthDelta < 0 ? (target.Health + target.PendingHealthDelta) : target.Health) / target.maxHealth, 0f, 1f);
 				solidRectTransform.anchorMax = new Vector2(solidPercentage, 1f);
 				solidImage.color = Color.HSVToRGB(Mathf.Lerp(0f, 0.33333f, solidPercentage), 1f, 1f);
 
-				float blinkingPercentage = Mathf.Clamp(1f * (targetUnit.PendingHealthDelta < 0 ? targetUnit.Health : (targetUnit.Health + targetUnit.PendingHealthDelta)) / targetUnit.maxHealth, 0f, 1f);
+				float blinkingPercentage = Mathf.Clamp(1f * (target.PendingHealthDelta < 0 ? target.Health : (target.Health + target.PendingHealthDelta)) / target.maxHealth, 0f, 1f);
 				blinkingRectTransform.anchorMax = new Vector2(blinkingPercentage, 1f);
 				blinkingImage.color = Color.HSVToRGB(Mathf.Lerp(0f, 0.33333f, blinkingPercentage), 1f, Mathf.Lerp(0.25f, 0.5f, Mathf.InverseLerp(-1f, 1f, Mathf.Sin(Time.time * 10f))));
 			}
 			else
 			{
+				damageText.gameObject.SetActive(false);
 				healthRectTransform.gameObject.SetActive(false);
 				pointerImage.gameObject.SetActive(false);
 
+				damageText.text = "-0";
 				valueText.text = ("==/==");
 
 				solidRectTransform.anchorMax = new Vector2(1f, 1f);
@@ -160,12 +180,12 @@ namespace DiceRoller
 		/// </summary>
 		private void UpdatePosition()
 		{
-			if (targetUnit != null)
+			if (target != null)
 			{
 				// move the pointer to the top of the item
 				Vector3 pos = Vector3.zero;
-				pos.x = (Camera.main.WorldToScreenPoint(targetUnit.transform.position).x + Camera.main.WorldToScreenPoint(targetUnit.transform.position + Vector3.up * targetUnit.height).x) / 2f;
-				pos.y = Camera.main.WorldToScreenPoint(targetUnit.transform.position + Vector3.up * targetUnit.height).y;
+				pos.x = (Camera.main.WorldToScreenPoint(target.transform.position).x + Camera.main.WorldToScreenPoint(target.transform.position + Vector3.up * target.height).x) / 2f;
+				pos.y = Camera.main.WorldToScreenPoint(target.transform.position + Vector3.up * target.height).y;
 				transform.position = pos;
 			}
 		}

@@ -209,7 +209,7 @@ namespace DiceRoller
 							// use any activated equipment that are used at move state
 							foreach (Equipment equipment in self.Equipments.Where(x => x.ApplyTime == Equipment.EffectApplyTime.AtMove && x.IsActivated))
 							{
-								equipment.Apply();
+								equipment.ApplyEffect();
 							}
 
 							stateMachine.ChangeState(SMState.UnitMove);

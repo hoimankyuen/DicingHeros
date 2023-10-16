@@ -8529,7 +8529,7 @@ MonoBehaviour:
   actionImage: {fileID: 666635765}
   pointerImage: {fileID: 1736576107}
   icons: {fileID: 11400000, guid: ccc184c075419104786ad7ac4a3b5bc0, type: 2}
-  hideCursorAtStart: 0
+  hideCursorAtStart: 1
 --- !u!224 &375950720
 RectTransform:
   m_ObjectHideFlags: 0
@@ -36138,10 +36138,6 @@ PrefabInstance:
       propertyPath: iconSprite
       value: 
       objectReference: {fileID: 21300000, guid: 712767789a01dea4ba978fcc3474157d, type: 3}
-    - target: {fileID: 2284104210925587978, guid: e2a9f81fa3052474b882cfec95c1b548, type: 3}
-      propertyPath: baseKnockbackForce
-      value: 0.5
-      objectReference: {fileID: 0}
     - target: {fileID: 2284104210925587979, guid: e2a9f81fa3052474b882cfec95c1b548, type: 3}
       propertyPath: m_Name
       value: Piece (4)
@@ -36156,7 +36152,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2284104210925587980, guid: e2a9f81fa3052474b882cfec95c1b548, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -1.25
+      value: 1.5
       objectReference: {fileID: 0}
     - target: {fileID: 2284104210925587980, guid: e2a9f81fa3052474b882cfec95c1b548, type: 3}
       propertyPath: m_LocalPosition.y

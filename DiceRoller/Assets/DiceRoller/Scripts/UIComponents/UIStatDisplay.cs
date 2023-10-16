@@ -28,10 +28,7 @@ namespace DiceRoller
         /// </summary>
         protected void Start()
         {
-            if (unit != null)
-            {
-                unit.OnStatChanged += RefreshDisplay;
-            }
+            RegisterCallbacks(unit);
         }
 
         /// <summary>
@@ -39,11 +36,7 @@ namespace DiceRoller
         /// </summary>
         protected void OnDestroy()
         {
-            // deregister all events
-            if (unit != null)
-            {
-                unit.OnStatChanged -= RefreshDisplay;
-            }
+            DeregisterCallbacks(unit);
         }
 
         // ========================================================= UI Methods =========================================================
@@ -54,18 +47,36 @@ namespace DiceRoller
         public void SetDisplay(Unit unit)
         {
             // register and deregister callbacks
-            if (this.unit != null)
-            {
-                this.unit.OnStatChanged -= RefreshDisplay;
-            }
-            if (unit != null)
-            {
-                unit.OnStatChanged += RefreshDisplay;
-            }
+            DeregisterCallbacks(this.unit);
+            RegisterCallbacks(unit);
 
             // set values
             this.unit = unit;
             RefreshDisplay();
+        }
+
+        /// <summary>
+        /// Register all necssary callbacks to a target object.
+        /// </summary>
+        private void RegisterCallbacks(Unit target)
+        {
+            if (target == null)
+                return;
+
+            target.OnStatChanged += RefreshDisplay;
+            target.OnCurrentAttackTypeChanged += RefreshDisplay;
+        }
+
+        /// <summary>
+        /// Deregister all necssary callbacks from a target object.
+        /// </summary>
+        private void DeregisterCallbacks(Unit target)
+        {
+            if (target == null)
+                return;
+
+            target.OnStatChanged -= RefreshDisplay;
+            target.OnCurrentAttackTypeChanged -= RefreshDisplay;
         }
 
 
@@ -99,6 +110,11 @@ namespace DiceRoller
                 attackIcon.color = unit.Melee > unit.baseMelee ? Color.green : unit.Melee < unit.baseMelee ? Color.red : Color.white;
                 attackValue.color = unit.Melee > unit.baseMelee ? Color.green : unit.Melee < unit.baseMelee ? Color.red : Color.white;
                 attackValue.text = unit.Melee.ToString();
+                if (unit.CurrentAttackType != Unit.AttackType.Physical)
+                {
+                    attackIcon.color = attackIcon.color * 0.5f + Color.black * 0.5f;
+                    attackValue.color = attackValue.color * 0.5f + Color.black * 0.5f;
+                }
 
                 defenceIcon.color = unit.Defence > unit.baseDefence ? Color.green : unit.Defence < unit.baseDefence ? Color.red : Color.white;
                 defenceValue.color = unit.Defence > unit.baseDefence ? Color.green : unit.Defence < unit.baseDefence ? Color.red : Color.white;
@@ -107,6 +123,11 @@ namespace DiceRoller
                 magicIcon.color = unit.Magic > unit.baseMagic ? Color.green : unit.Magic < unit.baseMagic ? Color.red : Color.white;
                 magicValue.color = unit.Magic > unit.baseMagic ? Color.green : unit.Magic < unit.baseMagic ? Color.red : Color.white;
                 magicValue.text = unit.Magic.ToString();
+                if (unit.CurrentAttackType != Unit.AttackType.Magical)
+                {
+                    magicIcon.color = magicIcon.color * 0.5f + Color.black * 0.5f;
+                    magicValue.color = magicValue.color * 0.5f + Color.black * 0.5f;
+                }
 
                 movementIcon.color = unit.Movement > unit.baseMovement ? Color.green : unit.Movement < unit.baseMovement ? Color.red : Color.white;
                 movementValue.color = unit.Movement > unit.baseMovement ? Color.green : unit.Movement < unit.baseMovement ? Color.red : Color.white;
