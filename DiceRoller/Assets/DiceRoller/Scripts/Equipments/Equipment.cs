@@ -116,6 +116,23 @@ namespace DiceRoller
 			return _InspectingEquipment.Count > 0 ? _InspectingEquipment[0] : null;
 		}
 
+		// ========================================================= Properties (Information) =========================================================
+		
+		/// <summary>
+		/// The name of this equipment.
+		/// </summary>
+		public abstract EquipmentDictionary.Name EquipmentName { get; }
+
+		/// <summary>
+		/// What type this equipment belongs to.
+		/// </summary>
+		public abstract EquipmentType Type { get; }
+
+		/// <summary>
+		/// The time of which should this eqipment apply its effect.
+		/// </summary>
+		public abstract EffectApplyTime ApplyTime { get; }
+
 		// ========================================================= Properties (Unit) =========================================================
 
 		/// <summary>
@@ -252,15 +269,6 @@ namespace DiceRoller
 			}
 		}
 
-		/// <summary>
-		/// What type this equipment belongs to.
-		/// </summary>
-		public abstract EquipmentType Type { get; }
-
-		/// <summary>
-		/// The time of which should this eqipment apply its effect.
-		/// </summary>
-		public abstract EffectApplyTime ApplyTime { get; }
 
 		/// <summary>
 		/// Forward implementation of the effect of this equipment.

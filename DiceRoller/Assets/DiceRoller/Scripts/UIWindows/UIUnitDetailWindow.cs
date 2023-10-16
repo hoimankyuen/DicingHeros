@@ -96,18 +96,7 @@ namespace DiceRoller
 						{
 							// select the correct ui for the equipment
 							GameObject prefab = null;
-							if (inspectingUnit.Equipments[i] is SimpleKnife)
-							{
-								prefab = Resources.Load("UISimpleKnife") as GameObject;
-							}
-							else if (inspectingUnit.Equipments[i] is SimpleShoe)
-							{
-								prefab = Resources.Load("UISimpleShoe") as GameObject;
-							}
-							else if (inspectingUnit.Equipments[i] is Fireball)
-							{
-								prefab = Resources.Load("UIFireball") as GameObject;
-							}
+							prefab = EquipmentDictionary.GetUIPrefab(inspectingUnit.Equipments[i].EquipmentName);
 
 							// spawn the equipment ui
 							if (prefab != null)

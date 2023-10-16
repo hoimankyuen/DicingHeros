@@ -34,6 +34,7 @@ namespace DiceRoller
 		public int baseMovement = 4;
 		public int baseRange = 1;
 		public float baseKnockbackForce = 0.25f;
+		public List<EquipmentDictionary.Name> startingEquipment = new List<EquipmentDictionary.Name>();
 
 		// readonly
 		private readonly float moveTimePerTile = 0.2f;
@@ -579,9 +580,10 @@ namespace DiceRoller
 		/// </summary>
 		public void SetupInitialEquipments()
 		{
-			Equipments.Add(new SimpleShoe(this));
-			Equipments.Add(new SimpleKnife(this));
-			Equipments.Add(new Fireball(this));
+			foreach (EquipmentDictionary.Name name in startingEquipment)
+			{
+				Equipments.Add(EquipmentDictionary.NewEquipment(name, this));
+			}
 			OnEquipmentChanged.Invoke();
 		}
 

@@ -41,7 +41,18 @@ namespace DiceRoller
 				3));
 		}
 
-		// ========================================================= Activation =========================================================
+		// ========================================================= Information =========================================================
+
+		/// <summary>
+		/// The name of this equipment.
+		/// </summary>
+		public override EquipmentDictionary.Name EquipmentName 
+		{ 
+			get
+			{
+				return EquipmentDictionary.Name.SimpleShoe;
+			}
+		}
 
 		/// <summary>
 		/// What type this equipment belongs to.
@@ -64,6 +75,8 @@ namespace DiceRoller
 				return EffectApplyTime.AtMove;
 			}
 		}
+
+		// ========================================================= Activation =========================================================
 
 		/// <summary>
 		/// Forward implementation of the effect of this equipment.
