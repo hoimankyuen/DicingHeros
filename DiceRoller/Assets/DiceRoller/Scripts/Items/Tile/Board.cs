@@ -242,7 +242,7 @@ namespace DiceRoller
 		/// <summary>
 		/// Get all tiles that fulfills a given rule in relative to the starting tiles reguardless of connectivity, and return them in the supplied list.
 		/// </summary>
-		public void GetTilesByRule(IReadOnlyCollection<Tile> startingTiles, AttackAreaRule rule, in List<Tile> result)
+		public void GetTilesByRule(IReadOnlyCollection<Tile> startingTiles, AttackAreaRule rule, int range, in List<Tile> result)
 		{
 			// prepare containers
 			result.Clear();
@@ -256,15 +256,15 @@ namespace DiceRoller
 			max.z = startingTiles.Select(tile => tile.boardPos.z).Max();
 
 			// search for tiles within range on a subset of all tiles
-			for (int x = min.x - rule.GetRange(); x <= max.x + rule.GetRange(); x++)
+			for (int x = min.x - range; x <= max.x + range; x++)
 			{
-				for (int z = min.z - rule.GetRange(); z <= max.z + rule.GetRange(); z++)
+				for (int z = min.z - range; z <= max.z + range; z++)
 				{
 					Int2 pos = new Int2(x, z);
 					if (tiles.ContainsKey(pos))
 					{
 						Tile target = tiles[pos];
-						if (startingTiles.Any(starting => rule.Evaulate(target, starting)))
+						if (startingTiles.Any(starting => rule.Evaulate(target, starting, range)))
 						{
 							result.Add(target);
 						}

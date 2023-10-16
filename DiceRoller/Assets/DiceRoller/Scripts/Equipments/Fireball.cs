@@ -78,7 +78,7 @@ namespace DiceRoller
 		protected override void AddEffect()
 		{
 			Unit.ChangeAttackType(Unit.AttackType.Magical);
-			Unit.ChangeStat(magicDelta: 12, knockbackForceDelta: 0.25f);
+			Unit.ChangeStat(magicDelta: 12, attackRangeDelta: 2, knockbackForceDelta: 0.25f);
 			Unit.ChangeAttackAreaRule(attackRule);
 		}
 
@@ -88,16 +88,14 @@ namespace DiceRoller
 		protected override void RemoveEffect()
 		{
 			Unit.ChangeAttackType(Unit.AttackType.Physical);
-			Unit.ChangeStat(magicDelta: -12, knockbackForceDelta: -0.25f);
+			Unit.ChangeStat(magicDelta: -12, attackRangeDelta: -2, knockbackForceDelta: -0.25f);
 			Unit.ResetAttackAreaRule();
 		}
 
 		private static AttackAreaRule attackRule = new AttackAreaRule(
-			(target, starting) =>
-			{
-				return (Mathf.Abs(target.boardPos.x - starting.boardPos.x) <= 3 && target.boardPos.z == starting.boardPos.z) ||
-					(Mathf.Abs(target.boardPos.z - starting.boardPos.z) <= 3 && target.boardPos.x == starting.boardPos.x);
-			},
-			3);
+			(target, starting, range) => {
+				return (Mathf.Abs(target.boardPos.x - starting.boardPos.x) <= range && target.boardPos.z == starting.boardPos.z) ||
+					(Mathf.Abs(target.boardPos.z - starting.boardPos.z) <= range && target.boardPos.x == starting.boardPos.x);
+				});
 	}
 }

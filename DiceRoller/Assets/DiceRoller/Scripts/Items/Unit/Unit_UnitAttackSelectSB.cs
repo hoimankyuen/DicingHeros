@@ -19,6 +19,7 @@ namespace DiceRoller
 			private List<Tile> lastOccupiedTiles = new List<Tile>();
 
 			private AttackAreaRule lastAttackAreaRule = null;
+			private int lastAttackRange = 0;
 			private List<Tile> lastAttackArea = new List<Tile>();
 			private List<Unit> lastTargetableUnits = new List<Unit>();
 
@@ -74,13 +75,13 @@ namespace DiceRoller
 				if (isSelectedAtEnter)
 				{
 					// update attack area if needed
-					if (CachedValueUtils.HasValueChanged(self.AttackAreaRule, ref lastAttackAreaRule))
+					if (CachedValueUtils.HasValueChanged(self.AttackAreaRule, ref lastAttackAreaRule) || CachedValueUtils.HasValueChanged(self.AttackRange, ref lastAttackRange))
 					{
 						foreach (Tile tile in lastAttackArea)
 						{
 							tile.RemoveDisplay(self, Tile.DisplayType.Attack);
 						}
-						board.GetTilesByRule(self.OccupiedTiles, self.AttackAreaRule, lastAttackArea);
+						board.GetTilesByRule(self.OccupiedTiles, self.AttackAreaRule, self.AttackRange, lastAttackArea);
 						foreach (Tile tile in lastAttackArea)
 						{
 							tile.UpdateDisplayAs(self, Tile.DisplayType.Attack, lastAttackArea);
@@ -211,6 +212,7 @@ namespace DiceRoller
 						tile.UpdateDisplayAs(self, Tile.DisplayType.Attack, Tile.EmptyTiles);
 					}
 					lastAttackArea.Clear();
+					CachedValueUtils.ResetValueCache(ref lastAttackRange);
 					CachedValueUtils.ResetValueCache(ref lastAttackAreaRule);
 
 					// clear targetable units

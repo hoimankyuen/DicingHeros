@@ -32,6 +32,7 @@ namespace DiceRoller
 		public int baseDefence = 4;
 		public int baseMagic = 1;
 		public int baseMovement = 4;
+		public int baseRange = 1;
 		public float baseKnockbackForce = 0.25f;
 
 		// readonly
@@ -488,6 +489,28 @@ namespace DiceRoller
 		private int _Movement = 0;
 
 		/// <summary>
+		/// The current attack range value of this unit.
+		/// </summary>
+		public int AttackRange
+		{
+			get
+			{
+				return _AttackRange;
+			}
+			private set
+			{
+				int clampedValue = value < 0 ? 0 : value;
+				if (_AttackRange != clampedValue)
+				{
+					_AttackRange = clampedValue;
+					OnStatChanged.Invoke();
+				}
+			}
+		}
+		private int _AttackRange = 0;
+
+
+		/// <summary>
 		/// The current knockback force of this unit.
 		/// </summary>
 		public float KnockbackForce
@@ -522,18 +545,20 @@ namespace DiceRoller
 			Defence = baseDefence;
 			Magic = baseMagic;
 			Movement = baseMovement;
+			AttackRange = baseRange;
 			KnockbackForce = baseKnockbackForce;
 		}
 
 		/// <summary>
 		/// Apply a change on one or more stat variables.
 		/// </summary>
-		public void ChangeStat(int meleeDelta = 0, int defenceDelta = 0, int magicDelta = 0, int movementDelta = 0, float knockbackForceDelta = 0)
+		public void ChangeStat(int meleeDelta = 0, int defenceDelta = 0, int magicDelta = 0, int movementDelta = 0, int attackRangeDelta = 0, float knockbackForceDelta = 0)
 		{
 			Melee += meleeDelta;
 			Defence += defenceDelta;
 			Magic += magicDelta;
 			Movement += movementDelta;
+			AttackRange += attackRangeDelta;
 			KnockbackForce += knockbackForceDelta;
 		}
 
@@ -554,8 +579,8 @@ namespace DiceRoller
 		/// </summary>
 		public void SetupInitialEquipments()
 		{
-			Equipments.Add(new SimpleKnife(this));
 			Equipments.Add(new SimpleShoe(this));
+			Equipments.Add(new SimpleKnife(this));
 			Equipments.Add(new Fireball(this));
 			OnEquipmentChanged.Invoke();
 		}
@@ -644,9 +669,7 @@ namespace DiceRoller
 	
 
 		private static readonly AttackAreaRule _DefaultMeleeRule =
-			new AttackAreaRule(
-				(target, starting) => Int2.GridDistance(target.boardPos, starting.boardPos) <= 1,
-				 1);
+			new AttackAreaRule((target, starting, range) => Int2.GridDistance(target.boardPos, starting.boardPos) <= range);
 
 		/// <summary>
 		/// Reset the rule to determine which tiles are attackable to the basic melee form.

@@ -83,8 +83,7 @@ namespace DiceRoller
 			Unit.ResetAttackAreaRule();
 		}
 
-		private static AttackAreaRule attackRule = new AttackAreaRule(
-			(target, starting) => Int2.GridDistance(target.boardPos, starting.boardPos) <= 2,
-			2);
+		private static AttackAreaRule attackRule =
+			new AttackAreaRule((target, starting, range) => Int2.GridDistance(target.boardPos, starting.boardPos) <= range);
 	}
 }
