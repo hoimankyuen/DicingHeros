@@ -18,8 +18,8 @@ namespace DiceRoller
 
 			private List<Tile> lastOccupiedTiles = new List<Tile>();
 			private List<Tile> otherOccupiedTiles = new List<Tile>();
-			private int lastMovement = int.MinValue;
 			private List<Tile> lastMovementArea = new List<Tile>();
+			private List<Tile> affectedMovementArea = new List<Tile>();
 			private List<Tile> lastPath = new List<Tile>();
 			private Tile lastTargetTile = null;
 			private bool lastReachable = true;
@@ -90,17 +90,11 @@ namespace DiceRoller
 				if (isSelectedAtEnter)
 				{
 					// update movement area if needed
-					if (CachedValueUtils.HasValueChanged(self.Movement, ref lastMovement))
+					if (CachedValueUtils.HasCollectionChanged(self.MoveableTiles, lastMovementArea, affectedMovementArea))
 					{
-						// show possible movement area on board
-						foreach (Tile tile in lastMovementArea)
+						foreach (Tile tile in affectedMovementArea)
 						{
-							tile.RemoveDisplay(self, Tile.DisplayType.Move);
-						}
-						board.GetConnectedTilesInRange(self.OccupiedTiles, otherOccupiedTiles, self.Movement, lastMovementArea);
-						foreach (Tile tile in lastMovementArea)
-						{
-							tile.UpdateDisplayAs(self, Tile.DisplayType.Move, lastMovementArea);
+							tile.UpdateDisplayAs(self, Tile.DisplayType.Move, self.MoveableTiles);
 						}
 					}
 
@@ -207,7 +201,7 @@ namespace DiceRoller
 							self.NextMovement = new UnitMovement(self.OccupiedTiles, lastPath);
 
 							// use any activated equipment that are used at move state
-							foreach (Equipment equipment in self.Equipments.Where(x => x.ApplyTime == Equipment.EffectApplyTime.AtMove && x.IsActivated))
+							foreach (Equipment equipment in self.Equipments.Where(x => x.Type == Equipment.EquipmentType.Movement && x.IsActivated))
 							{
 								equipment.ApplyEffect();
 							}
@@ -323,7 +317,7 @@ namespace DiceRoller
 					}
 
 					// reset cache
-					lastMovement = int.MinValue;
+					CachedValueUtils.ResetCollectionCache(lastMovementArea, affectedMovementArea);
 
 					lastOccupiedTiles.Clear();
 					otherOccupiedTiles.Clear();

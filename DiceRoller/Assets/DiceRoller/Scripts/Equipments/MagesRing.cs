@@ -1,10 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace DiceRoller
 {
-	public class SimpleKnife : Equipment
+	public class MagesRing : Equipment
 	{
 		// ========================================================= Properties =========================================================
 
@@ -22,7 +23,7 @@ namespace DiceRoller
 		/// <summary>
 		/// Construcddtor.
 		/// </summary>
-		public SimpleKnife(Unit unit) : base(unit)
+		public MagesRing(Unit unit) : base(unit)
 		{
 
 		}
@@ -37,8 +38,12 @@ namespace DiceRoller
 			_DieSlots.Add(new EquipmentDieSlot(
 				this,
 				Die.Type.Unknown,
-				EquipmentDieSlot.Requirement.GreaterThan,
-				4));
+				EquipmentDieSlot.Requirement.IsEven));
+
+			_DieSlots.Add(new EquipmentDieSlot(
+				this,
+				Die.Type.Unknown,
+				EquipmentDieSlot.Requirement.IsOdd));
 		}
 
 		// ========================================================= Information =========================================================
@@ -50,29 +55,41 @@ namespace DiceRoller
 		{
 			get
 			{
-				return EquipmentDictionary.Name.SimpleKnife;
+				return EquipmentDictionary.Name.MagesRing;
 			}
 		}
 
 		/// <summary>
 		/// What type this equipment belongs to.
 		/// </summary>
-		public override EquipmentType Type
+		public override EquipmentType Type 
+		{ 
+			get
+			{
+				return EquipmentType.MagicBuff;
+			}
+		}
+
+
+		/// <summary>
+		/// The name to be displayed to the player.
+		/// </summary>
+		public override string DisplayableName
 		{
 			get
 			{
-				return EquipmentType.Melee;
+				return "Mage's Ring";
 			}
 		}
 
 		/// <summary>
-		/// The time of which should this eqipment apply its effect.
+		/// The effect discription to be displayed to the player.
 		/// </summary>
-		public override EffectApplyTime ApplyTime
+		public override string DisplayableEffectDiscription
 		{
-			get
+			get	
 			{
-				return EffectApplyTime.AtAttack;
+				return "+ 3 Magic";
 			}
 		}
 
@@ -83,8 +100,7 @@ namespace DiceRoller
 		/// </summary>
 		protected override void AddEffect()
 		{
-			Unit.ChangeStat(meleeDelta: 6, knockbackForceDelta: 0.25f);
-			Unit.ChangeAttackAreaRule(attackRule);
+			Unit.ChangeStat(magicDelta: 3);
 		}
 
 		/// <summary>
@@ -92,11 +108,7 @@ namespace DiceRoller
 		/// </summary>
 		protected override void RemoveEffect()
 		{
-			Unit.ChangeStat(meleeDelta: -6, knockbackForceDelta: -0.25f);
-			Unit.ResetAttackAreaRule();
+			Unit.ChangeStat(magicDelta: -3);
 		}
-
-		private static AttackAreaRule attackRule =
-			new AttackAreaRule((target, starting, range) => Int2.GridDistance(target.boardPos, starting.boardPos) <= range);
 	}
 }

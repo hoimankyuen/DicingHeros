@@ -18,12 +18,11 @@ namespace DiceRoller
 		}
 
 		public enum AttackType
-		{ 
+		{
 			None,
 			Physical,
 			Magical,
 		}
-
 
 		// parameters
 		[Header("Unit Parameters")]
@@ -63,6 +62,7 @@ namespace DiceRoller
 			base.Start();
 			RegisterStateBehaviours();
 			RegisterToPlayer();
+			RegisterMoveableTilesDetection();
 
 			SetupInitialEquipments();
 
@@ -91,6 +91,7 @@ namespace DiceRoller
 
 			DeregisterStateBehaviours();
 			DeregisterFromPlayer();
+			DeregisterMoveableTilesDetection();
 		}
 
 		/// <summary>
@@ -140,6 +141,7 @@ namespace DiceRoller
 			if (Player != null)
 			{
 				Player.units.Add(this);
+				Player.SortUnits();
 			}
 		}
 
@@ -176,7 +178,7 @@ namespace DiceRoller
 					OnInspectionChanged.Invoke();
 					OnItemBeingInspectedChanged.Invoke();
 				}
-				else if(_InspectingUnits.Contains(this) && !value)
+				else if (_InspectingUnits.Contains(this) && !value)
 				{
 					_InspectingUnits.Remove(this);
 					OnInspectionChanged.Invoke();
@@ -223,7 +225,7 @@ namespace DiceRoller
 					OnSelectionChanged.Invoke();
 					OnItemSelectedChanged.Invoke();
 				}
-				else if(_SelectedUnits.Contains(this) && !value)
+				else if (_SelectedUnits.Contains(this) && !value)
 				{
 					_SelectedUnits.Remove(this);
 					OnSelectionChanged.Invoke();
@@ -289,7 +291,7 @@ namespace DiceRoller
 					OnDragChanged.Invoke();
 					OnItemBeingDraggedChanged.Invoke();
 				}
-				else if(_DraggingUnits.Contains(this) && !value)
+				else if (_DraggingUnits.Contains(this) && !value)
 				{
 					_DraggingUnits.Remove(this);
 					OnDragChanged.Invoke();
@@ -322,7 +324,7 @@ namespace DiceRoller
 		/// <summary>
 		/// The current health value of this unit.
 		/// </summary>
-		public int Health 
+		public int Health
 		{
 			get
 			{
@@ -404,12 +406,11 @@ namespace DiceRoller
 
 		// ========================================================= Properties (Stats) =========================================================
 
-
 		/// <summary>
 		/// The current melee value of this unit.
 		/// </summary>
-		public int Melee 
-		{ 
+		public int Melee
+		{
 			get
 			{
 				return _Melee;
@@ -420,11 +421,16 @@ namespace DiceRoller
 				if (_Melee != clampedValue)
 				{
 					_Melee = clampedValue;
-					OnStatChanged.Invoke();
+					OnMeleeChanged.Invoke();
 				}
 			}
 		}
 		private int _Melee = 0;
+
+		/// <summary>
+		/// Event raised when the melee stat of this unit is changed.
+		/// </summary>
+		public event Action OnMeleeChanged = () => { };
 
 		/// <summary>
 		/// The current defence value of this unit.
@@ -441,11 +447,16 @@ namespace DiceRoller
 				if (_Defence != clampedValue)
 				{
 					_Defence = clampedValue;
-					OnStatChanged.Invoke();
+					OnDefenceChanged.Invoke();
 				}
 			}
 		}
 		private int _Defence = 0;
+
+		/// <summary>
+		/// Event raised when the melee stat of this unit is changed.
+		/// </summary>
+		public event Action OnDefenceChanged = () => { };
 
 		/// <summary>
 		/// The current magic value of this unit.
@@ -462,11 +473,16 @@ namespace DiceRoller
 				if (_Magic != clampedValue)
 				{
 					_Magic = clampedValue;
-					OnStatChanged.Invoke();
+					OnMagicChanged.Invoke();
 				}
 			}
 		}
 		private int _Magic = 0;
+
+		/// <summary>
+		/// Event raised when the melee stat of this unit is changed.
+		/// </summary>
+		public event Action OnMagicChanged = () => { };
 
 		/// <summary>
 		/// The current movement value of this unit.
@@ -483,11 +499,16 @@ namespace DiceRoller
 				if (_Movement != clampedValue)
 				{
 					_Movement = clampedValue;
-					OnStatChanged.Invoke();
+					OnMovementChanged.Invoke();
 				}
 			}
 		}
 		private int _Movement = 0;
+
+		/// <summary>
+		/// Event raised when the melee stat of this unit is changed.
+		/// </summary>
+		public event Action OnMovementChanged = () => { };
 
 		/// <summary>
 		/// The current attack range value of this unit.
@@ -504,12 +525,16 @@ namespace DiceRoller
 				if (_AttackRange != clampedValue)
 				{
 					_AttackRange = clampedValue;
-					OnStatChanged.Invoke();
+					OnAttackRangeChanged.Invoke();
 				}
 			}
 		}
 		private int _AttackRange = 0;
 
+		/// <summary>
+		/// Event raised when the melee stat of this unit is changed.
+		/// </summary>
+		public event Action OnAttackRangeChanged = () => { };
 
 		/// <summary>
 		/// The current knockback force of this unit.
@@ -526,16 +551,17 @@ namespace DiceRoller
 				if (_KnockbackForce != clampedValue)
 				{
 					_KnockbackForce = clampedValue;
-					//OnStatChanged.Invoke();
+					OnKnockbackChanged.Invoke();
 				}
 			}
 		}
 		private float _KnockbackForce = 0;
 
 		/// <summary>
-		/// Event raised when either stat of this unit is changed.
+		/// Event raised when the melee stat of this unit is changed.
 		/// </summary>
-		public event Action OnStatChanged = () => { };
+		public event Action OnKnockbackChanged = () => { };
+
 
 		/// <summary>
 		/// Set the stat values to the inital value.
@@ -598,7 +624,7 @@ namespace DiceRoller
 			}
 		}
 
-		// ========================================================= Properties (AttackRangeRule) =========================================================
+		// ========================================================= Properties (AttackType) =========================================================
 
 		/// <summary>
 		/// The current attack type to be performed by this unit.
@@ -623,7 +649,7 @@ namespace DiceRoller
 		/// <summary>
 		/// Event raised when the current attack type to be performed by this unit is changed.
 		/// </summary>
-		public event Action OnCurrentAttackTypeChanged = () => {};
+		public event Action OnCurrentAttackTypeChanged = () => { };
 
 
 		/// <summary>
@@ -648,7 +674,7 @@ namespace DiceRoller
 		/// The Rule that dictates the attack area of this unit.
 		/// </summary>
 		public AttackAreaRule AttackAreaRule
-		{ 
+		{
 			get
 			{
 				return _AttackAreaRule;
@@ -668,9 +694,8 @@ namespace DiceRoller
 		/// Event raised when the rule that dictates the attack area of this unit is changed. 
 		/// </summary>
 		public event Action OnAttackAreaRuleChanged = () => { };
-	
 
-		private static readonly AttackAreaRule _DefaultMeleeRule =
+		private static readonly AttackAreaRule DefaultMeleeRule =
 			new AttackAreaRule((target, starting, range) => Int2.GridDistance(target.boardPos, starting.boardPos) <= range);
 
 		/// <summary>
@@ -678,7 +703,7 @@ namespace DiceRoller
 		/// </summary>
 		public void ResetAttackAreaRule()
 		{
-			_AttackAreaRule = _DefaultMeleeRule;
+			_AttackAreaRule = DefaultMeleeRule;
 		}
 
 		/// <summary>
@@ -687,6 +712,63 @@ namespace DiceRoller
 		public void ChangeAttackAreaRule(AttackAreaRule rule)
 		{
 			AttackAreaRule = rule;
+		}
+
+		// ========================================================= Properties (MovableArea) =========================================================
+
+		/// <summary>
+		/// A read only list of tiles that this unit can move to.
+		/// </summary>
+		public IReadOnlyCollection<Tile> MoveableTiles
+		{
+			get
+			{
+				return _MoveableTiles.AsReadOnly();
+			}
+		}
+		private List<Tile> _MoveableTiles = new List<Tile>();
+		private List<Tile> _OtherOccupiedTiles = new List<Tile>();
+
+		/// <summary>
+		/// Event raised when the tiles that this unit can move to is changed.
+		/// </summary>
+		public event Action OnMoveableTilesChanged = () => {};
+
+		/// <summary>
+		/// Register necessary callbacks for moveable tiles detection.
+		/// </summary>
+		private void RegisterMoveableTilesDetection()
+		{
+			OnOccupiedTilesChanged += RefreshTilesMovability;
+			OnMovementChanged += RefreshTilesMovability;
+		}
+
+		/// <summary>
+		/// Deregister all callbacks for moveable tiles detection.
+		/// </summary>
+		private void DeregisterMoveableTilesDetection()
+		{
+			OnOccupiedTilesChanged -= RefreshTilesMovability;
+			OnMovementChanged -= RefreshTilesMovability;
+		}
+
+		/// <summary>
+		/// Detect which tiles can this unit move to.
+		/// </summary>
+		private void RefreshTilesMovability()
+		{
+			_OtherOccupiedTiles.Clear();
+			foreach (Player player in game.GetAllPlayers())
+			{
+				foreach (Unit unit in player.units)
+				{
+					if (unit != this)
+					{
+						_OtherOccupiedTiles.AddRange(unit.OccupiedTiles.Except(_OtherOccupiedTiles));
+					}
+				}
+			}
+			board.GetConnectedTilesInRange(OccupiedTiles, _OtherOccupiedTiles, Movement, _MoveableTiles);
 		}
 
 		// ========================================================= Properties (CurrentUnitState) =========================================================
@@ -744,7 +826,7 @@ namespace DiceRoller
 		/// </summary>
 		public event Action OnUnitStateChange = () => { };
 
-		// ========================================================= Properties (Actions) =========================================================
+		// ========================================================= Liminal Properties (Actions) =========================================================
 
 		/// <summary>
 		/// The next movement action chosen by the player.

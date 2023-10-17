@@ -10,6 +10,9 @@ namespace DiceRoller
 		{
 			Normal,
 
+			MovePossible,
+			AttackPossible,
+
 			Move,
 			Attack,
 
@@ -20,7 +23,7 @@ namespace DiceRoller
 			FriendPosition,
 			SelfPosition,
 		} // order of enum denotes display priority, where larger means higher priority
-		public static readonly int DisplayTypeCount = 8;
+		public static readonly int DisplayTypeCount = 10;
 
 		public enum PathDirection
 		{
@@ -305,7 +308,7 @@ namespace DiceRoller
 					}
 					targetRange.SetTileStyle(style);
 					targetRange.SetColor(style.frameColors[displayType], style.backgroundColors[displayType]);
-					targetRange.SetAdjancencies(adjacencies);
+					targetRange.SetAdjancencies(adjacencies, style.dashed[displayType]);
 					targetRange.Show(true);
 					registeredDisplay[displayType].Add(new RangeDisplayEntry(holder, targetRange));
 				}
@@ -314,7 +317,7 @@ namespace DiceRoller
 					// modify existing range
 					entry.range.SetTileStyle(style);
 					entry.range.SetColor(style.frameColors[displayType], style.backgroundColors[displayType]);
-					entry.range.SetAdjancencies(adjacencies);
+					entry.range.SetAdjancencies(adjacencies, style.dashed[displayType]);
 				}
 				ResolveRangeOrder();
 			}
@@ -369,7 +372,7 @@ namespace DiceRoller
 					}			
 					targetRange.SetTileStyle(style);
 					targetRange.SetColor(style.frameColors[displayType], style.backgroundColors[displayType]);
-					targetRange.SetAdjancencies(adjacencies);
+					targetRange.SetAdjancencies(adjacencies, style.dashed[displayType]);
 					targetRange.Show(true);
 					registeredDisplay[displayType].Add(new RangeDisplayEntry(holder, targetRange));
 				}
@@ -378,7 +381,7 @@ namespace DiceRoller
 					// modify existing range
 					entry.range.SetTileStyle(style);
 					entry.range.SetColor(style.frameColors[displayType], style.backgroundColors[displayType]);
-					entry.range.SetAdjancencies(adjacencies);
+					entry.range.SetAdjancencies(adjacencies, style.dashed[displayType]);
 					entry.range.Show(true);
 				}
 				ResolveRangeOrder();

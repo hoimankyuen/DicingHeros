@@ -38,14 +38,8 @@ namespace DiceRoller
 			_DieSlots.Add(new EquipmentDieSlot(
 				this,
 				Die.Type.Unknown,
-				EquipmentDieSlot.Requirement.GreaterThan,
-				4));
-
-			_DieSlots.Add(new EquipmentDieSlot(
-				this,
-				Die.Type.Unknown,
-				EquipmentDieSlot.Requirement.LesserThan,
-				3));
+				EquipmentDieSlot.Requirement.GreaterThanEqual,
+				7));
 		}
 
 		// ========================================================= Information =========================================================
@@ -73,13 +67,24 @@ namespace DiceRoller
 		}
 
 		/// <summary>
-		/// The time of which should this eqipment apply its effect.
+		/// The name to be displayed to the player.
 		/// </summary>
-		public override EffectApplyTime ApplyTime
-		{
+		public override string DisplayableName
+		{ 
 			get
 			{
-				return EffectApplyTime.AtAttack;
+				return "Fireball";
+			}
+		}
+
+		/// <summary>
+		/// The effect discription to be displayed to the player.
+		/// </summary>
+		public override string DisplayableEffectDiscription 
+		{ 
+			get
+			{
+				return "+ 8 Magic\n 3 Range";
 			}
 		}
 
@@ -91,7 +96,7 @@ namespace DiceRoller
 		protected override void AddEffect()
 		{
 			Unit.ChangeAttackType(Unit.AttackType.Magical);
-			Unit.ChangeStat(magicDelta: 12, attackRangeDelta: 2, knockbackForceDelta: 0.25f);
+			Unit.ChangeStat(magicDelta: 8, attackRangeDelta: 2, knockbackForceDelta: 0.1f);
 			Unit.ChangeAttackAreaRule(attackRule);
 		}
 
@@ -101,14 +106,14 @@ namespace DiceRoller
 		protected override void RemoveEffect()
 		{
 			Unit.ChangeAttackType(Unit.AttackType.Physical);
-			Unit.ChangeStat(magicDelta: -12, attackRangeDelta: -2, knockbackForceDelta: -0.25f);
+			Unit.ChangeStat(magicDelta: -8, attackRangeDelta: -2, knockbackForceDelta: -0.1f);
 			Unit.ResetAttackAreaRule();
 		}
 
 		private static AttackAreaRule attackRule = new AttackAreaRule(
 			(target, starting, range) => {
-				return (Mathf.Abs(target.boardPos.x - starting.boardPos.x) <= range && target.boardPos.z == starting.boardPos.z) ||
-					(Mathf.Abs(target.boardPos.z - starting.boardPos.z) <= range && target.boardPos.x == starting.boardPos.x);
-				});
+				return Mathf.Max(Mathf.Abs(target.boardPos.x - starting.boardPos.x), Mathf.Abs(target.boardPos.z - starting.boardPos.z)) <= range &&
+					Mathf.Max(Mathf.Abs(target.boardPos.x - starting.boardPos.x), Mathf.Abs(target.boardPos.z - starting.boardPos.z)) >= 2;
+					});
 	}
 }

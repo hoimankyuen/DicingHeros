@@ -13,6 +13,7 @@ namespace DiceRoller
 		public UIHealthDisplay healthDisplay;
 		public UIStatDisplay statDisplay;
 		public Transform gearFrame;
+		public GameObject equipmentPrefab;
 
 		// reference
 		protected GameController game => GameController.current;
@@ -94,20 +95,13 @@ namespace DiceRoller
 					{
 						for (int i = 0; i < inspectingUnit.Equipments.Count; i++)
 						{
-							// select the correct ui for the equipment
-							GameObject prefab = null;
-							prefab = EquipmentDictionary.GetUIPrefab(inspectingUnit.Equipments[i].EquipmentName);
-
 							// spawn the equipment ui
-							if (prefab != null)
-							{
-								GameObject uiEquipment = Instantiate(prefab, gearFrame);
-								RectTransform rt = uiEquipment.GetComponent<RectTransform>();
-								rt.anchorMin = new Vector2(0, 1);
-								rt.anchorMax = new Vector2(1, 1);
-								rt.anchoredPosition = new Vector3(0, -5 - i * (rt.rect.height + 10), 0);
-								uiEquipment.GetComponent<UIEquipment>().SetInspectingTarget(inspectingUnit.Equipments[i]);
-							}
+							GameObject uiEquipment = Instantiate(equipmentPrefab, gearFrame);
+							RectTransform rt = uiEquipment.GetComponent<RectTransform>();
+							rt.anchorMin = new Vector2(0, 1);
+							rt.anchorMax = new Vector2(1, 1);
+							rt.anchoredPosition = new Vector3(0, -5 - i * (rt.rect.height + 10), 0);
+							uiEquipment.GetComponent<UIEquipment>().SetInspectingTarget(inspectingUnit.Equipments[i]);
 						}
 					}
 				}

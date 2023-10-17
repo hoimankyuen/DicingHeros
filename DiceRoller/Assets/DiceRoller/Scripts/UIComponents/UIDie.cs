@@ -340,16 +340,22 @@ namespace DiceRoller
 						valueText.text = value == -1 ? "?" : value.ToString();
 						break;
 					case EquipmentDieSlot.Requirement.GreaterThan:
-						valueText.text = ">" + (value == -1 ? "?" : value.ToString());
+						valueText.text = "> " + (value == -1 ? "?" : value.ToString());
+						break;
+					case EquipmentDieSlot.Requirement.GreaterThanEqual:
+						valueText.text = "≥ " + (value == -1 ? "?" : value.ToString());
 						break;
 					case EquipmentDieSlot.Requirement.LesserThan:
-						valueText.text = "<" + (value == -1 ? "?" : value.ToString());
+						valueText.text = "< " + (value == -1 ? "?" : value.ToString());
+						break;
+					case EquipmentDieSlot.Requirement.LesserThanEqual:
+						valueText.text = "≤ " + (value == -1 ? "?" : value.ToString());
 						break;
 					case EquipmentDieSlot.Requirement.Equals:
-						valueText.text = "=" + (value == -1 ? "?" : value.ToString());
+						valueText.text = "= " + (value == -1 ? "?" : value.ToString());
 						break;
 					case EquipmentDieSlot.Requirement.NotEquals:
-						valueText.text = "≠" + (value == -1 ? "?" : value.ToString());
+						valueText.text = "≠ " + (value == -1 ? "?" : value.ToString());
 						break;
 					case EquipmentDieSlot.Requirement.IsEven:
 						valueText.text = "Even";

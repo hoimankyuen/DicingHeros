@@ -83,7 +83,7 @@ namespace DiceRoller
 			DeregisterCallbacks(this.target);
 			RegisterCallbacks(target);
 
-			// set values
+			// set information
 			this.target = target;
 			RefreshDisplay();
 
@@ -134,6 +134,10 @@ namespace DiceRoller
 		{
 			if (target != null)
 			{
+				// change text
+				titleText.text = target.DisplayableName;
+				contentText.text = target.DisplayableEffectDiscription;
+
 				// change effects
 				outlineImage.enabled = target.IsActivated;
 

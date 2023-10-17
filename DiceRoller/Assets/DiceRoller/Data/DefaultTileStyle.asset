@@ -16,27 +16,43 @@ MonoBehaviour:
   - type: 0
     frameColor: {r: 1, g: 1, b: 1, a: 1}
     backgroundColor: {r: 1, g: 1, b: 1, a: 0}
+    dashed: 0
   - type: 1
     frameColor: {r: 0, g: 0, b: 1, a: 1}
-    backgroundColor: {r: 0, g: 0, b: 1, a: 0.2509804}
+    backgroundColor: {r: 0, g: 0, b: 1, a: 0}
+    dashed: 1
   - type: 2
     frameColor: {r: 1, g: 0, b: 0, a: 1}
-    backgroundColor: {r: 1, g: 0, b: 0, a: 0.2509804}
+    backgroundColor: {r: 1, g: 0, b: 0, a: 0}
+    dashed: 1
   - type: 3
-    frameColor: {r: 0, g: 1, b: 0, a: 1}
-    backgroundColor: {r: 0, g: 1, b: 0, a: 0.2509804}
+    frameColor: {r: 0.09451604, g: 0, b: 1, a: 1}
+    backgroundColor: {r: 0, g: 0, b: 1, a: 0.2509804}
+    dashed: 0
   - type: 4
     frameColor: {r: 1, g: 0, b: 0, a: 1}
     backgroundColor: {r: 1, g: 0, b: 0, a: 0.2509804}
+    dashed: 0
   - type: 5
+    frameColor: {r: 0, g: 1, b: 0, a: 1}
+    backgroundColor: {r: 0, g: 1, b: 0, a: 0.2509804}
+    dashed: 0
+  - type: 6
     frameColor: {r: 1, g: 0, b: 0, a: 1}
     backgroundColor: {r: 1, g: 0, b: 0, a: 0.2509804}
-  - type: 6
+    dashed: 0
+  - type: 7
+    frameColor: {r: 1, g: 0, b: 0, a: 1}
+    backgroundColor: {r: 1, g: 0, b: 0, a: 0.2509804}
+    dashed: 0
+  - type: 8
     frameColor: {r: 1, g: 0.5, b: 0, a: 1}
     backgroundColor: {r: 1, g: 0.5, b: 0, a: 0.2509804}
-  - type: 7
+    dashed: 0
+  - type: 9
     frameColor: {r: 0.09451604, g: 1, b: 0, a: 1}
     backgroundColor: {r: 0, g: 1, b: 0, a: 0.2509804}
+    dashed: 0
   pathDirecitonSpriteEntries:
   - directions:
       from: 0
@@ -102,7 +118,7 @@ MonoBehaviour:
       from: 5
       to: 0
     sprite: {fileID: 1152286761345384294, guid: f4d44d751dd7ac44f9eb05121cb312ea, type: 3}
-  frameSprites:
+  frameSolidSprites:
   - {fileID: -5713798065741706917, guid: 9656b95b4f6379d4197fc7c7ca3c8aea, type: 3}
   - {fileID: -5942279834736413795, guid: 9656b95b4f6379d4197fc7c7ca3c8aea, type: 3}
   - {fileID: -248460151707736418, guid: 9656b95b4f6379d4197fc7c7ca3c8aea, type: 3}
@@ -135,6 +151,39 @@ MonoBehaviour:
   - {fileID: 6542190902616160500, guid: 9656b95b4f6379d4197fc7c7ca3c8aea, type: 3}
   - {fileID: 825511749482489702, guid: 9656b95b4f6379d4197fc7c7ca3c8aea, type: 3}
   - {fileID: 7658785451460725904, guid: 9656b95b4f6379d4197fc7c7ca3c8aea, type: 3}
+  frameDashedSprites:
+  - {fileID: -5836847916380212249, guid: cce464b3a9192de40bf97f2ac8717c68, type: 3}
+  - {fileID: 4898968171460704577, guid: cce464b3a9192de40bf97f2ac8717c68, type: 3}
+  - {fileID: 1382425842100762418, guid: cce464b3a9192de40bf97f2ac8717c68, type: 3}
+  - {fileID: 7404623820820030065, guid: cce464b3a9192de40bf97f2ac8717c68, type: 3}
+  - {fileID: 6363231460937653009, guid: cce464b3a9192de40bf97f2ac8717c68, type: 3}
+  - {fileID: 7021951828451821872, guid: cce464b3a9192de40bf97f2ac8717c68, type: 3}
+  - {fileID: 8885542013277650223, guid: cce464b3a9192de40bf97f2ac8717c68, type: 3}
+  - {fileID: 4337745829497420682, guid: cce464b3a9192de40bf97f2ac8717c68, type: 3}
+  - {fileID: -1017322739454127895, guid: cce464b3a9192de40bf97f2ac8717c68, type: 3}
+  - {fileID: 7020655601070864504, guid: cce464b3a9192de40bf97f2ac8717c68, type: 3}
+  - {fileID: 2658166157684724804, guid: cce464b3a9192de40bf97f2ac8717c68, type: 3}
+  - {fileID: 1760430150055248938, guid: cce464b3a9192de40bf97f2ac8717c68, type: 3}
+  - {fileID: 4228851541061155899, guid: cce464b3a9192de40bf97f2ac8717c68, type: 3}
+  - {fileID: -949969885869408185, guid: cce464b3a9192de40bf97f2ac8717c68, type: 3}
+  - {fileID: 4770208553492557480, guid: cce464b3a9192de40bf97f2ac8717c68, type: 3}
+  - {fileID: -1867912852684521906, guid: cce464b3a9192de40bf97f2ac8717c68, type: 3}
+  - {fileID: -2030848909662226127, guid: cce464b3a9192de40bf97f2ac8717c68, type: 3}
+  - {fileID: 6680015851420024540, guid: cce464b3a9192de40bf97f2ac8717c68, type: 3}
+  - {fileID: -1398647991478309945, guid: cce464b3a9192de40bf97f2ac8717c68, type: 3}
+  - {fileID: -5841656969631131190, guid: cce464b3a9192de40bf97f2ac8717c68, type: 3}
+  - {fileID: -3846199211306381208, guid: cce464b3a9192de40bf97f2ac8717c68, type: 3}
+  - {fileID: 6357881786980638269, guid: cce464b3a9192de40bf97f2ac8717c68, type: 3}
+  - {fileID: 1926007957026755356, guid: cce464b3a9192de40bf97f2ac8717c68, type: 3}
+  - {fileID: 1498046480223838520, guid: cce464b3a9192de40bf97f2ac8717c68, type: 3}
+  - {fileID: -2786397674310712116, guid: cce464b3a9192de40bf97f2ac8717c68, type: 3}
+  - {fileID: -62129652521187155, guid: cce464b3a9192de40bf97f2ac8717c68, type: 3}
+  - {fileID: 8184486903729757890, guid: cce464b3a9192de40bf97f2ac8717c68, type: 3}
+  - {fileID: -1425897226434387019, guid: cce464b3a9192de40bf97f2ac8717c68, type: 3}
+  - {fileID: 3905803410770200237, guid: cce464b3a9192de40bf97f2ac8717c68, type: 3}
+  - {fileID: -1092489764402594673, guid: cce464b3a9192de40bf97f2ac8717c68, type: 3}
+  - {fileID: 64362266481130279, guid: cce464b3a9192de40bf97f2ac8717c68, type: 3}
+  - {fileID: -6493860216099402698, guid: cce464b3a9192de40bf97f2ac8717c68, type: 3}
   frameMasks:
   - {fileID: 6879347760117335681, guid: 15f7f4d4bef1fdf43ac8ffb8a156363a, type: 3}
   - {fileID: -1095312608652509620, guid: 15f7f4d4bef1fdf43ac8ffb8a156363a, type: 3}

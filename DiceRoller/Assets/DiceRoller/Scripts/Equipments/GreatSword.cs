@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace DiceRoller
 {
-	public class SimpleShoe : Equipment
+	public class GreatSword : Equipment
 	{
 		// ========================================================= Properties =========================================================
 
@@ -13,16 +13,16 @@ namespace DiceRoller
 		/// </summary>
 		public override IReadOnlyList<EquipmentDieSlot> DieSlots
 		{
-			get { return _slotTypes.AsReadOnly(); }
+			get { return _DieSlots.AsReadOnly(); }
 		}
-		private List<EquipmentDieSlot> _slotTypes = new List<EquipmentDieSlot>();
+		private List<EquipmentDieSlot> _DieSlots = new List<EquipmentDieSlot>();
 
 		// ========================================================= Constructor =========================================================
 
 		/// <summary>
 		/// Construcddtor.
 		/// </summary>
-		public SimpleShoe(Unit unit) : base(unit)
+		public GreatSword(Unit unit) : base(unit)
 		{
 
 		}
@@ -34,11 +34,11 @@ namespace DiceRoller
 		/// </summary>
 		protected override void FillDieSlots()
 		{
-			_slotTypes.Add(new EquipmentDieSlot(
-				this, 
+			_DieSlots.Add(new EquipmentDieSlot(
+				this,
 				Die.Type.Unknown,
-				EquipmentDieSlot.Requirement.GreaterThan, 
-				3));
+				EquipmentDieSlot.Requirement.GreaterThanEqual,
+				5));
 		}
 
 		// ========================================================= Information =========================================================
@@ -46,11 +46,11 @@ namespace DiceRoller
 		/// <summary>
 		/// The name of this equipment.
 		/// </summary>
-		public override EquipmentDictionary.Name EquipmentName 
-		{ 
+		public override EquipmentDictionary.Name EquipmentName
+		{
 			get
 			{
-				return EquipmentDictionary.Name.SimpleShoe;
+				return EquipmentDictionary.Name.GreatSword;
 			}
 		}
 
@@ -61,18 +61,30 @@ namespace DiceRoller
 		{
 			get
 			{
-				return EquipmentType.Movement;
+				return EquipmentType.Melee;
+			}
+		}
+
+
+		/// <summary>
+		/// The name to be displayed to the player.
+		/// </summary>
+		public override string DisplayableName
+		{
+			get
+			{
+				return "Great Sword";
 			}
 		}
 
 		/// <summary>
-		/// The time of which should this eqipment apply its effect.
+		/// The effect discription to be displayed to the player.
 		/// </summary>
-		public override EffectApplyTime ApplyTime
+		public override string DisplayableEffectDiscription
 		{
 			get
 			{
-				return EffectApplyTime.AtMove;
+				return "+ 6 Attack";
 			}
 		}
 
@@ -83,7 +95,7 @@ namespace DiceRoller
 		/// </summary>
 		protected override void AddEffect()
 		{
-			Unit.ChangeStat(movementDelta: 3);
+			Unit.ChangeStat(meleeDelta: 6, knockbackForceDelta: 0.25f);
 		}
 
 		/// <summary>
@@ -91,7 +103,7 @@ namespace DiceRoller
 		/// </summary>
 		protected override void RemoveEffect()
 		{
-			Unit.ChangeStat(movementDelta: -3);
+			Unit.ChangeStat(meleeDelta: -6, knockbackForceDelta: -0.25f);
 		}
 	}
 }

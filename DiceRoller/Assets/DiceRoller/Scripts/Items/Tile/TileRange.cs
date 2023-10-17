@@ -68,7 +68,7 @@ namespace DiceRoller
             }
         }
 
-        public void SetAdjancencies(Adj adjacencies)
+        public void SetAdjancencies(Adj adjacencies, bool dashed)
         {
             /*
              * Note: 
@@ -157,10 +157,20 @@ namespace DiceRoller
                 (adjacencies & (Adj.BottomRight | Adj.Bottom | Adj.Right)) == (Adj.Bottom | Adj.Right | Adj.BottomRight) ? 21 :
                 20;
 
-            frameRenderers[0].sprite = tileStyle.frameSprites[r0];
-            frameRenderers[1].sprite = tileStyle.frameSprites[r1];
-            frameRenderers[2].sprite = tileStyle.frameSprites[r2];
-            frameRenderers[3].sprite = tileStyle.frameSprites[r3];
+            if (dashed)
+            {
+                frameRenderers[0].sprite = tileStyle.frameDashedSprites[r0];
+                frameRenderers[1].sprite = tileStyle.frameDashedSprites[r1];
+                frameRenderers[2].sprite = tileStyle.frameDashedSprites[r2];
+                frameRenderers[3].sprite = tileStyle.frameDashedSprites[r3];
+            }
+            else
+            {
+                frameRenderers[0].sprite = tileStyle.frameSolidSprites[r0];
+                frameRenderers[1].sprite = tileStyle.frameSolidSprites[r1];
+                frameRenderers[2].sprite = tileStyle.frameSolidSprites[r2];
+                frameRenderers[3].sprite = tileStyle.frameSolidSprites[r3];
+            }
 
             backgroundRenderers[0].sprite = tileStyle.frameMasks[r0];
             backgroundRenderers[1].sprite = tileStyle.frameMasks[r1];

@@ -15,5 +15,15 @@ namespace DiceRoller
 		public List<Unit> units = new List<Unit>();
 		[System.NonSerialized]
 		public List<Die> dice = new List<Die>();
+
+		public void SortUnits()
+		{
+			units.Sort((a, b) => a.name.CompareTo(b.name));
+		}
+
+		public void SortDice()
+		{
+			dice.Sort((a, b) => a.type.CompareTo(b.type));
+		}
 	}
 }

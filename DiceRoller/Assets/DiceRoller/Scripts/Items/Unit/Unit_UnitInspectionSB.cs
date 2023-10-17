@@ -15,6 +15,7 @@ namespace DiceRoller
 			// caches
 			private bool isSelectedAtEnter = false;
 			private List<Tile> lastOccupiedTiles = new List<Tile>();
+			private List<Tile> lastAttackArea = new List<Tile>();
 
 			private Vector2 pressedPosition1 = Vector2.negativeInfinity;
 
@@ -50,6 +51,13 @@ namespace DiceRoller
 					foreach (Tile tile in lastOccupiedTiles)
 					{
 						tile.UpdateDisplayAs(self, Tile.DisplayType.EnemyPosition, lastOccupiedTiles);
+					}
+
+					// show attack range
+					board.GetTilesByRule(self.MoveableTiles, self.AttackAreaRule, self.AttackRange, lastAttackArea);
+					foreach (Tile tile in lastAttackArea)
+					{
+						tile.UpdateDisplayAs(self, Tile.DisplayType.AttackPossible, lastAttackArea);
 					}
 				}
 			}
@@ -93,7 +101,15 @@ namespace DiceRoller
 						tile.UpdateDisplayAs(self, Tile.DisplayType.EnemyPosition, Tile.EmptyTiles);
 					}
 					lastOccupiedTiles.Clear();
-					
+
+
+					// show attack range
+					foreach (Tile tile in lastAttackArea)
+					{
+						tile.UpdateDisplayAs(self, Tile.DisplayType.AttackPossible, Tile.EmptyTiles);
+					}
+					lastAttackArea.Clear();
+
 					// reset cache
 					InputUtils.ResetPressCache(ref pressedPosition1);
 				}

@@ -14,7 +14,9 @@ namespace DiceRoller
 		{
 			None,
 			GreaterThan,
+			GreaterThanEqual,
 			LesserThan,
+			LesserThanEqual,
 			Equals,
 			NotEquals,
 			IsEven,
@@ -115,8 +117,12 @@ namespace DiceRoller
 					return true;
 				case Requirement.GreaterThan:
 					return die.Value > parameter;
+				case Requirement.GreaterThanEqual:
+					return die.Value >= parameter;
 				case Requirement.LesserThan:
 					return die.Value < parameter;
+				case Requirement.LesserThanEqual:
+					return die.Value <= parameter;
 				case Requirement.Equals:
 					return die.Value == parameter;
 				case Requirement.NotEquals:

@@ -13,6 +13,7 @@ namespace DiceRoller
 			public Tile.DisplayType type;
 			public Color frameColor;
 			public Color backgroundColor;
+			public bool dashed;
 		}
 
 		[System.Serializable]
@@ -28,23 +29,30 @@ namespace DiceRoller
 		public Dictionary<Tile.DisplayType, Color> frameColors;
 		[HideInInspector]
 		public Dictionary<Tile.DisplayType, Color> backgroundColors;
+		[HideInInspector]
+		public Dictionary<Tile.DisplayType, bool> dashed;
 
 		[SerializeField]
 		protected List<PathDirectionSpriteEntry> pathDirecitonSpriteEntries = new List<PathDirectionSpriteEntry>();
 		[HideInInspector]
 		public Dictionary<Tile.PathDirections, Sprite> pathDirectionSprites;
 
-		public List<Sprite> frameSprites = new List<Sprite>();
+		[UnityEngine.Serialization.FormerlySerializedAs("frameSprites")]
+		public List<Sprite> frameSolidSprites = new List<Sprite>();
+		public List<Sprite> frameDashedSprites = new List<Sprite>();
+
 		public List<Sprite> frameMasks = new List<Sprite>();
 
 		protected void OnEnable()
 		{
 			frameColors = new Dictionary<Tile.DisplayType, Color>();
 			backgroundColors = new Dictionary<Tile.DisplayType, Color>();
+			dashed = new Dictionary<Tile.DisplayType, bool>();
 			foreach (VisualSpriteEntry entry in visualSpriteEntries)
 			{
 				frameColors[entry.type] = entry.frameColor;
 				backgroundColors[entry.type] = entry.backgroundColor;
+				dashed[entry.type] = entry.dashed;
 			}
 
 			pathDirectionSprites = new Dictionary<Tile.PathDirections, Sprite>();

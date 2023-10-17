@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace DiceRoller
@@ -13,8 +14,13 @@ namespace DiceRoller
 
 			// caches
 			private bool lastIsHovering = false;
+
 			private List<Tile> lastOccupiedTiles = new List<Tile>();
 			private List<Tile> affectedOccupiedTiles = new List<Tile>();
+
+			private List<Tile> possibleAttackArea = new List<Tile>();
+			private List<Tile> lastPossibleArea = new List<Tile>();
+			private List<Tile> affectedPossibleARea = new List<Tile>();
 
 			// ========================================================= Constructor =========================================================
 
@@ -33,6 +39,11 @@ namespace DiceRoller
 			/// </summary>
 			public override void OnStateEnter()
 			{
+				// calculage attack range
+				if (self.Player != game.CurrentPlayer)
+				{
+					board.GetTilesByRule(self.MoveableTiles, self.AttackAreaRule, self.AttackRange, possibleAttackArea);
+				}
 			}
 
 			/// <summary>
@@ -43,21 +54,32 @@ namespace DiceRoller
 				// only work on still alive units
 				if (self.CurrentUnitState != UnitState.Defeated)
 				{
-					// show occupied tiles on the board
-					IReadOnlyCollection<Tile> tiles = self.IsHovering ? self.OccupiedTiles : Tile.EmptyTiles;
-					if (CachedValueUtils.HasCollectionChanged(tiles, lastOccupiedTiles, affectedOccupiedTiles))
-					{
-						foreach (Tile tile in affectedOccupiedTiles)
-						{
-							tile.UpdateDisplayAs(self, self.Player == game.CurrentPlayer ? Tile.DisplayType.SelfPosition : Tile.DisplayType.EnemyPosition, tiles);
-						}
-					}
-
-					// show unit info on ui
+					// hovering effects
 					if (CachedValueUtils.HasValueChanged(self.IsHovering, ref lastIsHovering))
 					{
+						// allow inspection
 						self.IsBeingInspected = self.IsHovering;
 						self.ShowEffect(self.Player == game.CurrentPlayer ? EffectType.InspectingSelf : EffectType.InspectingEnemy, self.IsHovering);
+
+						// show occupied tiles on the board
+						IReadOnlyCollection<Tile> occupiedTiles = self.IsHovering ? self.OccupiedTiles : Tile.EmptyTiles;
+						if (CachedValueUtils.HasCollectionChanged(occupiedTiles, lastOccupiedTiles, affectedOccupiedTiles))
+						{
+							foreach (Tile tile in affectedOccupiedTiles)
+							{
+								tile.UpdateDisplayAs(self, self.Player == game.CurrentPlayer ? Tile.DisplayType.SelfPosition : Tile.DisplayType.EnemyPosition, occupiedTiles);
+							}
+						}
+
+						// show possible movement or attack range on the board
+						IReadOnlyCollection<Tile> possibleTiles = self.IsHovering ? (self.Player == game.CurrentPlayer ? self.MoveableTiles : possibleAttackArea) : Tile.EmptyTiles;
+						if (CachedValueUtils.HasCollectionChanged(possibleTiles, lastPossibleArea, affectedPossibleARea))
+						{
+							foreach (Tile tile in affectedPossibleARea)
+							{
+								tile.UpdateDisplayAs(self, self.Player == game.CurrentPlayer ? Tile.DisplayType.MovePossible : Tile.DisplayType.AttackPossible, possibleTiles);
+							}
+						}
 					}
 
 					// go to unit movement selection state, unit attack selection state or unit depleted select staet when this unit is pressed
@@ -98,6 +120,12 @@ namespace DiceRoller
 				foreach (Tile tile in lastOccupiedTiles)
 				{
 					tile.UpdateDisplayAs(self, self.Player == game.CurrentPlayer ? Tile.DisplayType.SelfPosition : Tile.DisplayType.EnemyPosition, Tile.EmptyTiles);
+				}
+
+				// hidepossible movement or attack range on the board
+				foreach (Tile tile in lastPossibleArea)
+				{
+					tile.UpdateDisplayAs(self, self.Player == game.CurrentPlayer ? Tile.DisplayType.MovePossible : Tile.DisplayType.AttackPossible, Tile.EmptyTiles);
 				}
 
 				// hide unit info on ui

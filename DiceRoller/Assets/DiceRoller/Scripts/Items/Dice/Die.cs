@@ -181,6 +181,7 @@ namespace DiceRoller
 			if (Player != null)
 			{
 				Player.dice.Add(this);
+				Player.SortDice();
 			}
 		}
 

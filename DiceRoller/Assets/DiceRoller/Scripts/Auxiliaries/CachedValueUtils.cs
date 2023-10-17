@@ -39,6 +39,23 @@ public class CachedValueUtils
 		cache = default;
 	}
 
+	public static bool HasCollectionChanged<T>(IReadOnlyCollection<T> target, ICollection<T> cache)
+	{
+		if (!target.SequenceEqual(cache))
+		{
+			cache.Clear();
+			foreach (T t in target)
+			{
+				cache.Add(t);
+			}
+
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
 	public static bool HasCollectionChanged<T>(IReadOnlyCollection<T> target, ICollection<T> cache, ICollection<T> affected)
 	{
 		if (!target.SequenceEqual(cache))
@@ -67,6 +84,10 @@ public class CachedValueUtils
 		}
 	}
 
+	public static void ResetCollectionCache<T>(ICollection<T> cache)
+	{
+		cache.Clear();
+	}
 	public static void ResetCollectionCache<T>(ICollection<T> cache, ICollection<T> affected)
 	{
 		cache.Clear();

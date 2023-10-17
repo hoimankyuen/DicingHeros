@@ -63,7 +63,10 @@ namespace DiceRoller
             if (target == null)
                 return;
 
-            target.OnStatChanged += RefreshDisplay;
+            target.OnMeleeChanged += RefreshDisplay;
+            target.OnMagicChanged += RefreshDisplay;
+            target.OnDefenceChanged += RefreshDisplay;
+            target.OnMovementChanged += RefreshDisplay;
             target.OnCurrentAttackTypeChanged += RefreshDisplay;
         }
 
@@ -75,7 +78,10 @@ namespace DiceRoller
             if (target == null)
                 return;
 
-            target.OnStatChanged -= RefreshDisplay;
+            target.OnMeleeChanged -= RefreshDisplay;
+            target.OnMagicChanged -= RefreshDisplay;
+            target.OnDefenceChanged -= RefreshDisplay;
+            target.OnMovementChanged -= RefreshDisplay;
             target.OnCurrentAttackTypeChanged -= RefreshDisplay;
         }
 

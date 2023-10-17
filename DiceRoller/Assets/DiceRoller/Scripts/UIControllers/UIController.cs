@@ -114,7 +114,7 @@ namespace DiceRoller
 			infoWindow.Show = false;
 			generalControlWindow.Show = false;
 			unitControlWindow.Show = false;
-			inspectedItemWindow.Show = false;
+			//inspectedItemWindow.Show = false;
 			diceListWindow.Show = false;
 			unitListWindow.Show = false;
 			diceDetailWindow.Show = false;
@@ -178,7 +178,7 @@ namespace DiceRoller
 			public override void OnStateEnter()
 			{
 				self.infoWindow.Show = true;
-				self.inspectedItemWindow.Show = true;
+				//self.inspectedItemWindow.Show = true;
 				self.diceListWindow.Show = true;
 				self.unitListWindow.Show = true;
 				self.generalControlWindow.Show = true;
@@ -197,7 +197,7 @@ namespace DiceRoller
 			public override void OnStateExit()
 			{
 				self.infoWindow.Show = false;
-				self.inspectedItemWindow.Show = false;
+				//self.inspectedItemWindow.Show = false;
 				self.diceListWindow.Show = false;
 				self.unitListWindow.Show = false;
 				self.generalControlWindow.Show = false;
@@ -224,7 +224,7 @@ namespace DiceRoller
 			public override void OnStateEnter()
 			{
 				self.infoWindow.Show = true;
-				self.inspectedItemWindow.Show = true;
+				//self.inspectedItemWindow.Show = true;
 				self.unitDetailSelfWindow.Show = true;
 				self.diceListWindow.Show = true;
 				self.unitControlWindow.Show = true;
@@ -246,7 +246,7 @@ namespace DiceRoller
 			public override void OnStateExit()
 			{
 				self.infoWindow.Show = false;
-				self.inspectedItemWindow.Show = false;
+				//self.inspectedItemWindow.Show = false;
 				self.unitDetailSelfWindow.Show = false;
 				self.diceListWindow.Show = false;
 				self.unitControlWindow.Show = false;
@@ -276,7 +276,7 @@ namespace DiceRoller
 			public override void OnStateEnter()
 			{
 				self.infoWindow.Show = true;
-				self.inspectedItemWindow.Show = true;
+				//self.inspectedItemWindow.Show = true;
 				self.unitDetailSelfWindow.Show = true;
 				self.diceListWindow.Show = true;
 				self.unitControlWindow.Show = true;
@@ -298,7 +298,7 @@ namespace DiceRoller
 			public override void OnStateExit()
 			{
 				self.infoWindow.Show = false;
-				self.inspectedItemWindow.Show = false;
+				//self.inspectedItemWindow.Show = false;
 				self.unitDetailSelfWindow.Show = false;
 				self.diceListWindow.Show = false;
 				self.unitControlWindow.Show = false;
@@ -328,7 +328,7 @@ namespace DiceRoller
 			public override void OnStateEnter()
 			{
 				self.infoWindow.Show = true;
-				self.inspectedItemWindow.Show = true;
+				//self.inspectedItemWindow.Show = true;
 				self.unitDetailSelfWindow.Show = true;
 				self.diceListWindow.Show = true;
 				self.unitControlWindow.Show = true;
@@ -349,7 +349,7 @@ namespace DiceRoller
 			public override void OnStateExit()
 			{
 				self.infoWindow.Show = false;
-				self.inspectedItemWindow.Show = false;
+				//self.inspectedItemWindow.Show = false;
 				self.unitDetailSelfWindow.Show = false;
 				self.diceListWindow.Show = false;
 				self.unitControlWindow.Show = false;
@@ -424,7 +424,7 @@ namespace DiceRoller
 			public override void OnStateEnter()
 			{
 				self.infoWindow.Show = true;
-				self.inspectedItemWindow.Show = true;
+				//self.inspectedItemWindow.Show = true;
 				//self.diceDetailWindow.Show = true;
 				self.diceListWindow.Show = true;
 			}
@@ -442,7 +442,7 @@ namespace DiceRoller
 			public override void OnStateExit()
 			{
 				self.infoWindow.Show = false;
-				self.inspectedItemWindow.Show = false;
+				//self.inspectedItemWindow.Show = false;
 				//self.diceDetailWindow.Show = false;
 				self.diceListWindow.Show = false;
 			}

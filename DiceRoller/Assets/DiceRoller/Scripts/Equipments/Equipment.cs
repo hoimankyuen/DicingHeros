@@ -13,15 +13,9 @@ namespace DiceRoller
 			Movement,
 			Melee,
 			Magic,
-			Buff,
-		}
-
-		public enum EffectApplyTime
-		{
-			AtMove,
-			AtAttack,
-			AtDefend,
-			AtActivation,
+			MeleeBuff,
+			MagicBuff,
+			Defence,
 		}
 
 		// ========================================================= Constructor =========================================================
@@ -129,9 +123,14 @@ namespace DiceRoller
 		public abstract EquipmentType Type { get; }
 
 		/// <summary>
-		/// The time of which should this eqipment apply its effect.
+		/// The name to be displayed to the player.
 		/// </summary>
-		public abstract EffectApplyTime ApplyTime { get; }
+		public abstract string DisplayableName { get; }
+
+		/// <summary>
+		/// The effect discription to be displayed to the player.
+		/// </summary>
+		public abstract string DisplayableEffectDiscription { get; }
 
 		// ========================================================= Properties (Unit) =========================================================
 

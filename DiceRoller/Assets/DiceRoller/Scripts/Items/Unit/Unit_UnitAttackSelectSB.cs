@@ -167,10 +167,32 @@ namespace DiceRoller
 						// fill in attack parameters
 						self.NextAttack = new UnitAttack(target, damage, self.KnockbackForce);
 
-						// use any activated equipment that are used at move state
-						foreach (Equipment equipment in self.Equipments.Where(x => x.ApplyTime == Equipment.EffectApplyTime.AtAttack && x.IsActivated))
+						// use any activated equipment that are used at attack state
+						foreach (Equipment equipment in self.Equipments)
 						{
-							equipment.ApplyEffect();
+							if (self.CurrentAttackType == AttackType.Physical)
+							{
+								if (equipment.IsActivated && (equipment.Type == Equipment.EquipmentType.Melee || equipment.Type == Equipment.EquipmentType.MeleeBuff))
+								{
+									equipment.ApplyEffect();
+								}
+							}
+							else if (self.CurrentAttackType == AttackType.Magical)
+							{
+								if (equipment.IsActivated && (equipment.Type == Equipment.EquipmentType.Magic || equipment.Type == Equipment.EquipmentType.MagicBuff))
+								{
+									equipment.ApplyEffect();
+								}
+							}
+						}
+
+						// use any activated equipment on the target that are used as defence
+						foreach (Equipment equipment in target.Equipments)
+						{
+							if (equipment.IsActivated && equipment.Type == Equipment.EquipmentType.Defence)
+							{
+								equipment.ApplyEffect();
+							}
 						}
 
 						stateMachine.ChangeState(SMState.UnitAttack);
