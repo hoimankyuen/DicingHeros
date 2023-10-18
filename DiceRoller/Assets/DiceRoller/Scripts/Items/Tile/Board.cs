@@ -283,7 +283,7 @@ namespace DiceRoller
 		/// <summary>
 		/// Find all connected tiles within a certain range of this tile, and return them in the supplied list.
 		/// </summary>
-		public void GetConnectedTilesInRange(IReadOnlyCollection<Tile> startingTiles, List<Tile> excludedTiles, int range, in List<Tile> result)
+		public void GetConnectedTilesInRange(IReadOnlyCollection<Tile> startingTiles, IReadOnlyCollection<Tile> excludedTiles, int range, in List<Tile> result)
 		{
 			// prepare containers
 			List<TileRangePair> open = tempTileRangePairs;

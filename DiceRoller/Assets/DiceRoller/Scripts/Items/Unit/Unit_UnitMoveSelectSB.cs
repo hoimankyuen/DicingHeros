@@ -18,8 +18,10 @@ namespace DiceRoller
 
 			private List<Tile> lastOccupiedTiles = new List<Tile>();
 			private List<Tile> otherOccupiedTiles = new List<Tile>();
+
+			private int lastMovement = 0;
 			private List<Tile> lastMovementArea = new List<Tile>();
-			private List<Tile> affectedMovementArea = new List<Tile>();
+			
 			private List<Tile> lastPath = new List<Tile>();
 			private Tile lastTargetTile = null;
 			private bool lastReachable = true;
@@ -64,18 +66,8 @@ namespace DiceRoller
 						tile.UpdateDisplayAs(self, Tile.DisplayType.SelfPosition, lastOccupiedTiles);
 					}
 
-					// find all tiles that are occupied by other units
-					otherOccupiedTiles.Clear();
-					foreach (Player player in game.GetAllPlayers())
-					{
-						foreach (Unit unit in player.units)
-						{
-							if (unit != self)
-							{
-								otherOccupiedTiles.AddRange(unit.OccupiedTiles.Except(otherOccupiedTiles));
-							}
-						}
-					}
+					// retrieve other occupied tiles
+					otherOccupiedTiles.AddRange(self.AllOccupiedTilesExceptSelf);
 				}
 			}
 
@@ -90,11 +82,16 @@ namespace DiceRoller
 				if (isSelectedAtEnter)
 				{
 					// update movement area if needed
-					if (CachedValueUtils.HasCollectionChanged(self.MoveableTiles, lastMovementArea, affectedMovementArea))
+					if (CachedValueUtils.HasValueChanged(self.Movement, ref lastMovement))
 					{
-						foreach (Tile tile in affectedMovementArea)
+						foreach (Tile tile in lastMovementArea)
 						{
-							tile.UpdateDisplayAs(self, Tile.DisplayType.Move, self.MoveableTiles);
+							tile.RemoveDisplay(self, Tile.DisplayType.Move);
+						}
+						board.GetConnectedTilesInRange(self.OccupiedTiles, otherOccupiedTiles, self.Movement, lastMovementArea);
+						foreach (Tile tile in lastMovementArea)
+						{
+							tile.UpdateDisplayAs(self, Tile.DisplayType.Move, lastMovementArea);
 						}
 					}
 
@@ -317,7 +314,7 @@ namespace DiceRoller
 					}
 
 					// reset cache
-					CachedValueUtils.ResetCollectionCache(lastMovementArea, affectedMovementArea);
+					CachedValueUtils.ResetValueCache(ref lastMovement);
 
 					lastOccupiedTiles.Clear();
 					otherOccupiedTiles.Clear();

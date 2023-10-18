@@ -15,6 +15,8 @@ namespace DiceRoller
 			// caches
 			private bool lastIsHovering = false;
 
+			private List<Tile> lastMoveableTiles = new List<Tile>();
+
 			private List<Tile> lastOccupiedTiles = new List<Tile>();
 			private List<Tile> affectedOccupiedTiles = new List<Tile>();
 
@@ -39,10 +41,13 @@ namespace DiceRoller
 			/// </summary>
 			public override void OnStateEnter()
 			{
+				// retrieve moveable area
+				board.GetConnectedTilesInRange(self.OccupiedTiles, self.AllOccupiedTilesExceptSelf, self.Movement, lastMoveableTiles);
+
 				// calculage attack range
 				if (self.Player != game.CurrentPlayer)
 				{
-					board.GetTilesByRule(self.MoveableTiles, self.AttackAreaRule, self.AttackRange, possibleAttackArea);
+					board.GetTilesByRule(lastMoveableTiles, self.AttackAreaRule, self.AttackRange, possibleAttackArea);
 				}
 			}
 
@@ -72,7 +77,7 @@ namespace DiceRoller
 						}
 
 						// show possible movement or attack range on the board
-						IReadOnlyCollection<Tile> possibleTiles = self.IsHovering ? (self.Player == game.CurrentPlayer ? self.MoveableTiles : possibleAttackArea) : Tile.EmptyTiles;
+						IReadOnlyCollection<Tile> possibleTiles = self.IsHovering ? (self.Player == game.CurrentPlayer ? lastMoveableTiles : possibleAttackArea) : Tile.EmptyTiles;
 						if (CachedValueUtils.HasCollectionChanged(possibleTiles, lastPossibleArea, affectedPossibleARea))
 						{
 							foreach (Tile tile in affectedPossibleARea)
@@ -136,6 +141,7 @@ namespace DiceRoller
 				}
 
 				// reset cache
+				lastMoveableTiles.Clear();
 				CachedValueUtils.ResetValueCache(ref lastIsHovering);
 				CachedValueUtils.ResetCollectionCache(lastOccupiedTiles, affectedOccupiedTiles);
 			}

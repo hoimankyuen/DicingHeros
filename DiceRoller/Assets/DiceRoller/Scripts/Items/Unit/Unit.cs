@@ -24,6 +24,18 @@ namespace DiceRoller
 			Magical,
 		}
 
+
+		[System.Serializable]
+		public enum AITendency
+		{
+			None,
+			Rush,
+			Stay,
+
+
+		}
+
+
 		// parameters
 		[Header("Unit Parameters")]
 		public int maxHealth = 20;
@@ -34,6 +46,9 @@ namespace DiceRoller
 		public int baseRange = 1;
 		public float baseKnockbackForce = 0.25f;
 		public List<EquipmentDictionary.Name> startingEquipment = new List<EquipmentDictionary.Name>();
+
+		[Header("AI Parameters (Only used if AI Controlled)")]
+		public AITendency aiTendency = AITendency.None;
 
 		// readonly
 		private readonly float moveTimePerTile = 0.2f;
@@ -62,7 +77,6 @@ namespace DiceRoller
 			base.Start();
 			RegisterStateBehaviours();
 			RegisterToPlayer();
-			RegisterMoveableTilesDetection();
 
 			SetupInitialEquipments();
 
@@ -91,7 +105,6 @@ namespace DiceRoller
 
 			DeregisterStateBehaviours();
 			DeregisterFromPlayer();
-			DeregisterMoveableTilesDetection();
 		}
 
 		/// <summary>
@@ -318,6 +331,32 @@ namespace DiceRoller
 		{
 			return _DraggingUnits.Count > 0 ? _DraggingUnits[0] : null;
 		}
+
+
+		// ========================================================= Properties (AllOccupiedTilesExceptSelf) =========================================================
+
+		/// <summary>
+		/// A list of all occupied tiles except the ones that this unit occupied. Useful for movement calculation.
+		/// </summary>
+		public IReadOnlyCollection<Tile> AllOccupiedTilesExceptSelf
+		{
+			get
+			{
+				_AllOccupiedTilesExceptSelf.Clear();
+				foreach (Player player in game.GetAllPlayers())
+				{
+					foreach (Unit unit in player.units)
+					{
+						if (unit != this)
+						{
+							_AllOccupiedTilesExceptSelf.AddRange(unit.OccupiedTiles.Except(_AllOccupiedTilesExceptSelf));
+						}
+					}
+				}
+				return _AllOccupiedTilesExceptSelf.AsReadOnly();
+			}
+		}
+		private List<Tile> _AllOccupiedTilesExceptSelf = new List<Tile>();
 
 		// ========================================================= Properties (Health) =========================================================
 
@@ -651,7 +690,6 @@ namespace DiceRoller
 		/// </summary>
 		public event Action OnCurrentAttackTypeChanged = () => { };
 
-
 		/// <summary>
 		/// Set the attack type to the inital value.
 		/// </summary>
@@ -714,62 +752,6 @@ namespace DiceRoller
 			AttackAreaRule = rule;
 		}
 
-		// ========================================================= Properties (MovableArea) =========================================================
-
-		/// <summary>
-		/// A read only list of tiles that this unit can move to.
-		/// </summary>
-		public IReadOnlyCollection<Tile> MoveableTiles
-		{
-			get
-			{
-				return _MoveableTiles.AsReadOnly();
-			}
-		}
-		private List<Tile> _MoveableTiles = new List<Tile>();
-		private List<Tile> _OtherOccupiedTiles = new List<Tile>();
-
-		/// <summary>
-		/// Event raised when the tiles that this unit can move to is changed.
-		/// </summary>
-		public event Action OnMoveableTilesChanged = () => {};
-
-		/// <summary>
-		/// Register necessary callbacks for moveable tiles detection.
-		/// </summary>
-		private void RegisterMoveableTilesDetection()
-		{
-			OnOccupiedTilesChanged += RefreshTilesMovability;
-			OnMovementChanged += RefreshTilesMovability;
-		}
-
-		/// <summary>
-		/// Deregister all callbacks for moveable tiles detection.
-		/// </summary>
-		private void DeregisterMoveableTilesDetection()
-		{
-			OnOccupiedTilesChanged -= RefreshTilesMovability;
-			OnMovementChanged -= RefreshTilesMovability;
-		}
-
-		/// <summary>
-		/// Detect which tiles can this unit move to.
-		/// </summary>
-		private void RefreshTilesMovability()
-		{
-			_OtherOccupiedTiles.Clear();
-			foreach (Player player in game.GetAllPlayers())
-			{
-				foreach (Unit unit in player.units)
-				{
-					if (unit != this)
-					{
-						_OtherOccupiedTiles.AddRange(unit.OccupiedTiles.Except(_OtherOccupiedTiles));
-					}
-				}
-			}
-			board.GetConnectedTilesInRange(OccupiedTiles, _OtherOccupiedTiles, Movement, _MoveableTiles);
-		}
 
 		// ========================================================= Properties (CurrentUnitState) =========================================================
 

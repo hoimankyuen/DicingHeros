@@ -14,6 +14,8 @@ namespace DiceRoller
 
 			// caches
 			private bool isSelectedAtEnter = false;
+
+			private List<Tile> lastMoveableTiles = new List<Tile>();
 			private List<Tile> lastOccupiedTiles = new List<Tile>();
 			private List<Tile> lastAttackArea = new List<Tile>();
 
@@ -27,6 +29,7 @@ namespace DiceRoller
 			public UnitInspectionSB(Unit self)
 			{
 				this.self = self;
+
 			}
 
 			// ========================================================= State Enter Methods =========================================================
@@ -53,8 +56,11 @@ namespace DiceRoller
 						tile.UpdateDisplayAs(self, Tile.DisplayType.EnemyPosition, lastOccupiedTiles);
 					}
 
+					// retrieve moveable area
+					board.GetConnectedTilesInRange(self.OccupiedTiles, self.AllOccupiedTilesExceptSelf, self.Movement, lastMoveableTiles);
+
 					// show attack range
-					board.GetTilesByRule(self.MoveableTiles, self.AttackAreaRule, self.AttackRange, lastAttackArea);
+					board.GetTilesByRule(lastMoveableTiles, self.AttackAreaRule, self.AttackRange, lastAttackArea);
 					foreach (Tile tile in lastAttackArea)
 					{
 						tile.UpdateDisplayAs(self, Tile.DisplayType.AttackPossible, lastAttackArea);

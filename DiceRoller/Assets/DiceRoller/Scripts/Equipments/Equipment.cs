@@ -310,7 +310,11 @@ namespace DiceRoller
 			private readonly Equipment self = null;
 
 			// cache
+			private bool isUserSelectedAtEnter = false;
 			private bool lastIsHovering = false;
+
+			private List<Tile> effectArea = new List<Tile>();
+			private List<Tile> lastEffectArea = new List<Tile>();
 
 			/// <summary>
 			/// Constructor.
@@ -325,6 +329,19 @@ namespace DiceRoller
 			/// </summary>
 			public override void OnStateEnter()
 			{
+				isUserSelectedAtEnter = self.Unit.IsSelected;
+
+				if (isUserSelectedAtEnter)
+				{
+					if (stateMachine.State == SMState.UnitMoveSelect && self.Type == EquipmentType.Movement)
+					{
+
+					}
+					else if (stateMachine.State == SMState.UnitMoveSelect &&  (self.Type == EquipmentType.Melee || self.Type == EquipmentType.Magic))
+					{
+
+					}
+				}
 			}
 
 			/// <summary>
@@ -332,7 +349,7 @@ namespace DiceRoller
 			/// </summary>
 			public override void OnStateUpdate()
 			{
-				if (self.Unit.Player == game.CurrentPlayer)
+				if (isUserSelectedAtEnter)
 				{
 					// inspection
 					if (CachedValueUtils.HasValueChanged(self.IsHovering, ref lastIsHovering))
@@ -382,7 +399,7 @@ namespace DiceRoller
 			/// </summary>
 			public override void OnStateExit()
 			{
-				if (self.Unit.Player == game.CurrentPlayer)
+				if (isUserSelectedAtEnter)
 				{
 					// inspection
 					if (lastIsHovering)
