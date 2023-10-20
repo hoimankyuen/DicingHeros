@@ -62,7 +62,7 @@ namespace DiceRoller
 		{ 
 			get
 			{
-				return EquipmentType.Magic;
+				return EquipmentType.MagicAttack;
 			}
 		}
 

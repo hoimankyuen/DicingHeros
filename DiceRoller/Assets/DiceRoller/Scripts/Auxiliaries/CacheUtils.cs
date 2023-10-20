@@ -4,8 +4,10 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class CachedValueUtils
+public class CacheUtils
 {
+	// ========================================================= Cached Values =========================================================
+
 	public static bool HasValueChanged<T>(T target, ref T cache) where T : IEquatable<T>
 	{
 		if ((target == null && cache != null) || (target != null && !target.Equals(cache)))
@@ -18,7 +20,6 @@ public class CachedValueUtils
 			return false;
 		}
 	}
-
 	public static bool HasValueChanged<T>(T target, ref T cache, out T lastValue) where T : IEquatable<T>
 	{
 		if ((target == null && cache != null) || (target != null && !target.Equals(cache)))
@@ -39,7 +40,29 @@ public class CachedValueUtils
 		cache = default;
 	}
 
-	public static bool HasCollectionChanged<T>(IReadOnlyCollection<T> target, ICollection<T> cache)
+	// ========================================================= Cached Referencces =========================================================
+
+	public static bool HasReferenceChanged(object target, object cache)
+	{
+		if ((target == null && cache != null) || (target != null && target != cache))
+		{
+			cache = target;
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	public static void ResetReferenceCache(object cache)
+	{
+		cache = null;
+	}
+
+	// ========================================================= Cached Collections =========================================================
+
+	public static bool HasCollectionChanged<T>(IEnumerable<T> target, ICollection<T> cache)
 	{
 		if (!target.SequenceEqual(cache))
 		{
@@ -56,7 +79,7 @@ public class CachedValueUtils
 			return false;
 		}
 	}
-	public static bool HasCollectionChanged<T>(IReadOnlyCollection<T> target, ICollection<T> cache, ICollection<T> affected)
+	public static bool HasCollectionChanged<T>(IEnumerable<T> target, ICollection<T> cache, ICollection<T> affected)
 	{
 		if (!target.SequenceEqual(cache))
 		{

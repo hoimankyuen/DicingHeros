@@ -12,12 +12,10 @@ namespace DiceRoller
         {
             this.rule = rule;
         }
-
         public bool Equals(AttackAreaRule other)
         {
             return this == other;
         }
-
         public bool Evaulate(Tile target, Tile starting, int range)
         {
             return rule(target, starting, range);

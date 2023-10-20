@@ -1,20 +1,21 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
 namespace DiceRoller
 {
-	public class Tile : MonoBehaviour
+	public class Tile : MonoBehaviour, IEquatable<Tile>
 	{
 		public enum DisplayType
 		{
 			Normal,
 
-			MovePossible,
-			AttackPossible,
-
 			Move,
 			Attack,
+
+			MovePossible,
+			AttackPossible,
 
 			MoveTarget,
 			AttackTarget,
@@ -212,8 +213,20 @@ namespace DiceRoller
 			}
 		}
 
+		// ========================================================= IEqautable Methods =========================================================
+
+		/// <summary>
+		/// Check if this object is equal to the other object.
+		/// </summary>
+		public bool Equals(Tile other)
+		{
+			return this == other;
+		}
+
 		// ========================================================= Editor =========================================================
 
+		#if UNITY_EDITOR
+		
 		/// <summary>
 		/// Regenerate all components related to this tile. Should only be called in editor.
 		/// </summary>
@@ -231,6 +244,11 @@ namespace DiceRoller
 			collider = transform.Find("Collider").GetComponent<Collider>();
 			collider.transform.localScale = new Vector3(tileSize, 0.1f, tileSize);
 		}
+
+		#endif
+
+		// ========================================================= Occupation =========================================================
+
 
 		/// <summary>
 		/// Add an occupant to this tile, all hovering through tile.
@@ -257,35 +275,7 @@ namespace DiceRoller
 		}
 
 		// ========================================================= Appearance =========================================================
-
-		/*
-		/// <summary>
-		/// Register a particular display to this tile by any object.
-		/// </summary>
-		public void AddDisplay(object o, DisplayType displayType)
-		{
-			registeredDisplay[displayType].Add(o);
-			ResolveDisplay();
-		}
-
-		/// <summary>
-		/// Deregister a particular display from this tile by any object.
-		/// </summary>
-		public void RemoveDisplay(object o, DisplayType displayType)
-		{
-			registeredDisplay[displayType].Remove(o);
-			ResolveDisplay();
-		}
-		*/
 		
-		/// <summary>
-		/// Remove the range display of this tile. 
-		/// </summary>
-		public void RemoveDisplay(object holder, DisplayType displayType)
-		{
-			UpdateDisplayAs(holder, displayType, (Tile)null);
-		}
-
 		/// <summary>
 		/// Add or remove the range display of this tile based on a single target tile. 
 		/// </summary>
@@ -324,7 +314,7 @@ namespace DiceRoller
 			else
 			{
 				// remove entry and return range to pool
-				RangeDisplayEntry entry = registeredDisplay[displayType].First(x => x.holder == holder);
+				RangeDisplayEntry entry = registeredDisplay[displayType].FirstOrDefault(x => x.holder == holder);
 				if (entry != null)
 				{
 					entry.range.Show(false);
@@ -337,7 +327,7 @@ namespace DiceRoller
 		/// <summary>
 		/// Add or remove the range display of this tile based on a set of target tiles. 
 		/// </summary>
-		public void UpdateDisplayAs(object holder, DisplayType displayType, IReadOnlyCollection<Tile> targetTiles)
+		public void UpdateDisplayAs(object holder, DisplayType displayType, IEnumerable<Tile> targetTiles)
 		{
 			if (targetTiles.Contains(this))
 			{
@@ -397,6 +387,14 @@ namespace DiceRoller
 				}
 
 			}
+		}
+
+		/// <summary>
+		/// Remove the range display of this tile. 
+		/// </summary>
+		public void RemoveDisplay(object holder, DisplayType displayType)
+		{
+			UpdateDisplayAs(holder, displayType, (Tile)null);
 		}
 
 		/// <summary>
@@ -467,15 +465,6 @@ namespace DiceRoller
 		public void ShowInvalidPath()
 		{
 			pathRenderer.sprite = style.pathDirectionSprites[new PathDirections(PathDirection.End, PathDirection.Start)];
-		}
-
-
-		/// <summary>
-		/// Hide the invalid path display on the tile.
-		/// </summary>
-		public void HideInvalidPath()
-		{
-			pathRenderer.sprite = null;
 		}
 
 		// ========================================================= Inqury =========================================================

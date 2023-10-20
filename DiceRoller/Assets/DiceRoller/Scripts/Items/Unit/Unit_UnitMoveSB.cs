@@ -44,9 +44,10 @@ namespace DiceRoller
 				List<Tile> path = self.NextMovement.path;
 
 				// show all displays on grid
-				startTiles.ForEach(x => x.UpdateDisplayAs(self, Tile.DisplayType.SelfPosition, startTiles));
-				path.ForEach(x => { x.UpdateDisplayAs(self, Tile.DisplayType.Move, path); x.ShowPath(path); });
-				path[path.Count - 1].UpdateDisplayAs(self, Tile.DisplayType.MoveTarget, path[path.Count - 1]);
+				board.ShowArea(self, Tile.DisplayType.SelfPosition, startTiles);
+				board.ShowArea(self, Tile.DisplayType.Move, path);
+				board.ShowArea(self, Tile.DisplayType.MoveTarget, path[path.Count - 1]);
+				board.ShowPath(path);
 
 				// show unit info on ui
 				float startTime = 0;
@@ -87,9 +88,10 @@ namespace DiceRoller
 				}
 
 				// hide all displays on grid
-				startTiles.ForEach(x => x.UpdateDisplayAs(self, Tile.DisplayType.SelfPosition, Tile.EmptyTiles));
-				path.ForEach(x => { x.UpdateDisplayAs(self, Tile.DisplayType.Move, Tile.EmptyTiles); x.HidePath(); });
-				path[path.Count - 1].UpdateDisplayAs(self, Tile.DisplayType.MoveTarget, (Tile)null);
+				board.HideArea(self, Tile.DisplayType.SelfPosition);
+				board.HideArea(self, Tile.DisplayType.Move);
+				board.HideArea(self, Tile.DisplayType.MoveTarget);
+				board.HidePath();
 
 				// set flag
 				self.CurrentUnitState = UnitState.Moved;

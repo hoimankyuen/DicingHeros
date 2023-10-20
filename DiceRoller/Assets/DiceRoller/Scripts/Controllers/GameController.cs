@@ -22,81 +22,13 @@ namespace DiceRoller
 		private UIController uiController => UIController.current;
 		private StateMachine stateMachine => StateMachine.current;
 		private DiceThrower diceThrower => DiceThrower.current;
+		private AIEngine aiEngine => AIEngine.current;
 
 		// working variables
 		private Dictionary<int, Player> playersDict = new Dictionary<int, Player>();
 		private List<Turn> previousTurns = new List<Turn>();
 
-		// events
-		public event Action OnPlayerChanged = () => { };
-		public event Action OnTurnChanged = () => { };
 
-		// ========================================================= Properties =========================================================
-		
-		/// <summary>
-		/// Current player that is active within this turn.
-		/// </summary>
-		public Player CurrentPlayer
-		{
-			get
-			{
-				return _currentPlayer;
-			}
-			private set
-			{
-				if (_currentPlayer != value)
-				{
-					_currentPlayer = value;
-					OnPlayerChanged.Invoke();
-				}
-			}
-		}
-		private Player _currentPlayer = null;
-
-		/// <summary>
-		/// Current turn the game is in.
-		/// </summary>
-		public Turn CurrentTurn
-		{
-			get
-			{
-				return _currentTurn;
-			}
-			private set
-			{
-				if (_currentTurn != value)
-				{
-					_currentTurn = value;
-					OnTurnChanged.Invoke();
-				}
-			}
-		}
-		private Turn _currentTurn = null;
-
-		// ========================================================= Inquiries =========================================================
-
-		/// <summary>
-		/// Retrieve a list of all players.
-		/// </summary>
-		public IReadOnlyCollection<Player> GetAllPlayers()
-		{
-			return players.AsReadOnly();
-		}
-
-		/// <summary>
-		/// Retrieve a player object by its id.
-		/// </summary>
-		public Player GetPlayerById(int id)
-		{
-			if (playersDict.ContainsKey(id))
-			{
-				return playersDict[id];
-			}
-			else
-			{
-				return null;
-			}
-		}
 
 		// ========================================================= Monobehaviour Methods =========================================================
 
@@ -143,6 +75,99 @@ namespace DiceRoller
 		{
 			DeregisterStateBehaviours();
 			current = null;
+		}
+
+
+		// ========================================================= Properties (CurrentPlayer) =========================================================
+
+		/// <summary>
+		/// Current player that is active within this turn.
+		/// </summary>
+		public Player CurrentPlayer
+		{
+			get
+			{
+				return _currentPlayer;
+			}
+			private set
+			{
+				if (_currentPlayer != value)
+				{
+					_currentPlayer = value;
+					OnPlayerChanged.Invoke();
+				}
+			}
+		}
+		private Player _currentPlayer = null;
+
+		/// <summary>
+		/// Event raised when the current player is changed.
+		/// </summary>
+		public event Action OnPlayerChanged = () => { };
+
+		// ========================================================= Properties (CurrentTurn) =========================================================
+
+		/// <summary>
+		/// Current turn the game is in.
+		/// </summary>
+		public Turn CurrentTurn
+		{
+			get
+			{
+				return _currentTurn;
+			}
+			private set
+			{
+				if (_currentTurn != value)
+				{
+					_currentTurn = value;
+					OnTurnChanged.Invoke();
+				}
+			}
+		}
+		private Turn _currentTurn = null;
+
+		/// <summary>
+		/// Event raised when the current turn is changed.
+		/// </summary>
+		public event Action OnTurnChanged = () => { };
+
+		// ========================================================= Properties (IsAITurn) =========================================================
+
+		/// <summary>
+		/// Flag for if the current turn is controlled by AI.
+		/// </summary>
+		public bool IsAITurn
+		{
+			get
+			{
+				return CurrentPlayer != null ? CurrentPlayer.isAI : false;
+			} 
+		}
+
+		// ========================================================= Inquiries =========================================================
+
+		/// <summary>
+		/// Retrieve a list of all players.
+		/// </summary>
+		public IReadOnlyCollection<Player> GetAllPlayers()
+		{
+			return players.AsReadOnly();
+		}
+
+		/// <summary>
+		/// Retrieve a player object by its id.
+		/// </summary>
+		public Player GetPlayerById(int id)
+		{
+			if (playersDict.ContainsKey(id))
+			{
+				return playersDict[id];
+			}
+			else
+			{
+				return null;
+			}
 		}
 
 		// ========================================================= General Behaviour =========================================================
@@ -227,6 +252,12 @@ namespace DiceRoller
 				// reset remaining throw
 				self.diceThrower.ResetRemainingThrow(self.CurrentPlayer.throws);
 
+				// start ai engine if necessary
+				if (self.CurrentPlayer.isAI)
+				{
+					self.aiEngine.RunAs(self.CurrentPlayer);
+				}
+
 				// wait for start turn animation and change state
 				self.StartCoroutine(WaitForAnimationAndChangeState());
 			}
@@ -264,7 +295,6 @@ namespace DiceRoller
 				stateMachine.ChangeState(SMState.EndTurn);
 			}
 		}
-
 
 		// ========================================================= End Turn State =========================================================
 

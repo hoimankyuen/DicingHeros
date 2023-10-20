@@ -258,7 +258,7 @@ namespace DiceRoller
 			{
 				if (isEquipmentUnitSelectedAtEnter)
 				{
-					if (CachedValueUtils.HasValueChanged(self.IsHovering && InputUtils.IsDragging, ref lastIsDragRecipient))
+					if (CacheUtils.HasValueChanged(self.IsHovering && InputUtils.IsDragging, ref lastIsDragRecipient))
 					{
 						if (self.IsHovering && InputUtils.IsDragging)
 						{
@@ -293,7 +293,7 @@ namespace DiceRoller
 					}
 
 					// reset cache
-					CachedValueUtils.ResetValueCache(ref lastIsDragRecipient);
+					CacheUtils.ResetValueCache(ref lastIsDragRecipient);
 				}
 			}
 		}

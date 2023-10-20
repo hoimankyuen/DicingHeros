@@ -88,11 +88,11 @@ namespace DiceRoller
 				return;
 
 			// populate a new set of ui dice
-			for (int i = 0; i < inspectingPlayer.units.Count; i++)
+			for (int i = 0; i < inspectingPlayer.Units.Count; i++)
 			{
 				UIUnit uiUnit = Instantiate(uiUnitPrefab, uiUnitPrefab.transform.parent).GetComponent<UIUnit>();
 				uiUnit.gameObject.SetActive(true);
-				uiUnit.SetDisplay(inspectingPlayer.units[i]);
+				uiUnit.SetDisplay(inspectingPlayer.Units[i]);
 				uiUnit.rectTransform.anchoredPosition = new Vector2(0, i * -uiUnit.rectTransform.rect.height);
 				uiUnits.Add(uiUnit);
 			}

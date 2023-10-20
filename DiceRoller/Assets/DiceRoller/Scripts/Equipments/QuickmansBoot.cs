@@ -61,7 +61,7 @@ namespace DiceRoller
 		{
 			get
 			{
-				return EquipmentType.Movement;
+				return EquipmentType.MovementBuff;
 			}
 		}
 

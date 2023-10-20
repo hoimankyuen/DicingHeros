@@ -15,10 +15,6 @@ namespace DiceRoller
 			// caches
 			private bool isSelectedAtEnter = false;
 
-			private List<Tile> lastMoveableTiles = new List<Tile>();
-			private List<Tile> lastOccupiedTiles = new List<Tile>();
-			private List<Tile> lastAttackArea = new List<Tile>();
-
 			private Vector2 pressedPosition1 = Vector2.negativeInfinity;
 
 			// ========================================================= Constructor =========================================================
@@ -50,21 +46,10 @@ namespace DiceRoller
 					self.ShowEffect(EffectType.SelectedEnemy, true);
 
 					// show occupied tiles on board, assume unit wont move during movement selection state
-					lastOccupiedTiles.AddRange(self.OccupiedTiles);
-					foreach (Tile tile in lastOccupiedTiles)
-					{
-						tile.UpdateDisplayAs(self, Tile.DisplayType.EnemyPosition, lastOccupiedTiles);
-					}
-
-					// retrieve moveable area
-					board.GetConnectedTilesInRange(self.OccupiedTiles, self.AllOccupiedTilesExceptSelf, self.Movement, lastMoveableTiles);
+					board.ShowArea(self, Tile.DisplayType.EnemyPosition, self.OccupiedTiles);
 
 					// show attack range
-					board.GetTilesByRule(lastMoveableTiles, self.AttackAreaRule, self.AttackRange, lastAttackArea);
-					foreach (Tile tile in lastAttackArea)
-					{
-						tile.UpdateDisplayAs(self, Tile.DisplayType.AttackPossible, lastAttackArea);
-					}
+					board.ShowArea(self, Tile.DisplayType.AttackPossible, self.PredictedAttackableArea);
 				}
 			}
 
@@ -102,19 +87,10 @@ namespace DiceRoller
 					self.ShowEffect(EffectType.SelectedEnemy, false);
 
 					// hide occupied tiles on board
-					foreach (Tile tile in lastOccupiedTiles)
-					{
-						tile.UpdateDisplayAs(self, Tile.DisplayType.EnemyPosition, Tile.EmptyTiles);
-					}
-					lastOccupiedTiles.Clear();
-
+					board.HideArea(self, Tile.DisplayType.EnemyPosition);
 
 					// show attack range
-					foreach (Tile tile in lastAttackArea)
-					{
-						tile.UpdateDisplayAs(self, Tile.DisplayType.AttackPossible, Tile.EmptyTiles);
-					}
-					lastAttackArea.Clear();
+					board.HideArea(self, Tile.DisplayType.AttackPossible);
 
 					// reset cache
 					InputUtils.ResetPressCache(ref pressedPosition1);

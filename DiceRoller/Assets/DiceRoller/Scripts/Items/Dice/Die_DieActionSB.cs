@@ -46,7 +46,7 @@ namespace DiceRoller
 				if (game.CurrentPlayer == self.Player)
 				{
 					// show dice info on ui
-					if (CachedValueUtils.HasValueChanged(self.IsHovering, ref lastIsHovering))
+					if (CacheUtils.HasValueChanged(self.IsHovering, ref lastIsHovering))
 					{
 						self.IsBeingInspected = self.IsHovering;
 						self.ShowEffect(EffectType.InspectingSelf, self.IsHovering);
@@ -89,7 +89,7 @@ namespace DiceRoller
 				}
 
 				// reset caches
-				CachedValueUtils.ResetValueCache(ref lastIsHovering);
+				CacheUtils.ResetValueCache(ref lastIsHovering);
 			}
 		}
 
@@ -97,10 +97,10 @@ namespace DiceRoller
 		{
 			if (StateMachine.current.State == SMState.DiceActionSelect)
 			{
-				IEnumerable<Die> dice = GameController.current.CurrentPlayer.dice.Where(x => x.CurrentDieState != DieState.Expended);
+				IEnumerable<Die> dice = GameController.current.CurrentPlayer.Dice.Where(x => x.CurrentDieState != DieState.Expended);
 				if (dice.All(x => x.IsSelected))
 				{
-					foreach (Die die in GameController.current.CurrentPlayer.dice)
+					foreach (Die die in GameController.current.CurrentPlayer.Dice)
 					{
 						if (die.CurrentDieState != DieState.Expended)
 						{
@@ -111,7 +111,7 @@ namespace DiceRoller
 				}
 				else
 				{
-					foreach (Die die in GameController.current.CurrentPlayer.dice)
+					foreach (Die die in GameController.current.CurrentPlayer.Dice)
 					{
 						if (die.CurrentDieState != DieState.Expended)
 						{

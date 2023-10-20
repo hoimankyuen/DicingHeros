@@ -28991,6 +28991,7 @@ GameObject:
   - component: {fileID: 1362206139}
   - component: {fileID: 1362206138}
   - component: {fileID: 1362206141}
+  - component: {fileID: 1362206142}
   - component: {fileID: 1362206140}
   m_Layer: 0
   m_Name: GameController
@@ -29015,9 +29016,11 @@ MonoBehaviour:
   - id: 0
     name: Player
     throws: 3
+    isAI: 0
   - id: 1
     name: Enemy
     throws: 3
+    isAI: 1
 --- !u!4 &1362206139
 Transform:
   m_ObjectHideFlags: 0
@@ -29061,6 +29064,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e83f479cee9aa5e428c9d969cd28e63a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &1362206142
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1362206137}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f2bb39f7037cbea46860568d7fa48dd7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!114 &1362617533 stripped

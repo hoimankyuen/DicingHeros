@@ -39,7 +39,7 @@ namespace DiceRoller
 					if (self.CurrentDieState == DieState.Casted || self.CurrentDieState == DieState.Assigned)
 					{
 						// show dice info on ui
-						if (CachedValueUtils.HasValueChanged(self.IsHovering, ref lastIsHovering))
+						if (CacheUtils.HasValueChanged(self.IsHovering, ref lastIsHovering))
 						{
 							self.IsBeingInspected = self.IsHovering;
 							self.ShowEffect(EffectType.InspectingSelf, self.IsHovering);
@@ -103,7 +103,7 @@ namespace DiceRoller
 					}
 
 					// reset caches
-					CachedValueUtils.ResetValueCache(ref lastIsHovering);
+					CacheUtils.ResetValueCache(ref lastIsHovering);
 				}
 
 				

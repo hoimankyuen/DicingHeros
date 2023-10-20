@@ -12,11 +12,181 @@ namespace DiceRoller
 
 		// ========================================================= Properties =========================================================
 
+
+
+
+
+
+
+
+		// ========================================================= Message From External (Drive) =========================================================
+
+		/// <summary>
+		/// Perform an monobehaviour update, should be driven by another monobehaviour as this object is not one.
+		/// </summary>
+		public virtual void Update()
+		{
+			DetectHover();
+			DetectPress();
+			DetectDrag();
+		}
+
+		// ========================================================= Message From External (Input) =========================================================
+
+		/// <summary>
+		/// An OnMouseEnter triggered from UI.
+		/// </summary>
+		public void OnUIMouseEnter()
+		{
+			_IsUIHovering = true;
+		}
+
+		/// <summary>
+		/// An OnMouseExit triggered from UI.
+		/// </summary>
+		public void OnUIMouseExit()
+		{
+			_IsUIHovering = false;
+		}
+
+		/// <summary>
+		/// An OnMouseDown triggered from UI.
+		/// </summary>
+		public void OnUIMouseDown(int mouseButton)
+		{
+			_StartedUIPress[mouseButton] = true;
+			_StartedUIDrag[mouseButton] = true;
+			_LastMousePosition[mouseButton] = Input.mousePosition;
+		}
+
+		/// <summary>
+		/// An OnMouseUp triggered from UI.
+		/// </summary>
+		public void OnUIMouseUp(int mouseButton)
+		{
+			if (_StartedUIPress[mouseButton] && Vector2.Distance(_LastMousePosition[mouseButton], Input.mousePosition) < 2f)
+			{
+				_StartedUIPress[mouseButton] = false;
+				_StartedUIDrag[mouseButton] = false;
+				_CompletedUIPress[mouseButton] = true;
+				_LastMousePosition[mouseButton] = Vector2.negativeInfinity;
+			}
+		}
+
+		// ========================================================= Message From External (AI) =========================================================
+
+		/// <summary>
+		/// An OnMouseEnter triggered from AI.
+		/// </summary>
+		public void OnAIMouseEnter()
+		{
+			_IsAIHovering = true;
+		}
+
+		/// <summary>
+		/// An OnMouseExit triggered from AI.
+		/// </summary>
+		public void OnAIMouseExit()
+		{
+			_IsAIHovering = false;
+		}
+
+		/// <summary>
+		/// An OnMousePress triggered from AI.
+		/// </summary>
+		public void OnAIMousePress(int mouseButton)
+		{
+			_CompletedAIPress[mouseButton] = true;
+		}
+
+		/// <summary>
+		/// An OnMouseStartDrag triggered from AI.
+		/// </summary>
+		public void OnAIMouseStartDrag(int mouseButton)
+		{
+			_StartedAIDrag[mouseButton] = true;
+		}
+
+		/// <summary>
+		/// An OnMouseCompleteDrag triggered from AI.
+		/// </summary>
+		public void OnAIMouseCompletetDrag(int mouseButton)
+		{
+			_CompletedAIDrag[mouseButton] = true;
+		}
+
+		// ========================================================= Properties (IsHovering) =========================================================
+
 		/// <summary>
 		/// Flag for if user is hovering on this item component by any means.
 		/// </summary>
 		protected bool IsHovering { get; private set; } = false;
-		private bool isUIHovering = false;
+		private bool _IsUIHovering = false;
+		private bool _IsAIHovering = false;
+
+		/// <summary>
+		/// Detect hover events.
+		/// </summary>
+		private void DetectHover()
+		{
+			if (!game.IsAITurn)
+			{
+				// player inputs
+				IsHovering = _IsUIHovering;
+			}
+			else
+			{
+				// ai inputs
+				IsHovering = _IsAIHovering;
+			}
+		}
+
+		// ========================================================= Properties (IsPressed) =========================================================
+
+		/// <summary>
+		/// Flag for if user has pressed on this item component by any means.
+		/// </summary>
+		protected bool[] IsPressed { get; private set; } = new bool[] { false, false, false };
+		private Vector2[] _LastMousePosition = new Vector2[] { Vector2.negativeInfinity, Vector2.negativeInfinity, Vector2.negativeInfinity };
+		private bool[] _StartedUIPress = new bool[] { false, false, false };
+		private bool[] _CompletedUIPress = new bool[] { false, false, false };
+		private bool[] _CompletedAIPress = new bool[] { false, false, false };
+
+		/// <summary>
+		/// Detect press event and trim to a single frame flag.
+		/// </summary>
+		private void DetectPress()
+		{
+			if (!game.IsAITurn)
+			{
+				// player inputs
+				for (int i = 0; i < 3; i++)
+				{
+					IsPressed[i] = false;
+					if (_CompletedUIPress[i])
+					{
+						_CompletedUIPress[i] = false;
+						IsPressed[i] = true;
+					}
+				}
+			}
+			else
+			{
+				// ai inputs
+				for (int i = 0; i < 3; i++)
+				{
+					IsPressed[i] = false;
+					if (_CompletedAIPress[i])
+					{
+						_CompletedAIPress[i] = false;
+
+						IsPressed[i] = true;
+					}
+				}
+			}
+		}
+
+		// ========================================================= Properties (IsStartedDrag & IsCompletedDrag) =========================================================
 
 		/// <summary>
 		/// Flag for if user has started drag on this item component by any means.
@@ -29,116 +199,60 @@ namespace DiceRoller
 		/// <summary>
 		/// Flag for if user has ended drag on this item component by any means.
 		/// </summary>
-		private bool[] startedUIDrag = new bool[] { false, false, false };
-		private Vector2[] lastMousePosition = new Vector2[] { Vector2.negativeInfinity, Vector2.negativeInfinity, Vector2.negativeInfinity };
-
-		/// <summary>
-		/// Flag for if user has pressed on this item component by any means.
-		/// </summary>
-		protected bool[] IsPressed { get; private set; } = new bool[] { false, false, false };
-		private bool[] startedUIPress = new bool[] { false, false, false };
-		private bool[] completedUIPress = new bool[] { false, false, false };
-
-		// ========================================================= Message From External =========================================================
-
-		/// <summary>
-		/// An OnMouseEnter triggered from UI.
-		/// </summary>
-		public void OnUIMouseEnter()
-		{
-			isUIHovering = true;
-		}
-
-		/// <summary>
-		/// An OnMouseExit triggered from UI.
-		/// </summary>
-		public void OnUIMouseExit()
-		{
-			isUIHovering = false;
-		}
-
-		/// <summary>
-		/// An OnMouseDown triggered from UI.
-		/// </summary>
-		public void OnUIMouseDown(int mouseButton)
-		{
-			startedUIPress[mouseButton] = true;
-			startedUIDrag[mouseButton] = true;
-			lastMousePosition[mouseButton] = Input.mousePosition;
-		}
-
-		/// <summary>
-		/// An OnMouseUp triggered from UI.
-		/// </summary>
-		public void OnUIMouseUp(int mouseButton)
-		{
-			if (startedUIPress[mouseButton] && Vector2.Distance(lastMousePosition[mouseButton], Input.mousePosition) < 2f)
-			{
-				startedUIPress[mouseButton] = false;
-				startedUIDrag[mouseButton] = false;
-				completedUIPress[mouseButton] = true;
-				lastMousePosition[mouseButton] = Vector2.negativeInfinity;
-			}
-		}
-
-		/// <summary>
-		/// Perform an monobehaviour update, should be driven by another monobehaviour as this object is not one.
-		/// </summary>
-		public virtual void Update()
-		{
-			DetectHover();
-			DetectPress();
-			DetectDrag();
-		}
-
-		// ========================================================= Input Interpetation =========================================================
-
-		/// <summary>
-		/// Detect hover events.
-		/// </summary>
-		private void DetectHover()
-		{
-			IsHovering = isUIHovering;
-		}
-
-		/// <summary>
-		/// Detect press event and trim to a single frame flag.
-		/// </summary>
-		private void DetectPress()
-		{
-			for (int i = 0; i < 3; i++)
-			{
-				IsPressed[i] = false;
-				if (completedUIPress[i])
-				{
-					completedUIPress[i] = false;
-					IsPressed[i] = true;
-				}
-			}
-		}
+		private bool[] _StartedUIDrag = new bool[] { false, false, false };
+		private bool[] _StartedAIDrag = new bool[] { false, false, false };
+		private bool[] _CompletedAIDrag = new bool[] { false, false, false };
 
 		/// <summary>
 		/// Detect draga event and trim to a single frame flag.
 		/// </summary>
 		private void DetectDrag()
 		{
-			for (int i = 0; i < 3; i++)
+
+			if (!game.IsAITurn)
 			{
-				IsStartedDrag[i] = false;
-				if (startedUIDrag[i] && Vector2.Distance(lastMousePosition[i], Input.mousePosition) >= 2f)
+				// player inputs
+				for (int i = 0; i < 3; i++)
 				{
-					startedUIPress[i] = false;
-					startedUIDrag[i] = false;
+					IsStartedDrag[i] = false;
+					if (_StartedUIDrag[i] && Vector2.Distance(_LastMousePosition[i], Input.mousePosition) >= 2f)
+					{
+						_StartedUIPress[i] = false;
+						_StartedUIDrag[i] = false;
 
-					IsStartedDrag[i] = true;
-				}
+						IsStartedDrag[i] = true;
+					}
 
-				IsCompletedDrag[i] = false;
-				if (Input.GetMouseButtonUp(i))
-				{
-					IsCompletedDrag[i] = true;
+					IsCompletedDrag[i] = false;
+					if (Input.GetMouseButtonUp(i))
+					{
+						IsCompletedDrag[i] = true;
+					}
 				}
 			}
+			else
+			{
+				// ai inputs
+				for (int i = 0; i < 3; i++)
+				{
+					IsStartedDrag[i] = false;
+					if (_StartedAIDrag[i])
+					{
+						_StartedAIDrag[i] = false;
+
+						IsStartedDrag[i] = true;
+					}
+
+					IsCompletedDrag[i] = false;
+					if (_CompletedAIDrag[i])
+					{
+						_CompletedAIDrag[i] = false;
+
+						IsCompletedDrag[i] = true;
+					}
+				}
+			}
+
 		}
 	}
 }

@@ -5,6 +5,8 @@ using UnityEngine.EventSystems;
 
 public class InputUtils
 {
+	// ========================================================= Drag Passing Token =========================================================
+
 	private static readonly float dragInitializeDistance = 5f;
 
 	/// <summary>
@@ -42,10 +44,7 @@ public class InputUtils
 		}
 	}
 
-	public static List<object> GetDragTargets()
-	{
-		return null;
-	}
+	// ========================================================= Mouse BUtton Press Detection =========================================================
 
 	/// <summary>
 	/// Utility function for detecting a non dragging mouse press with the help of a Vector2 cache value.
@@ -81,4 +80,15 @@ public class InputUtils
 	{
 		pressedPositionCache = Vector2.negativeInfinity;
 	}
+
+	// ========================================================= UI Prevention =========================================================
+
+	/// <summary>
+	/// Check if the mouse is currently on any UI.
+	/// </summary>
+	public static bool IsMouseOnUI()
+	{
+		return EventSystem.current.IsPointerOverGameObject();
+	}
+
 }

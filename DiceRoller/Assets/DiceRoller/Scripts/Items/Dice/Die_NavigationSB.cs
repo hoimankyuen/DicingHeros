@@ -37,7 +37,7 @@ namespace DiceRoller
 			public override void OnStateUpdate()
 			{
 				// show dice info on ui
-				if (CachedValueUtils.HasValueChanged(self.IsHovering, ref lastIsHovering))
+				if (CacheUtils.HasValueChanged(self.IsHovering, ref lastIsHovering))
 				{
 					self.IsBeingInspected = self.IsHovering;
 					self.ShowEffect(self.Player == game.CurrentPlayer ? EffectType.InspectingSelf : EffectType.InspectingEnemy, self.IsHovering);
@@ -64,7 +64,7 @@ namespace DiceRoller
 				}
 
 				// reset caches
-				CachedValueUtils.ResetValueCache(ref lastIsHovering);
+				CacheUtils.ResetValueCache(ref lastIsHovering);
 			}
 		}
 
@@ -72,10 +72,10 @@ namespace DiceRoller
 		{
 			if (StateMachine.current.State == SMState.Navigation)
 			{
-				IEnumerable<Die> dice = GameController.current.CurrentPlayer.dice.Where(x => x.CurrentDieState != DieState.Expended);
+				IEnumerable<Die> dice = GameController.current.CurrentPlayer.Dice.Where(x => x.CurrentDieState != DieState.Expended);
 				if (dice.Count() > 0)
 				{
-					foreach (Die die in GameController.current.CurrentPlayer.dice)
+					foreach (Die die in GameController.current.CurrentPlayer.Dice)
 					{
 						if (die.CurrentDieState != DieState.Expended)
 						{

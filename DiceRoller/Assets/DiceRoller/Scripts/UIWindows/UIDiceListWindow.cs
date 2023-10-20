@@ -92,11 +92,11 @@ namespace DiceRoller
 				return;
 
 			// populate a new set of ui dice
-			for (int i = 0; i < inspectingPlayer.dice.Count; i++)
+			for (int i = 0; i < inspectingPlayer.Dice.Count; i++)
 			{
 				UIDie uiDie = Instantiate(uiDiePrefab, uiDiePrefab.transform.parent).GetComponent<UIDie>();
 				uiDie.gameObject.SetActive(true);
-				uiDie.SetInspectingTarget(inspectingPlayer.dice[i]);
+				uiDie.SetInspectingTarget(inspectingPlayer.Dice[i]);
 				uiDie.rectTransform.pivot = new Vector2(i % 2 == 0 ? 1 : 0, 1);
 				uiDie.rectTransform.anchoredPosition = new Vector2(0, i / 2 * -uiDie.rectTransform.rect.height);	
 				uiDice.Add(uiDie);

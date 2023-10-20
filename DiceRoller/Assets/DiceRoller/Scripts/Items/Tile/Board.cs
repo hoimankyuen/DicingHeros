@@ -9,39 +9,26 @@ namespace DiceRoller
 {
 	public class Board : MonoBehaviour
 	{
-		protected struct TileRangePair
-		{
-			public Tile tile;
-			public int range;
-		}
-
-		protected struct TilePathRangeHeuristicPair
-		{
-			public Tile tile;
-			public Tile previous;
-			public int range;
-			public float heuristic;
-		}
-
 		// singleton
 		public static Board current { get; protected set; }
 
+		// reference
+		private GameController game => GameController.current;
+
+		[Header("Board Setup")]
 		public float tileSize = 1f;
 		public int boardSizeX = 1;
 		public int boardSizeZ = 1;
 		public GameObject tilePrefab = null;
 
-		public Tile HoveringTile { get; protected set; } = null;
-
 		// working variables
-		protected Dictionary<Int2, Tile> tiles = new Dictionary<Int2, Tile>();
+		private readonly Dictionary<Int2, Tile> tiles = new Dictionary<Int2, Tile>();
 
-
-		// temporary working variables
-		protected List<Tile> tempTiles = new List<Tile>();
-		protected List<TileRangePair> tempTileRangePairs = new List<TileRangePair>();
-		protected List<TilePathRangeHeuristicPair> tempTilePathRangeHeuristicPairs1 = new List<TilePathRangeHeuristicPair>();
-		protected List<TilePathRangeHeuristicPair> tempTilePathRangeHeuristicPairs2 = new List<TilePathRangeHeuristicPair>();
+		// temp working variables
+		private readonly List<Tile> tempTiles = new List<Tile>();
+		private readonly List<TileRangePair> tempTileRangePairs = new List<TileRangePair>();
+		private readonly List<TilePathRangeHeuristicPair> tempTilePathRangeHeuristicPairs1 = new List<TilePathRangeHeuristicPair>();
+		private readonly List<TilePathRangeHeuristicPair> tempTilePathRangeHeuristicPairs2 = new List<TilePathRangeHeuristicPair>();
 
 		// ========================================================= Monobehaviour Methods =========================================================
 
@@ -49,26 +36,16 @@ namespace DiceRoller
 		/// Awake is called when the game object was created. It is always called before start and is 
 		/// independent of if the game object is active or not.
 		/// </summary>
-		void Awake()
+		private void Awake()
 		{
 			current = this;
-			for (int i = 0; i < transform.childCount; i++)
-			{
-				if (transform.GetChild(i).gameObject.activeInHierarchy)
-				{
-					Tile tile = transform.GetChild(i).GetComponent<Tile>();
-					if (tile != null)
-					{
-						tiles[tile.boardPos] = tile;
-					}
-				}
-			}
+			RetrieveAllTiles();
 		}
 
 		/// <summary>
 		/// Start is called before the first frame update and/or the game object is first active.
 		/// </summary>
-		void Start()
+		private void Start()
 		{
 
 		}
@@ -76,7 +53,7 @@ namespace DiceRoller
 		/// <summary>
 		/// Update is called once per frame.
 		/// </summary>
-		void Update()
+		private void Update()
 		{
 			DetectTileHover();
 		}
@@ -84,14 +61,14 @@ namespace DiceRoller
 		/// <summary>
 		/// OnDestroy is called when the game object is destroyed.
 		/// </summary>
-		void OnDestroy()
+		private void OnDestroy()
 		{
 			current = null;
 		}
 
 		// ========================================================= Editor =========================================================
 
-#if UNITY_EDITOR
+		#if UNITY_EDITOR
 
 		/// <summary>
 		/// Regenerate all components related to this board. Should only be called in editor.
@@ -136,14 +113,14 @@ namespace DiceRoller
 			}
 		}
 
-#endif
+		#endif
 
 		// ========================================================= Position Conversion =========================================================
 
 		/// <summary>
 		/// Convert any board position to a world position.
 		/// </summary>
-		protected Vector3 BoardPosToWorldPos(Int2 boardPos)
+		private Vector3 BoardPosToWorldPos(Int2 boardPos)
 		{
 			return new Vector3(
 				(boardPos.x - (float)(boardSizeX - 1) / 2) * tileSize,
@@ -154,22 +131,70 @@ namespace DiceRoller
 		/// <summary>
 		/// Convert any world position to the nearest board position.
 		/// </summary>
-		protected Int2 WorldPosToBoardPos(Vector3 worldPos)
+		private Int2 WorldPosToBoardPos(Vector3 worldPos)
 		{
 			return new Int2(
 				Convert.ToInt32(worldPos.x / tileSize + (float)(boardSizeX - 1) / 2),
 				Convert.ToInt32(worldPos.z / tileSize + (float)(boardSizeZ - 1) / 2));
 		}
 
-		// ========================================================= Hover Detection =========================================================
+		// ========================================================= Tiles =========================================================
+
+		/// <summary>
+		/// Retrieve all available tiles of this board.
+		/// </summary>
+		private void RetrieveAllTiles()
+		{
+			for (int i = 0; i < transform.childCount; i++)
+			{
+				if (transform.GetChild(i).gameObject.activeInHierarchy)
+				{
+					Tile tile = transform.GetChild(i).GetComponent<Tile>();
+					if (tile != null)
+					{
+						tiles[tile.boardPos] = tile;
+					}
+				}
+			}
+		}
+
+		// ========================================================= Properties (HoveringTile) =========================================================
+
+		/// <summary>
+		/// The tile that the user is currenly hovering on.
+		/// </summary>
+		public Tile HoveringTile 
+		{ 
+			get
+			{
+				return _HoveringTile;
+			}
+			private set
+			{
+				if (_HoveringTile != value)
+				{
+					_HoveringTile = value;
+					OnHoveringTileChanged.Invoke();
+				}
+			}
+		}
+		private Tile _HoveringTile = null;
+
+		/// <summary>
+		/// Event raised whe the tile that the user is currently hovering on is changed.
+		/// </summary>
+		public event Action OnHoveringTileChanged = () => { };
 
 		/// <summary>
 		/// Detect if the mouse is hovering on any tile.
 		/// </summary>
-		protected void DetectTileHover()
+		private void DetectTileHover()
 		{
+			if (game.IsAITurn)
+				return;
+
 			// find the target tile that the mouse is pointing to
-			if (!EventSystem.current.IsPointerOverGameObject() && Die.GetFirstBeingInspected() == null && Unit.GetFirstBeingInspected() == null && !InputUtils.IsDragging)
+			if (!InputUtils.IsMouseOnUI() && Die.GetFirstBeingInspected() == null && Unit.GetFirstBeingInspected() == null && !InputUtils.IsDragging)
 			{
 				if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, Camera.main.farClipPlane, LayerMask.GetMask("Tile")))
 				{
@@ -186,12 +211,37 @@ namespace DiceRoller
 			}
 		}
 
-		// ========================================================= Inqury =========================================================
+		/// <summary>
+		/// Directly set the tile that is being hovering. Used by AI actions only.
+		/// </summary>
+		public void SetHoveringTile(Tile tile)
+		{
+			if (!game.IsAITurn)
+				return;
+
+			HoveringTile = tile;
+		}
+
+		// ========================================================= Tile Inqury ========================================================
+		private struct TileRangePair
+		{
+			public Tile tile;
+			public int range;
+		}
+
+		private struct TilePathRangeHeuristicPair
+		{
+			public Tile tile;
+			public Tile previous;
+			public int range;
+			public float heuristic;
+		}
+
 
 		/// <summary>
 		/// Get all tiles that an object is in.
 		/// </summary>
-		public void GetCurrentTiles(Vector3 position, float size, ref List<Tile> result)
+		public void GetCurrentTiles(Vector3 position, float size, List<Tile> result)
 		{
 			result.Clear();
 
@@ -214,7 +264,17 @@ namespace DiceRoller
 		/// <summary>
 		/// Get all tiles that are within a certain range from the starting tiles regardless of connectivity, and return them in the supplied list.
 		/// </summary>
-		public void GetTilesInRange(IReadOnlyCollection<Tile> startingTiles, int range, in List<Tile> result)
+		public void GetTilesInRange(Tile startingTile, int range, List<Tile> result)
+		{
+			tempTiles.Clear();
+			tempTiles.Add(startingTile);
+			GetTilesInRange(tempTiles, range, result);
+			tempTiles.Clear();
+		}
+		/// <summary>
+		/// Get all tiles that are within a certain range from the starting tiles regardless of connectivity, and return them in the supplied list.
+		/// </summary>
+		public void GetTilesInRange(IEnumerable<Tile> startingTiles, int range, List<Tile> result)
 		{
 			// prepare containers
 			result.Clear();
@@ -242,7 +302,18 @@ namespace DiceRoller
 		/// <summary>
 		/// Get all tiles that fulfills a given rule in relative to the starting tiles reguardless of connectivity, and return them in the supplied list.
 		/// </summary>
-		public void GetTilesByRule(IReadOnlyCollection<Tile> startingTiles, AttackAreaRule rule, int range, in List<Tile> result)
+		public void GetTilesByRule(Tile startingTile, AttackAreaRule rule, int range, List<Tile> result)
+		{
+			tempTiles.Clear();
+			tempTiles.Add(startingTile);
+			GetTilesByRule(tempTiles, rule, range, result);
+			tempTiles.Clear();
+		}
+
+		/// <summary>
+		/// Get all tiles that fulfills a given rule in relative to the starting tiles reguardless of connectivity, and return them in the supplied list.
+		/// </summary>
+		public void GetTilesByRule(IEnumerable<Tile> startingTiles, AttackAreaRule rule, int range, List<Tile> result)
 		{
 			// prepare containers
 			result.Clear();
@@ -276,14 +347,14 @@ namespace DiceRoller
 		/// <summary>
 		/// Find all connected tiles within a certain range of this tile, and return them in the supplied list.
 		/// </summary>
-		public void GetConnectedTilesInRange(IReadOnlyCollection<Tile> startingTiles, int range, in List<Tile> result)
+		public void GetConnectedTilesInRange(IEnumerable<Tile> startingTiles, int range, List<Tile> result)
 		{
-			GetConnectedTilesInRange(startingTiles, null, range, in result);
+			GetConnectedTilesInRange(startingTiles, null, range, result);
 		}
 		/// <summary>
 		/// Find all connected tiles within a certain range of this tile, and return them in the supplied list.
 		/// </summary>
-		public void GetConnectedTilesInRange(IReadOnlyCollection<Tile> startingTiles, IReadOnlyCollection<Tile> excludedTiles, int range, in List<Tile> result)
+		public void GetConnectedTilesInRange(IEnumerable<Tile> startingTiles, IEnumerable<Tile> excludedTiles, int range, List<Tile> result)
 		{
 			// prepare containers
 			List<TileRangePair> open = tempTileRangePairs;
@@ -329,32 +400,34 @@ namespace DiceRoller
 		/// <summary>
 		/// Find the shortest path between a set of starting tile(s) to a specific target tile.
 		/// </summary>
-		public void GetShortestPath(Tile startingTile, Tile targetTile, int range, in List<Tile> result)
+		public void GetShortestPath(Tile startingTile, Tile targetTile, int range, List<Tile> result)
 		{
 			tempTiles.Clear();
 			tempTiles.Add(startingTile);
-			GetShortestPath(tempTiles, null, targetTile, range, in result);
+			GetShortestPath(tempTiles, null, targetTile, range, result);
+			tempTiles.Clear();
 		}
 		/// <summary>
 		/// Find the shortest path between a set of starting tile(s) to a specific target tile.
 		/// </summary>
-		public void GetShortestPath(IReadOnlyCollection<Tile> startingTiles, Tile targetTile, int range, in List<Tile> result)
+		public void GetShortestPath(IEnumerable<Tile> startingTiles, Tile targetTile, int range, List<Tile> result)
 		{
-			GetShortestPath(startingTiles, null, targetTile, range, in result);
+			GetShortestPath(startingTiles, null, targetTile, range, result);
 		}
 		/// <summary>
 		/// Find the shortest path between a set of starting tile(s) to a specific target tile.
 		/// </summary>
-		public void GetShortestPath(Tile startingTile, IReadOnlyCollection<Tile> excludedTiles, Tile targetTile, int range, in List<Tile> result)
+		public void GetShortestPath(Tile startingTile, IEnumerable<Tile> excludedTiles, Tile targetTile, int range, List<Tile> result)
 		{
 			tempTiles.Clear();
 			tempTiles.Add(startingTile);
-			GetShortestPath(tempTiles, excludedTiles, targetTile, range, in result);
+			GetShortestPath(tempTiles, excludedTiles, targetTile, range, result);
+			tempTiles.Clear();
 		}
 		/// <summary>
 		/// Find the shortest path between a set of starting tile(s) to a specific target tile.
 		/// </summary>
-		public void GetShortestPath(IReadOnlyCollection<Tile> startingTiles, IReadOnlyCollection<Tile> excludedTiles, Tile targetTile, int range, in List<Tile> result)
+		public void GetShortestPath(IEnumerable<Tile> startingTiles, IEnumerable<Tile> excludedTiles, Tile targetTile, int range, List<Tile> result)
 		{
 			// prepare containers
 			List<TilePathRangeHeuristicPair> open = tempTilePathRangeHeuristicPairs1;
@@ -449,6 +522,192 @@ namespace DiceRoller
 			open.Clear();
 			closed.Clear();
 			return;
+		}
+
+		// ========================================================= Display Area =========================================================
+
+		private struct HolderDisplayTypePair : IEquatable<HolderDisplayTypePair>
+		{
+			public object holder;
+			public Tile.DisplayType displayType;
+
+			public HolderDisplayTypePair(object holder, Tile.DisplayType displayType)
+			{
+				this.holder = holder;
+				this.displayType = displayType;
+			}
+
+			public bool Equals(HolderDisplayTypePair other)
+			{
+				return holder == other.holder && displayType == other.displayType;
+			}
+
+			public override bool Equals(object obj)
+			{
+				if (obj == null || GetType() != obj.GetType())
+					return false;
+				return Equals((HolderDisplayTypePair)obj);
+			}
+
+			public override int GetHashCode()
+			{
+				return holder.GetHashCode() << 8 + (int)displayType;
+			}
+		}
+		private class TileGroup
+		{
+			public HolderDisplayTypePair Info { get; private set; } = new HolderDisplayTypePair();
+			public IReadOnlyList<Tile> Tiles { get { return _Tiles.AsReadOnly(); } }
+			private readonly List<Tile> _Tiles = new List<Tile>();
+
+			private static readonly Stack<TileGroup> pool = new Stack<TileGroup>();
+
+			private TileGroup() {}
+
+			public static TileGroup New(HolderDisplayTypePair info, IEnumerable<Tile> tiles)
+			{
+				TileGroup target;
+				if (pool.Count == 0)
+				{
+					target = new TileGroup();
+				}
+				else
+				{
+					target = pool.Pop();
+				}
+				target.Info = info; 
+				target._Tiles.Clear();
+				target._Tiles.AddRange(tiles);
+				return target;
+			}
+
+			public void UpdateTiles(IEnumerable<Tile> tiles)
+			{
+				_Tiles.Clear();
+				_Tiles.AddRange(tiles);
+			}
+
+			public void ShowDisplay(bool show)
+			{
+				foreach (Tile tile in Tiles)
+				{
+					if (show)
+					{
+						tile.UpdateDisplayAs(Info.holder, Info.displayType, Tiles);
+					}
+					else
+					{
+						tile.RemoveDisplay(Info.holder, Info.displayType);
+					}
+				}
+			}
+
+			public void Recycle()
+			{
+				pool.Push(this);
+			}
+		}
+
+		private readonly Dictionary<HolderDisplayTypePair, TileGroup> activeTileDisplayGroup = new Dictionary<HolderDisplayTypePair, TileGroup>();
+
+		/// <summary>
+		/// Display an area on the tiles.
+		/// </summary>
+		public void ShowArea(object holder, Tile.DisplayType displayType, Tile area)
+		{
+			if (area != null)
+			{
+				tempTiles.Clear();
+				tempTiles.Add(area);
+				ShowArea(holder, displayType, tempTiles);
+				tempTiles.Clear();
+			}
+			else
+			{
+				HideArea(holder, displayType);
+			}
+		}
+
+		/// <summary>
+		/// Display an area on the tiles.
+		/// </summary>
+		public void ShowArea(object holder, Tile.DisplayType displayType, IEnumerable<Tile> area)
+		{
+			HolderDisplayTypePair targetPair = new HolderDisplayTypePair(holder, displayType);
+
+			// remove previous display
+			if (activeTileDisplayGroup.ContainsKey(targetPair))
+			{
+				activeTileDisplayGroup[targetPair].ShowDisplay(false);
+			}
+
+			// remove entry if needed
+			if (area.Count() == 0 && activeTileDisplayGroup.ContainsKey(targetPair))
+			{
+				activeTileDisplayGroup[targetPair].Recycle();
+				activeTileDisplayGroup.Remove(targetPair);
+			}
+
+			// add new display
+			if (area.Count() != 0)
+			{
+				if (!activeTileDisplayGroup.ContainsKey(targetPair))
+				{
+					activeTileDisplayGroup[targetPair] = TileGroup.New(targetPair, area);
+				}
+				else
+				{
+					activeTileDisplayGroup[targetPair].UpdateTiles(area);
+				}
+				activeTileDisplayGroup[targetPair].ShowDisplay(true);
+			}
+		}
+
+		/// <summary>
+		/// Hide a displayed area on the tiles.
+		/// </summary>
+		public void HideArea(object holder, Tile.DisplayType displayType)
+		{
+			ShowArea(holder, displayType, Tile.EmptyTiles);
+		}
+
+		// ========================================================= Display Path =========================================================
+
+		private readonly List<Tile> activePath = new List<Tile>();
+
+		/// <summary>
+		/// Show a display of the path on the board.
+		/// </summary>
+		public void ShowPath(List<Tile> path)
+		{
+			HidePath();
+			foreach (Tile tile in path)
+			{
+				tile.ShowPath(path);
+				activePath.Add(tile);
+			}
+		}
+
+		/// <summary>
+		/// Show a display of not reachable path on the board.
+		/// </summary>
+		public void ShowInvalidPath(Tile tile)
+		{
+			HidePath();
+			tile.ShowInvalidPath();
+			activePath.Add(tile);
+		}
+
+		/// <summary>
+		/// Hide the displayed path on the board.
+		/// </summary>
+		public void HidePath()
+		{
+			foreach (Tile tile in activePath)
+			{
+				tile.HidePath();
+			}
+			activePath.Clear();
 		}
 	}
 }

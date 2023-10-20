@@ -10,12 +10,12 @@ namespace DiceRoller
 	{
 		public enum EquipmentType
 		{
-			Movement,
-			Melee,
-			Magic,
-			MeleeBuff,
-			MagicBuff,
-			Defence,
+			MovementBuff,
+			MeleeAttack,
+			MagicAttack,
+			MeleeSelfBuff,
+			MagicSelfBuff,
+			DefenceBuff,
 		}
 
 		// ========================================================= Constructor =========================================================
@@ -105,13 +105,23 @@ namespace DiceRoller
 		/// </summary>
 		public static event Action OnItemBeingInspectedChange = () => { };
 
+		/// <summary>
+		/// Retrieve the first equipment being currently inspected, return null if none is being inspected.
+		/// </summary>
 		public static Equipment GetFirstBeingInspected()
 		{
 			return _InspectingEquipment.Count > 0 ? _InspectingEquipment[0] : null;
 		}
 
+		// ========================================================= Properties (Unit) =========================================================
+
+		/// <summary>
+		/// The unit that owns this equipment.
+		/// </summary>
+		public Unit Unit { get; private set; } = null;
+
 		// ========================================================= Properties (Information) =========================================================
-		
+
 		/// <summary>
 		/// The name of this equipment.
 		/// </summary>
@@ -131,13 +141,6 @@ namespace DiceRoller
 		/// The effect discription to be displayed to the player.
 		/// </summary>
 		public abstract string DisplayableEffectDiscription { get; }
-
-		// ========================================================= Properties (Unit) =========================================================
-
-		/// <summary>
-		/// The unit that owns this equipment.
-		/// </summary>
-		public Unit Unit { get; private set; } = null;
 
 		// ========================================================= Properties (DieSlots) =========================================================
 
@@ -255,7 +258,7 @@ namespace DiceRoller
 		/// <summary>
 		/// Apply the effect of this equipment and expend all dice assigned.
 		/// </summary>
-		public void ApplyEffect()
+		public void ConsumeDie()
 		{
 			if (IsActivated)
 			{
@@ -268,6 +271,83 @@ namespace DiceRoller
 			}
 		}
 
+		/*
+		// ========================================================= Properties (EffectiveArea) =========================================================
+
+		/// <summary>
+		/// A Readonly list of all tiles that are in range of the effect by this equipment.
+		/// </summary>
+		public IReadOnlyList<Tile> EffectiveArea
+		{
+			get
+			{
+				if (_IsEffectiveAreaDirty)
+				{
+					RefreshEffectiveArea();
+				}
+				return _EffectiveArea.AsReadOnly();
+			}
+		}
+		private List<Tile> _EffectiveArea = new List<Tile>();
+		private bool _IsEffectiveAreaDirty = true;
+
+		/// <summary>
+		/// Event raised when the list of tiles that are in range of the effect by this equipment needs updating.
+		/// </summary>
+		public event Action OnEffectiveAreaDirty = () => { };
+
+		/// <summary>
+		/// Register all necessary callbacks needed for EffectiveArea.
+		/// </summary>
+		private void RegisterCallbacksForEffectiveArea()
+		{
+			OnAllOcupiedTilesDirty += SetAttackableAreaDirty;
+			OnAttackAreaRuleChanged += SetAttackableAreaDirty;
+			OnAttackRangeChanged += SetAttackableAreaDirty;
+		}
+
+		/// <summary>
+		/// Deregister all necessary callbacks needed for EffectiveArea.
+		/// </summary>
+		private void DeregisterCallbacksForEFffectiveArea()
+		{
+			OnAllOcupiedTilesDirty -= SetAttackableAreaDirty;
+			OnAttackAreaRuleChanged -= SetAttackableAreaDirty;
+			OnAttackRangeChanged -= SetAttackableAreaDirty;
+		}
+
+		/// <summary>
+		/// Notify EffectiveArea needs updating.
+		/// </summary>
+		private void SetEffectiveAreaDirty()
+		{
+			if (!_IsEffectiveAreaDirty)
+			{
+				_IsEffectiveAreaDirty = true;
+				OnEffectiveAreaDirty.Invoke();
+			}
+		}
+
+		/// <summary>
+		/// Retrieve again the list of all tiles that in range of the effect by this equipment.
+		/// </summary>
+		private void RefreshEffectiveArea()
+		{
+			Board.current.GetTilesByRule(Unit.OccupiedTiles, AttackAreaRule, AttackRange, _AttackableArea);
+			_IsEffectiveAreaDirty = false;
+		}
+		*/
+
+		// ========================================================= Properties (Effects) =========================================================
+
+		/*
+		protected abstract int MeleeDelta { get; }
+		protected abstract int MagicDelta { get; }
+		protected abstract int DefenceDelta { get; }
+		protected abstract int MovementDelta { get; }
+		protected abstract int rangeDelta { get; }
+		protected abstract float knockbackForceDelta { get; }
+		*/
 
 		/// <summary>
 		/// Forward implementation of the effect of this equipment.
@@ -333,11 +413,11 @@ namespace DiceRoller
 
 				if (isUserSelectedAtEnter)
 				{
-					if (stateMachine.State == SMState.UnitMoveSelect && self.Type == EquipmentType.Movement)
+					if (stateMachine.State == SMState.UnitMoveSelect && self.Type == EquipmentType.MovementBuff)
 					{
 
 					}
-					else if (stateMachine.State == SMState.UnitMoveSelect &&  (self.Type == EquipmentType.Melee || self.Type == EquipmentType.Magic))
+					else if (stateMachine.State == SMState.UnitMoveSelect &&  (self.Type == EquipmentType.MeleeAttack || self.Type == EquipmentType.MagicAttack))
 					{
 
 					}
@@ -352,7 +432,7 @@ namespace DiceRoller
 				if (isUserSelectedAtEnter)
 				{
 					// inspection
-					if (CachedValueUtils.HasValueChanged(self.IsHovering, ref lastIsHovering))
+					if (CacheUtils.HasValueChanged(self.IsHovering, ref lastIsHovering))
 					{
 						self.IsBeingInspected = self.IsHovering;
 					}
@@ -363,21 +443,21 @@ namespace DiceRoller
 						if (!self.IsActivated && self.IsRequirementFulfilled)
 						{
 							// deactivate all other incompatible equipments first
-							if (self.Type == EquipmentType.Movement)
+							if (self.Type == EquipmentType.MovementBuff)
 							{
 								foreach (Equipment equipment in self.Unit.Equipments)
 								{
-									if (equipment != self && equipment.Type == EquipmentType.Movement && equipment.IsActivated)
+									if (equipment != self && equipment.Type == EquipmentType.MovementBuff && equipment.IsActivated)
 									{
 										equipment.IsActivated = false;
 									}
 								}
 							}
-							else if (self.Type == EquipmentType.Melee || self.Type == EquipmentType.Magic)
+							else if (self.Type == EquipmentType.MeleeAttack || self.Type == EquipmentType.MagicAttack)
 							{
 								foreach (Equipment equipment in self.Unit.Equipments)
 								{
-									if (equipment != self && (equipment.Type == EquipmentType.Melee || equipment.Type == EquipmentType.Magic) && equipment.IsActivated)
+									if (equipment != self && (equipment.Type == EquipmentType.MeleeAttack || equipment.Type == EquipmentType.MagicAttack) && equipment.IsActivated)
 									{
 										equipment.IsActivated = false;
 									}
@@ -408,7 +488,7 @@ namespace DiceRoller
 					}
 
 					// reset cache
-					CachedValueUtils.ResetValueCache(ref lastIsHovering);
+					CacheUtils.ResetValueCache(ref lastIsHovering);
 				}
 			}
 		}

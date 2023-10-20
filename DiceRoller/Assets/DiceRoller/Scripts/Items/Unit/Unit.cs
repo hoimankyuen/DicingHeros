@@ -30,9 +30,8 @@ namespace DiceRoller
 		{
 			None,
 			Rush,
+			Follow,
 			Stay,
-
-
 		}
 
 
@@ -40,8 +39,8 @@ namespace DiceRoller
 		[Header("Unit Parameters")]
 		public int maxHealth = 20;
 		public int baseMelee = 3;
-		public int baseDefence = 4;
 		public int baseMagic = 1;
+		public int baseDefence = 4;
 		public int baseMovement = 4;
 		public int baseRange = 1;
 		public float baseKnockbackForce = 0.25f;
@@ -78,6 +77,11 @@ namespace DiceRoller
 			RegisterStateBehaviours();
 			RegisterToPlayer();
 
+			RegisterCallbacksForAllOccupiedTiles();
+			RegisterCallbacksForMovableArea();
+			RegisterCallbacksForAttackableArea();
+			RegisterCallbacksForPredictedAttackableArea();
+
 			SetupInitialEquipments();
 
 			SetupInitialHealth();
@@ -105,6 +109,11 @@ namespace DiceRoller
 
 			DeregisterStateBehaviours();
 			DeregisterFromPlayer();
+
+			DeregisterCallbacksForAllOccupiedTiles();
+			DeregisterCallbacksForMovableArea();
+			DeregisterCallbacksForAttackableArea();
+			DeregisterCallbacksForPredictedAttackableArea();
 		}
 
 		/// <summary>
@@ -153,8 +162,7 @@ namespace DiceRoller
 
 			if (Player != null)
 			{
-				Player.units.Add(this);
-				Player.SortUnits();
+				Player.AddUnit(this);
 			}
 		}
 
@@ -168,7 +176,7 @@ namespace DiceRoller
 
 			if (Player != null)
 			{
-				Player.units.Remove(this);
+				Player.RemoveUnit(this);
 			}
 		}
 
@@ -332,7 +340,6 @@ namespace DiceRoller
 			return _DraggingUnits.Count > 0 ? _DraggingUnits[0] : null;
 		}
 
-
 		// ========================================================= Properties (AllOccupiedTilesExceptSelf) =========================================================
 
 		/// <summary>
@@ -345,7 +352,7 @@ namespace DiceRoller
 				_AllOccupiedTilesExceptSelf.Clear();
 				foreach (Player player in game.GetAllPlayers())
 				{
-					foreach (Unit unit in player.units)
+					foreach (Unit unit in player.Units)
 					{
 						if (unit != this)
 						{
@@ -472,32 +479,6 @@ namespace DiceRoller
 		public event Action OnMeleeChanged = () => { };
 
 		/// <summary>
-		/// The current defence value of this unit.
-		/// </summary>
-		public int Defence
-		{
-			get
-			{
-				return _Defence;
-			}
-			private set
-			{
-				int clampedValue = value < 0 ? 0 : value;
-				if (_Defence != clampedValue)
-				{
-					_Defence = clampedValue;
-					OnDefenceChanged.Invoke();
-				}
-			}
-		}
-		private int _Defence = 0;
-
-		/// <summary>
-		/// Event raised when the melee stat of this unit is changed.
-		/// </summary>
-		public event Action OnDefenceChanged = () => { };
-
-		/// <summary>
 		/// The current magic value of this unit.
 		/// </summary>
 		public int Magic
@@ -522,6 +503,32 @@ namespace DiceRoller
 		/// Event raised when the melee stat of this unit is changed.
 		/// </summary>
 		public event Action OnMagicChanged = () => { };
+
+		/// <summary>
+		/// The current defence value of this unit.
+		/// </summary>
+		public int Defence
+		{
+			get
+			{
+				return _Defence;
+			}
+			private set
+			{
+				int clampedValue = value < 0 ? 0 : value;
+				if (_Defence != clampedValue)
+				{
+					_Defence = clampedValue;
+					OnDefenceChanged.Invoke();
+				}
+			}
+		}
+		private int _Defence = 0;
+
+		/// <summary>
+		/// Event raised when the melee stat of this unit is changed.
+		/// </summary>
+		public event Action OnDefenceChanged = () => { };
 
 		/// <summary>
 		/// The current movement value of this unit.
@@ -608,8 +615,8 @@ namespace DiceRoller
 		public void SetupInitalStat()
 		{
 			Melee = baseMelee;
-			Defence = baseDefence;
 			Magic = baseMagic;
+			Defence = baseDefence;
 			Movement = baseMovement;
 			AttackRange = baseRange;
 			KnockbackForce = baseKnockbackForce;
@@ -618,7 +625,7 @@ namespace DiceRoller
 		/// <summary>
 		/// Apply a change on one or more stat variables.
 		/// </summary>
-		public void ChangeStat(int meleeDelta = 0, int defenceDelta = 0, int magicDelta = 0, int movementDelta = 0, int attackRangeDelta = 0, float knockbackForceDelta = 0)
+		public void ChangeStat(int meleeDelta = 0, int magicDelta = 0, int defenceDelta = 0, int movementDelta = 0, int attackRangeDelta = 0, float knockbackForceDelta = 0)
 		{
 			Melee += meleeDelta;
 			Defence += defenceDelta;
@@ -626,6 +633,267 @@ namespace DiceRoller
 			Movement += movementDelta;
 			AttackRange += attackRangeDelta;
 			KnockbackForce += knockbackForceDelta;
+		}
+
+		// ========================================================= Properties (AllOccupiedTiles) =========================================================
+
+		/// <summary>
+		/// All tiles that are occupied by every unit.
+		/// </summary>
+		public static IReadOnlyList<Tile> AllOccupiedTiles
+		{
+			get
+			{
+				if (_IsAllOccupiedTilesDirty)
+				{
+					RefresAllOccupiedTiles();		
+				}
+				return _AllOccupiedTiles.AsReadOnly();
+			}
+		}
+		private static List<Tile> _AllOccupiedTiles = new List<Tile>();
+		private static bool _IsAllOccupiedTilesDirty = true;
+
+		/// <summary>
+		/// Event raised when the list of all tiles occupied by every unit needs updating.
+		/// </summary>
+		public static event Action OnAllOcupiedTilesDirty = () => { };
+
+		/// <summary>
+		/// Register all necessary callbacks needed for AllOccupiedTiles.
+		/// </summary>
+		private void RegisterCallbacksForAllOccupiedTiles()
+		{
+			OnOccupiedTilesChanged += SetAllOccupiedTilesDirty;
+		}
+
+		/// <summary>
+		/// Deregister all necessary callbacks needed for AllOccupiedTiles.
+		/// </summary>
+		private void DeregisterCallbacksForAllOccupiedTiles()
+		{
+			OnOccupiedTilesChanged -= SetAllOccupiedTilesDirty;
+		}
+
+		/// <summary>
+		/// Notify AllOccupiedTiles needs updating.
+		/// </summary>
+		private static void SetAllOccupiedTilesDirty()
+		{
+			if (!_IsAllOccupiedTilesDirty)
+			{
+				_IsAllOccupiedTilesDirty = true;
+				OnAllOcupiedTilesDirty.Invoke();
+			}
+		}
+
+		/// <summary>
+		/// Retrieve again the list of all tiles that are occupied by any unit.
+		/// </summary>
+		private static void RefresAllOccupiedTiles()
+		{
+			_AllOccupiedTiles.Clear();
+			foreach (Player player in GameController.current.GetAllPlayers())
+			{
+				foreach (Unit unit in player.Units.Where(x => x.CurrentUnitState != UnitState.Defeated))
+				{
+					_AllOccupiedTiles.AddRange(unit.OccupiedTiles.Except(_AllOccupiedTiles));
+				}
+			}
+			_IsAllOccupiedTilesDirty = false;
+		}
+
+		// ========================================================= Properties (MoveableArea) =========================================================
+
+		/// <summary>
+		/// A Readonly list of all tiles that are movable to by this unit.
+		/// </summary>
+		public IReadOnlyList<Tile> MovableArea
+		{
+			get
+			{
+				if (_IsMoveableAreaDirty)
+				{
+					RefreshMoveableArea();			
+				}
+				return _MoveableArea.AsReadOnly();
+			}
+		}
+		private List<Tile> _MoveableArea = new List<Tile>();
+		private bool _IsMoveableAreaDirty = true;
+
+		/// <summary>
+		/// Event raised when the list of movable tiles by this unit needs updating.
+		/// </summary>
+		public event Action OnMoveableAreaDirty = () => { };
+
+		/// <summary>
+		/// Register all necessary callbacks needed for movableArea.
+		/// </summary>
+		private void RegisterCallbacksForMovableArea()
+		{
+			OnAllOcupiedTilesDirty += SetMovableAreaDirty;
+			OnMovementChanged += SetMovableAreaDirty;
+		}
+
+		/// <summary>
+		/// Deregister all necessary callbacks needed for movableArea.
+		/// </summary>
+		private void DeregisterCallbacksForMovableArea()
+		{
+			OnAllOcupiedTilesDirty -= SetMovableAreaDirty;
+			OnMovementChanged -= SetMovableAreaDirty;
+		}
+
+		/// <summary>
+		/// Notify MovableArea needs updating.
+		/// </summary>
+		private void SetMovableAreaDirty()
+		{
+			if (!_IsMoveableAreaDirty)
+			{
+				_IsMoveableAreaDirty = true;
+				OnMoveableAreaDirty.Invoke();
+			}
+		}
+
+		/// <summary>
+		/// Retrieve again the list of all tiles that are movable to by this unit.
+		/// </summary>
+		private void RefreshMoveableArea()
+		{
+			board.GetConnectedTilesInRange(OccupiedTiles, AllOccupiedTiles.Except(OccupiedTiles), Movement, _MoveableArea);
+			_IsMoveableAreaDirty = false;
+		}
+
+		// ========================================================= Properties (AttackableArea) =========================================================
+
+		/// <summary>
+		/// A Readonly list of all tiles that are attackable by this unit.
+		/// </summary>
+		public IReadOnlyList<Tile> AttackableArea
+		{
+			get
+			{
+				if (_IsAttackableAreaDirty)
+				{
+					RefreshAttackableArea();
+				}
+				return _AttackableArea.AsReadOnly();
+			}
+		}
+		private List<Tile> _AttackableArea = new List<Tile>();
+		private bool _IsAttackableAreaDirty = true;
+
+		/// <summary>
+		/// Event raised when the list of attackable tile by this unit needs updating.
+		/// </summary>
+		public event Action OnAttackableAreaDirty = () => { };
+
+		/// <summary>
+		/// Register all necessary callbacks needed for attackableArea.
+		/// </summary>
+		private void RegisterCallbacksForAttackableArea()
+		{
+			OnAllOcupiedTilesDirty += SetAttackableAreaDirty;
+			OnAttackAreaRuleChanged += SetAttackableAreaDirty;
+			OnAttackRangeChanged += SetAttackableAreaDirty;
+		}
+
+		/// <summary>
+		/// Deregister all necessary callbacks needed for attackableArea.
+		/// </summary>
+		private void DeregisterCallbacksForAttackableArea()
+		{
+			OnAllOcupiedTilesDirty -= SetAttackableAreaDirty;
+			OnAttackAreaRuleChanged -= SetAttackableAreaDirty;
+			OnAttackRangeChanged -= SetAttackableAreaDirty;
+		}
+
+		/// <summary>
+		/// Notify AttackableArea needs updating.
+		/// </summary>
+		private void SetAttackableAreaDirty()
+		{
+			if (!_IsAttackableAreaDirty)
+			{
+				_IsAttackableAreaDirty = true;
+				OnAttackableAreaDirty.Invoke();
+			}
+		}
+
+		/// <summary>
+		/// Retrieve again the list of all tiles that are attackable to by this unit.
+		/// </summary>
+		private void RefreshAttackableArea()
+		{
+			board.GetTilesByRule(OccupiedTiles, AttackAreaRule, AttackRange, _AttackableArea);
+			_IsAttackableAreaDirty = false;
+		}
+
+		// ========================================================= Properties (PredictedAttackableArea) =========================================================
+
+		/// <summary>
+		/// A Readonly list of all tiles that will be attackable after movement by this unit.
+		/// </summary>
+		public IReadOnlyList<Tile> PredictedAttackableArea
+		{
+			get
+			{
+				if (_IsPredictedAttackableAreaDirty)
+				{
+					RefreshPredictedAttackableArea();	
+				}
+				return _PredictedAttackableArea.AsReadOnly();
+			}
+		}
+		private List<Tile> _PredictedAttackableArea = new List<Tile>();
+		private bool _IsPredictedAttackableAreaDirty = true;
+
+		/// <summary>
+		/// Event raised when the list of attackable tile after movement by this unit needs updating.
+		/// </summary>
+		public event Action OnPredictedAttackableAreaDirty = () => { };
+
+		/// <summary>
+		/// Register all necessary callbacks needed for predictedAttackableArea.
+		/// </summary>
+		private void RegisterCallbacksForPredictedAttackableArea()
+		{
+			OnMoveableAreaDirty += SetPredictedAttakableAreaDirty;
+			OnAttackAreaRuleChanged += SetPredictedAttakableAreaDirty;
+			OnAttackRangeChanged += SetPredictedAttakableAreaDirty;
+		}
+
+		/// <summary>
+		/// Deregister all necessary callbacks needed for predictedAttackableArea.
+		/// </summary>
+		private void DeregisterCallbacksForPredictedAttackableArea()
+		{
+			OnMoveableAreaDirty -= SetPredictedAttakableAreaDirty;
+			OnAttackAreaRuleChanged -= SetPredictedAttakableAreaDirty;
+			OnAttackRangeChanged -= SetPredictedAttakableAreaDirty;
+		}
+
+		/// <summary>
+		/// Notify PredictedAttackableArea needs updating.
+		/// </summary>
+		private void SetPredictedAttakableAreaDirty()
+		{
+			if (!_IsPredictedAttackableAreaDirty)
+			{
+				_IsPredictedAttackableAreaDirty = true;
+				OnPredictedAttackableAreaDirty.Invoke();
+			}
+		}
+
+		/// <summary>
+		/// Retrieve again the list of all tiles that are attackable after movement by this unit.
+		/// </summary>
+		private void RefreshPredictedAttackableArea()
+		{
+			board.GetTilesByRule(MovableArea, AttackAreaRule, AttackRange, _PredictedAttackableArea);
+			_IsPredictedAttackableAreaDirty = false;
 		}
 
 		// ========================================================= Properties (Equipment) =========================================================
@@ -751,7 +1019,6 @@ namespace DiceRoller
 		{
 			AttackAreaRule = rule;
 		}
-
 
 		// ========================================================= Properties (CurrentUnitState) =========================================================
 

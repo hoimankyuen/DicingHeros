@@ -16,21 +16,19 @@ namespace DiceRoller
 			// caches
 			private bool isSelectedAtEnter = false;
 
-			private List<Tile> lastOccupiedTiles = new List<Tile>();
-			private List<Tile> otherOccupiedTiles = new List<Tile>();
+			private List<Tile> lastMovableArea = new List<Tile>();
 
-			private int lastMovement = 0;
-			private List<Tile> lastMovementArea = new List<Tile>();
-			
-			private List<Tile> lastPath = new List<Tile>();
+			private List<Tile> targetPath = new List<Tile>();
+
 			private Tile lastTargetTile = null;
-			private bool lastReachable = true;
+
+			private bool attackableAreaDirty = true;
+			private int lastAttackRange = 0;
+			private AttackAreaRule lastAttackAreaRule = null;
+			private List<Tile> nextAttackableArea = new List<Tile>();
+
 			private Vector2 pressedPosition0 = Vector2.negativeInfinity;
 			private Vector2 pressedPosition1 = Vector2.negativeInfinity;
-
-			private List<Tile> nextPath = new List<Tile>();
-			private List<Tile> appendPath = new List<Tile>();
-			private List<Tile> appendExcludedTiles = new List<Tile>();
 
 			private bool lastIsHoveringFromTiles = false;
 
@@ -60,14 +58,7 @@ namespace DiceRoller
 					self.ShowEffect(EffectType.SelectedSelf, true);
 
 					// show occupied tiles on board, assume unit wont move during movement selection state
-					lastOccupiedTiles.AddRange(self.OccupiedTiles);
-					foreach (Tile tile in lastOccupiedTiles)
-					{
-						tile.UpdateDisplayAs(self, Tile.DisplayType.SelfPosition, lastOccupiedTiles);
-					}
-
-					// retrieve other occupied tiles
-					otherOccupiedTiles.AddRange(self.AllOccupiedTilesExceptSelf);
+					board.ShowArea(self, Tile.DisplayType.SelfPosition, self.OccupiedTiles);
 				}
 			}
 
@@ -82,129 +73,119 @@ namespace DiceRoller
 				if (isSelectedAtEnter)
 				{
 					// update movement area if needed
-					if (CachedValueUtils.HasValueChanged(self.Movement, ref lastMovement))
+					if (CacheUtils.HasCollectionChanged(self.MovableArea, lastMovableArea))
 					{
-						foreach (Tile tile in lastMovementArea)
-						{
-							tile.RemoveDisplay(self, Tile.DisplayType.Move);
-						}
-						board.GetConnectedTilesInRange(self.OccupiedTiles, otherOccupiedTiles, self.Movement, lastMovementArea);
-						foreach (Tile tile in lastMovementArea)
-						{
-							tile.UpdateDisplayAs(self, Tile.DisplayType.Move, lastMovementArea);
-						}
+						board.ShowArea(self, Tile.DisplayType.Move, self.MovableArea);
 					}
 
 					// find the target tile that the mouse is pointing to
 					Tile targetTile = board.HoveringTile;
-
-					// check if target tile is reachable
-					bool reachable = lastMovementArea.Contains(targetTile);
-
-					if (lastTargetTile != targetTile)
+					bool reachable = self.MovableArea.Contains(targetTile);
+					if (CacheUtils.HasValueChanged(targetTile, ref lastTargetTile))
 					{
 						// calculate path
-						nextPath.Clear();
-						nextPath.AddRange(lastPath);
 						if (targetTile == null || !reachable)
 						{
 							// target tile is unreachable, no path is retrieved
-							nextPath.Clear();
+							targetPath.Clear();
 						}
 						else if (self.OccupiedTiles.Contains(targetTile))
 						{
 							// target tile is withing the starting tiles, reset the path to the target tile
-							nextPath.Clear();
-							nextPath.Add(targetTile);
+							targetPath.Clear();
+							targetPath.Add(targetTile);
 						}
-						else if (nextPath.Count == 0)
+						else if (targetPath.Count == 0)
 						{
 							// no path exist, find the shortest path to target tile
-							nextPath.Clear();
-							self.board.GetShortestPath(self.OccupiedTiles, otherOccupiedTiles, targetTile, self.Movement, in nextPath);
+							targetPath.Clear();
+							self.board.GetShortestPath(self.OccupiedTiles, self.AllOccupiedTilesExceptSelf, targetTile, self.Movement, targetPath);
 						}
-						else if (nextPath.Contains(targetTile))
+						else if (targetPath.Contains(targetTile))
 						{
 							// trim the path if target tile is already in the current path
-							nextPath.RemoveRange(nextPath.IndexOf(targetTile) + 1, nextPath.Count - nextPath.IndexOf(targetTile) - 1);
+							targetPath.RemoveRange(targetPath.IndexOf(targetTile) + 1, targetPath.Count - targetPath.IndexOf(targetTile) - 1);
 						}
 						else
 						{
 							// target tile is valid and not on current path, attempt to append a path from the end of current path to the target tile
-							appendPath.Clear();
+							List<Tile> appendPath = new List<Tile>();
+							List<Tile> appendExcludedTiles = new List<Tile>();
+							appendExcludedTiles.AddRange(targetPath);
+							appendExcludedTiles.AddRange(self.AllOccupiedTilesExceptSelf);
+							appendExcludedTiles.Remove(targetPath[targetPath.Count - 1]);
+							self.board.GetShortestPath(targetPath[targetPath.Count - 1], appendExcludedTiles, targetTile, self.Movement + 1 - targetPath.Count, appendPath);
 							appendExcludedTiles.Clear();
-							appendExcludedTiles.AddRange(nextPath);
-							appendExcludedTiles.AddRange(otherOccupiedTiles);
-							appendExcludedTiles.Remove(nextPath[nextPath.Count - 1]);
-							self.board.GetShortestPath(nextPath[nextPath.Count - 1], appendExcludedTiles, targetTile, self.Movement + 1 - nextPath.Count, in appendPath);
 							if (appendPath.Count > 0)
 							{
 								// append a path from last tile of the path to the target tile
 								appendPath.RemoveAt(0);
-								nextPath.AddRange(appendPath);
-								appendPath.Clear();
+								targetPath.AddRange(appendPath);
 							}
 							else
 							{
 								// path is too long, retrieve a shortest path to target tile instead
-								nextPath.Clear();
-								self.board.GetShortestPath(self.OccupiedTiles, otherOccupiedTiles, targetTile, self.Movement, in nextPath);
+								targetPath.Clear();
+								self.board.GetShortestPath(self.OccupiedTiles, self.AllOccupiedTilesExceptSelf, targetTile, self.Movement, targetPath);
 							}
 						}
 
-						// show path to target tile on the board
-						foreach (Tile tile in lastPath)
+						// show valid, invalid or no path on the board
+						if (targetPath.Count > 0)
 						{
-							tile.HidePath();
+							board.ShowPath(targetPath);
 						}
-						foreach (Tile tile in nextPath)
+						else if (targetTile != null && !reachable)
 						{
-							tile.ShowPath(nextPath);
+							board.ShowInvalidPath(targetTile);
 						}
-
-						// show invalid path to target tile on the board
-						if (lastTargetTile != null && !lastReachable)
+						else
 						{
-							lastTargetTile.HideInvalidPath();
-						}
-						if (targetTile != null && !reachable)
-						{
-							targetTile.ShowInvalidPath();
+							board.HidePath();
 						}
 
 						// show target tile on the board
-						if (lastTargetTile != null && lastReachable)
-						{
-							lastTargetTile.UpdateDisplayAs(self, Tile.DisplayType.MoveTarget, (Tile)null);
-						}
+						board.ShowArea(self, Tile.DisplayType.MoveTarget, (targetTile != null && reachable) ? targetTile : null);
+
+						// force attaack area recalculation
+						attackableAreaDirty = true;
+					}
+
+					// show attackable area on the board
+					if (CacheUtils.HasValueChanged(self.AttackRange, ref lastAttackRange))
+					{
+						attackableAreaDirty = true;
+					}
+					if (CacheUtils.HasValueChanged(self.AttackAreaRule, ref lastAttackAreaRule))
+					{
+						attackableAreaDirty = true;
+					}
+					if (attackableAreaDirty)
+					{		
 						if (targetTile != null && reachable)
 						{
-							targetTile.UpdateDisplayAs(self, Tile.DisplayType.MoveTarget, targetTile);
+							board.GetTilesByRule(targetTile, self.AttackAreaRule, self.AttackRange, nextAttackableArea);
+							board.ShowArea(self, Tile.DisplayType.AttackPossible, nextAttackableArea);
 						}
-
-						lastPath.Clear();
-						lastPath.AddRange(nextPath);
-						nextPath.Clear();
-						lastTargetTile = targetTile;
-						lastReachable = reachable;
+						else
+						{
+							board.ShowArea(self, Tile.DisplayType.AttackPossible, self.AttackableArea);
+						}
 					}
 
 					// detect path selection by left mouse pressing
-					if (InputUtils.GetMousePress(0, ref pressedPosition0))
+					if (InputUtils.GetMousePress(0, ref pressedPosition0) && reachable)
 					{
-						if (reachable)
+						// pressed on a valid tile, initiate movement
+						self.NextMovement = new UnitMovement(self.OccupiedTiles, targetPath);
+
+						// use any activated equipment that are used at move state
+						foreach (Equipment equipment in self.Equipments.Where(x => x.Type == Equipment.EquipmentType.MovementBuff && x.IsActivated))
 						{
-							// pressed on a valid tile, initiate movement
-							self.NextMovement = new UnitMovement(self.OccupiedTiles, lastPath);
-
-							// use any activated equipment that are used at move state
-							foreach (Equipment equipment in self.Equipments.Where(x => x.Type == Equipment.EquipmentType.Movement && x.IsActivated))
-							{
-								equipment.ApplyEffect();
-							}
-
-							stateMachine.ChangeState(SMState.UnitMove);
+							equipment.ConsumeDie();
 						}
+
+						stateMachine.ChangeState(SMState.UnitMove);
 					}
 
 					// detect return to navitation by right mouse pressing
@@ -225,26 +206,10 @@ namespace DiceRoller
 					{
 						isHoveringOnTiles &= !GetFirstSelected().OccupiedTiles.Contains(board.HoveringTile);
 					}
-					if (CachedValueUtils.HasValueChanged(isHoveringOnTiles, ref lastIsHoveringFromTiles))
+					if (CacheUtils.HasValueChanged(isHoveringOnTiles, ref lastIsHoveringFromTiles))
 					{
-						if (isHoveringOnTiles)
-						{
-							//self.AddToInspection();
-							self.ShowEffect(self.Player == game.CurrentPlayer ? EffectType.InspectingFriend : EffectType.InspectingEnemy, true);
-							foreach (Tile t in self.OccupiedTiles)
-							{
-								t.UpdateDisplayAs(self, self.Player == game.CurrentPlayer ? Tile.DisplayType.FriendPosition : Tile.DisplayType.EnemyPosition, self.OccupiedTiles);
-							}
-						}
-						else
-						{
-							//self.RemoveFromInspection();
-							self.ShowEffect(self.Player == game.CurrentPlayer ? EffectType.InspectingFriend : EffectType.InspectingEnemy, false);
-							foreach (Tile t in self.OccupiedTiles)
-							{
-								t.UpdateDisplayAs(self, self.Player == game.CurrentPlayer ? Tile.DisplayType.FriendPosition : Tile.DisplayType.EnemyPosition, Tile.EmptyTiles);
-							}
-						}
+						self.ShowEffect(self.Player == game.CurrentPlayer ? EffectType.InspectingFriend : EffectType.InspectingEnemy, isHoveringOnTiles);
+						board.ShowArea(self, self.Player == game.CurrentPlayer ? Tile.DisplayType.FriendPosition : Tile.DisplayType.EnemyPosition, isHoveringOnTiles ? self.OccupiedTiles : Tile.EmptyTiles);
 					}
 				}
 			}
@@ -260,69 +225,31 @@ namespace DiceRoller
 				if (isSelectedAtEnter)
 				{
 					// hide selection effect
-					self.ShowEffect(EffectType.SelectedSelf, false);
+					self.HideEffect(EffectType.SelectedSelf);
 
 					// hide occupied tiles on board
-					foreach (Tile tile in lastOccupiedTiles)
-					{
-						tile.UpdateDisplayAs(self, Tile.DisplayType.SelfPosition, Tile.EmptyTiles);
-					}
+					board.HideArea(self, Tile.DisplayType.SelfPosition);
 
 					// hide possible movement area on board
-					foreach (Tile tile in lastMovementArea)
-					{
-						tile.UpdateDisplayAs(self, Tile.DisplayType.Move, Tile.EmptyTiles);
-					}
-
-					// hide occupied tile of other units
-					if (lastTargetTile != null && !lastOccupiedTiles.Contains(lastTargetTile))
-					{
-						foreach (Item item in lastTargetTile.Occupants)
-						{
-							if (item is Unit)
-							{
-								Unit unit = item as Unit;
-								unit.ShowEffect(unit.Player == game.CurrentPlayer ? EffectType.InspectingFriend : EffectType.InspectingEnemy, false);
-								foreach (Tile t in unit.OccupiedTiles)
-								{
-									if (!lastOccupiedTiles.Contains(t))
-									{
-										t.UpdateDisplayAs(unit, unit.Player == game.CurrentPlayer ? Tile.DisplayType.FriendPosition : Tile.DisplayType.EnemyPosition, Tile.EmptyTiles);
-									}
-								}
-							}
-						}
-					}
+					board.HideArea(self, Tile.DisplayType.Move);
+					CacheUtils.ResetCollectionCache(lastMovableArea);
 
 					// hide path to target tile on board
-					foreach (Tile tile in lastPath)
-					{
-						tile.HidePath();
-					}
+					board.HidePath();
+					targetPath.Clear();
 
 					// hdie target tile on board
-					if (lastTargetTile != null)
-					{
-						if (lastReachable)
-						{
-							lastTargetTile.UpdateDisplayAs(self, Tile.DisplayType.MoveTarget, Tile.EmptyTiles);
-						}
-						else
-						{
-							lastTargetTile.HideInvalidPath();
-						}
-					}
+					board.HideArea(self, Tile.DisplayType.MoveTarget);
+					CacheUtils.ResetValueCache(ref lastTargetTile);
 
-					// reset cache
-					CachedValueUtils.ResetValueCache(ref lastMovement);
+					// hide attackable area on board
+					board.HideArea(self, Tile.DisplayType.AttackPossible);
+					attackableAreaDirty = true;
+					CacheUtils.ResetValueCache(ref lastAttackRange);
+					CacheUtils.ResetValueCache(ref lastAttackAreaRule);
+					nextAttackableArea.Clear();
 
-					lastOccupiedTiles.Clear();
-					otherOccupiedTiles.Clear();
-					lastMovementArea.Clear();
-					lastPath.Clear();
-					lastTargetTile = null;
-					lastReachable = true;
-
+					// reset input cache
 					InputUtils.ResetPressCache(ref pressedPosition0);
 					InputUtils.ResetPressCache(ref pressedPosition1);
 				}
@@ -331,18 +258,10 @@ namespace DiceRoller
 				if (!isSelectedAtEnter)
 				{
 					// hide hovering by tile
-					if (lastIsHoveringFromTiles)
-					{
-						//self.RemoveFromInspection();
-						self.ShowEffect(self.Player == game.CurrentPlayer ? EffectType.InspectingFriend : EffectType.InspectingEnemy, false);
-						foreach (Tile t in self.OccupiedTiles)
-						{
-							t.UpdateDisplayAs(self, self.Player == game.CurrentPlayer ? Tile.DisplayType.FriendPosition : Tile.DisplayType.EnemyPosition, Tile.EmptyTiles);
-						}
-					}
+					self.HideEffect(self.Player == game.CurrentPlayer ? EffectType.InspectingFriend : EffectType.InspectingEnemy);
+					board.HideArea(self, self.Player == game.CurrentPlayer ? Tile.DisplayType.FriendPosition : Tile.DisplayType.EnemyPosition);
+					CacheUtils.ResetValueCache(ref lastIsHoveringFromTiles);
 
-					// reset cache
-					CachedValueUtils.ResetValueCache(ref lastIsHoveringFromTiles);
 				}
 			}
 		}

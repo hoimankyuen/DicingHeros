@@ -16,14 +16,9 @@ namespace DiceRoller
 			// caches
 			private bool isSelectedAtEnter = false;
 
-			private List<Tile> lastOccupiedTiles = new List<Tile>();
-
-			private AttackAreaRule lastAttackAreaRule = null;
-			private int lastAttackRange = 0;
-			private List<Tile> lastAttackArea = new List<Tile>();
-			private List<Unit> lastTargetableUnits = new List<Unit>();
-
-			private Unit lastTargetedUnit = null;
+			private List<Tile> lastAttackableArea = new List<Tile>();
+			private List<Unit> targetableUnits = new List<Unit>();
+			private Unit targetedUnit = null;
 
 			private Vector2 pressedPosition0 = Vector2.negativeInfinity;
 			private Vector2 pressedPosition1 = Vector2.negativeInfinity;
@@ -56,11 +51,7 @@ namespace DiceRoller
 					self.ShowEffect(EffectType.SelectedSelf, true);
 
 					// show occupied tiles on board, assume unit wont move during movement selection state
-					lastOccupiedTiles.AddRange(self.OccupiedTiles);
-					foreach (Tile tile in lastOccupiedTiles)
-					{
-						tile.UpdateDisplayAs(self, Tile.DisplayType.SelfPosition, lastOccupiedTiles);
-					}
+					board.ShowArea(self, Tile.DisplayType.SelfPosition, self.OccupiedTiles);
 				}
 			}
 
@@ -75,29 +66,21 @@ namespace DiceRoller
 				if (isSelectedAtEnter)
 				{
 					// update attack area if needed
-					if (CachedValueUtils.HasValueChanged(self.AttackAreaRule, ref lastAttackAreaRule) || CachedValueUtils.HasValueChanged(self.AttackRange, ref lastAttackRange))
+					if (CacheUtils.HasCollectionChanged(self.AttackableArea, lastAttackableArea))
 					{
-						foreach (Tile tile in lastAttackArea)
-						{
-							tile.RemoveDisplay(self, Tile.DisplayType.Attack);
-						}
-						board.GetTilesByRule(self.OccupiedTiles, self.AttackAreaRule, self.AttackRange, lastAttackArea);
-						foreach (Tile tile in lastAttackArea)
-						{
-							tile.UpdateDisplayAs(self, Tile.DisplayType.Attack, lastAttackArea);
-						}
+						board.ShowArea(self, Tile.DisplayType.Attack, self.AttackableArea);
 
 						// find all targetable units
-						lastTargetableUnits.Clear();
+						targetableUnits.Clear();
 						foreach (Player player in game.GetAllPlayers())
 						{
 							if (player != self.Player)
 							{
-								foreach (Unit unit in player.units)
+								foreach (Unit unit in player.Units)
 								{
-									if (lastAttackArea.Intersect(unit.OccupiedTiles).Count() > 0)
+									if (lastAttackableArea.Intersect(unit.OccupiedTiles).Count() > 0)
 									{
-										lastTargetableUnits.Add(unit);
+										targetableUnits.Add(unit);
 										unit.ShowEffect(EffectType.PossibleEnemy, true);
 									}
 								}
@@ -106,8 +89,8 @@ namespace DiceRoller
 					}
 
 					// detect hovering on enemy units
-					Unit target = lastTargetableUnits.FirstOrDefault(x => x.IsHovering);
-					if (CachedValueUtils.HasValueChanged(target, ref lastTargetedUnit, out Unit previous))
+					Unit target = targetableUnits.FirstOrDefault(x => x.IsHovering);
+					if (CacheUtils.HasValueChanged(target, ref targetedUnit, out Unit previous))
 					{
 						if (previous != null)
 						{
@@ -116,10 +99,7 @@ namespace DiceRoller
 							previous.IsRecievingDamage = false;
 
 							// hide tiles and effect
-							foreach (Tile tile in previous.OccupiedTiles)
-							{
-								tile.UpdateDisplayAs(previous, Tile.DisplayType.EnemyPosition, Tile.EmptyTiles);
-							}
+							board.HideArea(previous, Tile.DisplayType.EnemyPosition);
 							previous.IsBeingInspected = false;
 							previous.ShowEffect(EffectType.InspectingEnemy, false);
 						}
@@ -142,10 +122,7 @@ namespace DiceRoller
 							target.IsRecievingDamage = true;
 
 							// show tiles and effect
-							foreach (Tile tile in target.OccupiedTiles)
-							{
-								tile.UpdateDisplayAs(target, Tile.DisplayType.EnemyPosition, target.OccupiedTiles);
-							}
+							board.ShowArea(target, Tile.DisplayType.EnemyPosition, target.OccupiedTiles);
 							target.IsBeingInspected = true;
 							target.ShowEffect(EffectType.InspectingEnemy, true);
 						}
@@ -172,16 +149,16 @@ namespace DiceRoller
 						{
 							if (self.CurrentAttackType == AttackType.Physical)
 							{
-								if (equipment.IsActivated && (equipment.Type == Equipment.EquipmentType.Melee || equipment.Type == Equipment.EquipmentType.MeleeBuff))
+								if (equipment.IsActivated && (equipment.Type == Equipment.EquipmentType.MeleeAttack || equipment.Type == Equipment.EquipmentType.MeleeSelfBuff))
 								{
-									equipment.ApplyEffect();
+									equipment.ConsumeDie();
 								}
 							}
 							else if (self.CurrentAttackType == AttackType.Magical)
 							{
-								if (equipment.IsActivated && (equipment.Type == Equipment.EquipmentType.Magic || equipment.Type == Equipment.EquipmentType.MagicBuff))
+								if (equipment.IsActivated && (equipment.Type == Equipment.EquipmentType.MagicAttack || equipment.Type == Equipment.EquipmentType.MagicSelfBuff))
 								{
-									equipment.ApplyEffect();
+									equipment.ConsumeDie();
 								}
 							}
 						}
@@ -189,9 +166,9 @@ namespace DiceRoller
 						// use any activated equipment on the target that are used as defence
 						foreach (Equipment equipment in target.Equipments)
 						{
-							if (equipment.IsActivated && equipment.Type == Equipment.EquipmentType.Defence)
+							if (equipment.IsActivated && equipment.Type == Equipment.EquipmentType.DefenceBuff)
 							{
-								equipment.ApplyEffect();
+								equipment.ConsumeDie();
 							}
 						}
 
@@ -219,45 +196,33 @@ namespace DiceRoller
 				if (isSelectedAtEnter)
 				{
 					// hide selection effect
-					self.ShowEffect(EffectType.SelectedSelf, false);
+					self.HideEffect(EffectType.SelectedSelf);
 
 					// hide occupied tiles on board
-					foreach (Tile tile in lastOccupiedTiles)
-					{
-						tile.UpdateDisplayAs(self, Tile.DisplayType.SelfPosition, Tile.EmptyTiles);
-					}
-					lastOccupiedTiles.Clear();
+					board.HideArea(self, Tile.DisplayType.SelfPosition);
 
 					// hide possible attack area on board
-					foreach (Tile tile in lastAttackArea)
-					{
-						tile.UpdateDisplayAs(self, Tile.DisplayType.Attack, Tile.EmptyTiles);
-					}
-					lastAttackArea.Clear();
-					CachedValueUtils.ResetValueCache(ref lastAttackRange);
-					CachedValueUtils.ResetValueCache(ref lastAttackAreaRule);
+					board.HideArea(self, Tile.DisplayType.Attack);
+					CacheUtils.ResetCollectionCache(lastAttackableArea);
 
 					// clear targetable units
-					foreach (Unit unit in lastTargetableUnits)
+					foreach (Unit unit in targetableUnits)
 					{
 						unit.ShowEffect(EffectType.PossibleEnemy, false);
 					}
-					lastTargetableUnits.Clear();
+					targetableUnits.Clear();
 
 					// remove effect on targeted unit
-					if (lastTargetedUnit != null)
+					if (targetedUnit != null)
 					{
-						lastTargetedUnit.PendingHealthDelta = 0;
-						lastTargetedUnit.IsRecievingDamage = false;
+						targetedUnit.PendingHealthDelta = 0;
+						targetedUnit.IsRecievingDamage = false;
 
-						foreach (Tile tile in lastTargetedUnit.OccupiedTiles)
-						{
-							tile.UpdateDisplayAs(lastTargetedUnit, Tile.DisplayType.EnemyPosition, Tile.EmptyTiles);
-						}
-						lastTargetedUnit.IsBeingInspected = false;
-						lastTargetedUnit.ShowEffect(EffectType.InspectingEnemy, false);
+						board.HideArea(targetedUnit, Tile.DisplayType.EnemyPosition);
+						targetedUnit.IsBeingInspected = false;
+						targetedUnit.ShowEffect(EffectType.InspectingEnemy, false);
 					}
-					CachedValueUtils.ResetValueCache(ref lastTargetedUnit);
+					CacheUtils.ResetValueCache(ref targetedUnit);
 
 					// reset cache
 					InputUtils.ResetPressCache(ref pressedPosition0);

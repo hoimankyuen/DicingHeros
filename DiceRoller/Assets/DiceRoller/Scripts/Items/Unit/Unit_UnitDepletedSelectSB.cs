@@ -14,7 +14,6 @@ namespace DiceRoller
 
 			// caches
 			private bool isSelectedAtEnter = false;
-			private List<Tile> lastOccupiedTiles = new List<Tile>();
 
 			private Vector2 pressedPosition1 = Vector2.negativeInfinity;
 
@@ -46,11 +45,7 @@ namespace DiceRoller
 					self.ShowEffect(EffectType.SelectedSelf, true);
 
 					// show occupied tiles on board, assume unit wont move during movement selection state
-					lastOccupiedTiles.AddRange(self.OccupiedTiles);
-					foreach (Tile tile in lastOccupiedTiles)
-					{
-						tile.UpdateDisplayAs(self, Tile.DisplayType.SelfPosition, lastOccupiedTiles);
-					}
+					board.ShowArea(self, Tile.DisplayType.SelfPosition, self.OccupiedTiles);
 				}
 			}
 
@@ -88,11 +83,7 @@ namespace DiceRoller
 					self.ShowEffect(EffectType.SelectedSelf, false);
 
 					// hide occupied tiles on board
-					foreach (Tile tile in lastOccupiedTiles)
-					{
-						tile.UpdateDisplayAs(self, Tile.DisplayType.SelfPosition, Tile.EmptyTiles);
-					}
-					lastOccupiedTiles.Clear();
+					board.HideArea(self, Tile.DisplayType.SelfPosition);
 					
 					// reset cache
 					InputUtils.ResetPressCache(ref pressedPosition1);

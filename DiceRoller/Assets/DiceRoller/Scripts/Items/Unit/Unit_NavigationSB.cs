@@ -15,15 +15,6 @@ namespace DiceRoller
 			// caches
 			private bool lastIsHovering = false;
 
-			private List<Tile> lastMoveableTiles = new List<Tile>();
-
-			private List<Tile> lastOccupiedTiles = new List<Tile>();
-			private List<Tile> affectedOccupiedTiles = new List<Tile>();
-
-			private List<Tile> possibleAttackArea = new List<Tile>();
-			private List<Tile> lastPossibleArea = new List<Tile>();
-			private List<Tile> affectedPossibleARea = new List<Tile>();
-
 			// ========================================================= Constructor =========================================================
 
 			/// <summary>
@@ -41,14 +32,7 @@ namespace DiceRoller
 			/// </summary>
 			public override void OnStateEnter()
 			{
-				// retrieve moveable area
-				board.GetConnectedTilesInRange(self.OccupiedTiles, self.AllOccupiedTilesExceptSelf, self.Movement, lastMoveableTiles);
 
-				// calculage attack range
-				if (self.Player != game.CurrentPlayer)
-				{
-					board.GetTilesByRule(lastMoveableTiles, self.AttackAreaRule, self.AttackRange, possibleAttackArea);
-				}
 			}
 
 			/// <summary>
@@ -60,30 +44,32 @@ namespace DiceRoller
 				if (self.CurrentUnitState != UnitState.Defeated)
 				{
 					// hovering effects
-					if (CachedValueUtils.HasValueChanged(self.IsHovering, ref lastIsHovering))
+					if (CacheUtils.HasValueChanged(self.IsHovering, ref lastIsHovering))
 					{
 						// allow inspection
 						self.IsBeingInspected = self.IsHovering;
 						self.ShowEffect(self.Player == game.CurrentPlayer ? EffectType.InspectingSelf : EffectType.InspectingEnemy, self.IsHovering);
 
 						// show occupied tiles on the board
-						IReadOnlyCollection<Tile> occupiedTiles = self.IsHovering ? self.OccupiedTiles : Tile.EmptyTiles;
-						if (CachedValueUtils.HasCollectionChanged(occupiedTiles, lastOccupiedTiles, affectedOccupiedTiles))
-						{
-							foreach (Tile tile in affectedOccupiedTiles)
-							{
-								tile.UpdateDisplayAs(self, self.Player == game.CurrentPlayer ? Tile.DisplayType.SelfPosition : Tile.DisplayType.EnemyPosition, occupiedTiles);
-							}
-						}
+						board.ShowArea(self, self.Player == game.CurrentPlayer ? Tile.DisplayType.SelfPosition : Tile.DisplayType.EnemyPosition, self.IsHovering ? self.OccupiedTiles : Tile.EmptyTiles);
 
 						// show possible movement or attack range on the board
-						IReadOnlyCollection<Tile> possibleTiles = self.IsHovering ? (self.Player == game.CurrentPlayer ? lastMoveableTiles : possibleAttackArea) : Tile.EmptyTiles;
-						if (CachedValueUtils.HasCollectionChanged(possibleTiles, lastPossibleArea, affectedPossibleARea))
+						if (self.Player == game.CurrentPlayer)
 						{
-							foreach (Tile tile in affectedPossibleARea)
+							// show possible movement area for not yet moved units of the current player
+							if (self.CurrentUnitState == UnitState.Standby)
 							{
-								tile.UpdateDisplayAs(self, self.Player == game.CurrentPlayer ? Tile.DisplayType.MovePossible : Tile.DisplayType.AttackPossible, possibleTiles);
+								board.ShowArea(self, Tile.DisplayType.MovePossible, self.IsHovering ? self.MovableArea : Tile.EmptyTiles);
 							}
+							else if (self.CurrentUnitState == UnitState.Moved)
+							{
+								board.ShowArea(self, Tile.DisplayType.AttackPossible, self.IsHovering ? self.AttackableArea : Tile.EmptyTiles);
+							}
+						}
+						else
+						{
+							// show possible attack area for units of the other players
+							board.ShowArea(self, Tile.DisplayType.AttackPossible, self.IsHovering ? self.MovableArea : Tile.EmptyTiles);
 						}
 					}
 
@@ -121,29 +107,37 @@ namespace DiceRoller
 			/// </summary>
 			public override void OnStateExit()
 			{
-				// hide occupied tiles on board
-				foreach (Tile tile in lastOccupiedTiles)
-				{
-					tile.UpdateDisplayAs(self, self.Player == game.CurrentPlayer ? Tile.DisplayType.SelfPosition : Tile.DisplayType.EnemyPosition, Tile.EmptyTiles);
-				}
-
-				// hidepossible movement or attack range on the board
-				foreach (Tile tile in lastPossibleArea)
-				{
-					tile.UpdateDisplayAs(self, self.Player == game.CurrentPlayer ? Tile.DisplayType.MovePossible : Tile.DisplayType.AttackPossible, Tile.EmptyTiles);
-				}
-
-				// hide unit info on ui
 				if (self.IsHovering)
 				{
+					// hide occupied tiles on board
+					board.HideArea(self, self.Player == game.CurrentPlayer ? Tile.DisplayType.SelfPosition : Tile.DisplayType.EnemyPosition);
+
+					// hide possible movement or attack range on the board
+					if (self.Player == game.CurrentPlayer)
+					{
+						// hide possible movement area for not yet moved units of the current player
+						if (self.CurrentUnitState == UnitState.Standby)
+						{
+							board.HideArea(self, Tile.DisplayType.MovePossible);
+						}
+						else if (self.CurrentUnitState == UnitState.Moved)
+						{
+							board.HideArea(self, Tile.DisplayType.AttackPossible);
+						}
+					}
+					else
+					{
+						// hide possible attack area for units of the other players
+						board.HideArea(self, Tile.DisplayType.AttackPossible);
+					}
+
+					// hide unit info on ui
 					self.IsBeingInspected = false;
-					self.ShowEffect(self.Player == game.CurrentPlayer ? EffectType.InspectingSelf : EffectType.InspectingEnemy, false);
+					self.HideEffect(self.Player == game.CurrentPlayer ? EffectType.InspectingSelf : EffectType.InspectingEnemy);
 				}
 
 				// reset cache
-				lastMoveableTiles.Clear();
-				CachedValueUtils.ResetValueCache(ref lastIsHovering);
-				CachedValueUtils.ResetCollectionCache(lastOccupiedTiles, affectedOccupiedTiles);
+				CacheUtils.ResetValueCache(ref lastIsHovering);
 			}
 		}
 	}

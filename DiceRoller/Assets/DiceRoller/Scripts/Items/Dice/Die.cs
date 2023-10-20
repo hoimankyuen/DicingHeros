@@ -180,8 +180,7 @@ namespace DiceRoller
 
 			if (Player != null)
 			{
-				Player.dice.Add(this);
-				Player.SortDice();
+				Player.AddDie(this);
 			}
 		}
 
@@ -195,7 +194,7 @@ namespace DiceRoller
 
 			if (Player != null)
 			{
-				Player.dice.Remove(this);
+				Player.RemoveDie(this);
 			}
 		}
 

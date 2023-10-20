@@ -57,7 +57,7 @@ namespace DiceRoller
 		{
 			rigidBody = GetComponent<Rigidbody>();
 			outline = GetComponent<Outline>();
-			overlay = GetComponent<Overlay>();		
+			overlay = GetComponent<Overlay>();
 		}
 
 		/// <summary>
@@ -186,6 +186,48 @@ namespace DiceRoller
 			}
 		}
 
+		// ========================================================= Message From AI (Inputs) =========================================================
+
+		/// <summary>
+		/// An OnMouseEnter triggered from AI.
+		/// </summary>
+		public void OnAIMouseEnter()
+		{
+			_IsAIHovering = true;
+		}
+
+		/// <summary>
+		/// An OnMouseExit triggered from AI.
+		/// </summary>
+		public void OnAIMouseExit()
+		{
+			_IsAIHovering = false;
+		}
+
+		/// <summary>
+		/// An OnMousePress triggered from AI.
+		/// </summary>
+		public void OnAIMousePress(int mouseButton)
+		{
+			_CompletedAIPress[mouseButton] = true;
+		}
+
+		/// <summary>
+		/// An OnMouseStartDrag triggered from AI.
+		/// </summary>
+		public void OnAIMouseStartDrag(int mouseButton)
+		{
+			_StartedAIDrag[mouseButton] = true;
+		}
+
+		/// <summary>
+		/// An OnMouseCompleteDrag triggered from AI.
+		/// </summary>
+		public void OnAIMouseCompletetDrag(int mouseButton)
+		{
+			_CompletedAIDrag[mouseButton] = true;
+		}
+
 		// ========================================================= Properties (IsHovering) =========================================================
 
 		/// <summary>
@@ -194,13 +236,23 @@ namespace DiceRoller
 		protected bool IsHovering { get; private set; } = false;
 		private bool _IsSelfHovering = false;
 		private bool _IsUIHovering = false;
+		private bool _IsAIHovering = false;
 
 		/// <summary>
 		/// Detect hover events.
 		/// </summary>
 		private void DetectHover()
 		{
-			IsHovering = _IsSelfHovering || _IsUIHovering;
+			if (!game.IsAITurn)
+			{
+				// player inputs
+				IsHovering = _IsSelfHovering || _IsUIHovering;
+			}
+			else
+			{
+				// ai inputs
+				IsHovering = _IsAIHovering;
+			}
 		}
 
 		// ========================================================= Properties (IsPressed) =========================================================
@@ -209,26 +261,45 @@ namespace DiceRoller
 		/// Flag for if user has pressed on this item by any means.
 		/// </summary>
 		protected bool[] IsPressed { get; private set; } = new bool[] { false, false, false };
-		private Vector2[] _LastMousePosition = new Vector2[] { Vector2.negativeInfinity, Vector2.negativeInfinity, Vector2.negativeInfinity };
-		private bool[] _StartedSelfPress = new bool[] { false, false, false };
-		private bool[] _StartedUIPress = new bool[] { false, false, false };
-		private bool[] _CompletedSelfPress = new bool[] { false, false, false };
-		private bool[] _CompletedUIPress = new bool[] { false, false, false };
+		private readonly Vector2[] _LastMousePosition = new Vector2[] { Vector2.negativeInfinity, Vector2.negativeInfinity, Vector2.negativeInfinity };
+		private readonly bool[] _StartedSelfPress = new bool[] { false, false, false };
+		private readonly bool[] _CompletedSelfPress = new bool[] { false, false, false };
+		private readonly bool[] _StartedUIPress = new bool[] { false, false, false };
+		private readonly bool[] _CompletedUIPress = new bool[] { false, false, false };
+		private readonly bool[] _CompletedAIPress = new bool[] { false, false, false };
 
 		/// <summary>
 		/// Detect press event and trim to a single frame flag.
 		/// </summary>
 		private void DetectPress()
 		{
-			for (int i = 0; i < 3; i++)
+			if (!game.IsAITurn)
 			{
-				IsPressed[i] = false;
-				if (_CompletedSelfPress[i] || _CompletedUIPress[i])
+				// player inputs
+				for (int i = 0; i < 3; i++)
 				{
-					_CompletedSelfPress[i] = false;
-					_CompletedUIPress[i] = false;
+					IsPressed[i] = false;
+					if (_CompletedSelfPress[i] || _CompletedUIPress[i])
+					{
+						_CompletedSelfPress[i] = false;
+						_CompletedUIPress[i] = false;
 
-					IsPressed[i] = true;
+						IsPressed[i] = true;
+					}
+				}
+			}
+			else
+			{
+				// ai inputs
+				for (int i = 0; i < 3; i++)
+				{
+					IsPressed[i] = false;
+					if (_CompletedAIPress[i])
+					{
+						_CompletedAIPress[i] = false;
+
+						IsPressed[i] = true;
+					}
 				}
 			}
 		}
@@ -246,31 +317,59 @@ namespace DiceRoller
 		/// <summary>
 		/// Flag for if user has ended drag on this item component by any means.
 		/// </summary>
-		private bool[] _StartedSelfDrag = new bool[] { false, false, false };
-		private bool[] _StartedUIDrag = new bool[] { false, false, false };
+		private readonly bool[] _StartedSelfDrag = new bool[] { false, false, false };
+		private readonly bool[] _StartedUIDrag = new bool[] { false, false, false };
+		private readonly bool[] _StartedAIDrag = new bool[] { false, false, false };
+		private readonly bool[] _CompletedAIDrag = new bool[] { false, false, false };
 
 		/// <summary>
 		/// Detect draga event and trim to a single frame flag.
 		/// </summary>
 		private void DetectDrag()
 		{
-			for (int i = 0; i < 3; i++)
+			if (!game.IsAITurn)
 			{
-				IsStartedDrag[i] = false;
-				if ((_StartedSelfDrag[i] || _StartedUIDrag[i]) && Vector2.Distance(_LastMousePosition[i], Input.mousePosition) >= 2f)
+				// player inputs
+				for (int i = 0; i < 3; i++)
 				{
-					_StartedSelfPress[i] = false;
-					_StartedUIPress[i] = false;
-					_StartedSelfDrag[i] = false;
-					_StartedUIDrag[i] = false;
+					IsStartedDrag[i] = false;
+					if ((_StartedSelfDrag[i] || _StartedUIDrag[i]) && Vector2.Distance(_LastMousePosition[i], Input.mousePosition) >= 2f)
+					{
+						_StartedSelfPress[i] = false;
+						_StartedUIPress[i] = false;
+						_StartedSelfDrag[i] = false;
+						_StartedUIDrag[i] = false;
 
-					IsStartedDrag[i] = true;
+						IsStartedDrag[i] = true;
+					}
+
+					IsCompletedDrag[i] = false;
+					if (Input.GetMouseButtonUp(i))
+					{
+						IsCompletedDrag[i] = true;
+					}
 				}
-
-				IsCompletedDrag[i] = false;
-				if (Input.GetMouseButtonUp(i))
+			}
+			else
+			{
+				// ai inputs
+				for (int i = 0; i < 3; i++)
 				{
-					IsCompletedDrag[i] = true;
+					IsStartedDrag[i] = false;
+					if (_StartedAIDrag[i])
+					{
+						_StartedAIDrag[i] = false;
+
+						IsStartedDrag[i] = true;
+					}
+
+					IsCompletedDrag[i] = false;
+					if (_CompletedAIDrag[i])
+					{
+						_CompletedAIDrag[i] = false;
+
+						IsCompletedDrag[i] = true;
+					}
 				}
 			}
 		}
@@ -323,7 +422,7 @@ namespace DiceRoller
 		{
 			if (!IsMoving && Vector3.Distance(transform.position, _LastOccupiedPosition) > 0.0001f)
 			{
-				Board.current.GetCurrentTiles(transform.position, size, ref _OccupiedTiles);
+				Board.current.GetCurrentTiles(transform.position, size, _OccupiedTiles);
 				if (!_OccupiedTiles.SequenceEqual(_LastOccupiedTiles))
 				{
 					foreach (Tile t in _LastOccupiedTiles.Except(_OccupiedTiles))
@@ -394,6 +493,8 @@ namespace DiceRoller
 
 		// ========================================================= Effects =========================================================
 
+		private HashSet<EffectType> effectSet = new HashSet<EffectType>();
+
 		/// <summary>
 		/// Show or hide an item effect.
 		/// </summary>
@@ -427,6 +528,13 @@ namespace DiceRoller
 				overlay.Color = overlayColor;
 			}
 		}
-		private HashSet<EffectType> effectSet = new HashSet<EffectType>();
+
+		/// <summary>
+		/// Hide an item effect.
+		/// </summary>
+		protected void HideEffect(EffectType effectType)
+		{
+			ShowEffect(effectType, false);
+		}
 	}
 }
