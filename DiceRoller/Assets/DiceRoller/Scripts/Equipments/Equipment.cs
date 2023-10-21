@@ -155,24 +155,13 @@ namespace DiceRoller
 		protected abstract void FillDieSlots();
 
 		/// <summary>
-		/// Assign a die to a specific slot.
-		/// </summary>
-		public void AssignDie(int slotNo, Die die)
-		{
-			if (slotNo >= DieSlots.Count)
-				return;
-
-			DieSlots[slotNo].AssignDie(die);
-		}
-
-		/// <summary>
 		/// Clear all assigned dice of all slots.
 		/// </summary>
 		public void ClearAssignedDie()
 		{
 			foreach (EquipmentDieSlot dieSlot in DieSlots)
 			{
-				dieSlot.AssignDie(null);
+				dieSlot.AssignDie(null, null);
 			}
 		}
 
@@ -212,8 +201,14 @@ namespace DiceRoller
 			bool fulfilled = DieSlots.Aggregate(true, (acc, dieSlot) => acc && dieSlot.IsRequirementFulfilled);
 			if (IsRequirementFulfilled != fulfilled)
 			{
-				if (!fulfilled && IsActivated)
+				if (fulfilled && !IsActivated)
 				{
+					// activate at the moment when this equipment is first fulfilled
+					IsActivated = true;
+				}
+				else if (!fulfilled && IsActivated)
+				{
+					// deactivate when equipment is not fulfilled
 					IsActivated = false;
 				}
 				IsRequirementFulfilled = fulfilled;
@@ -234,8 +229,34 @@ namespace DiceRoller
 			private set
 			{
 				if (_IsActivated != value)
-				{
+				{		
+					if (value)
+					{
+						// deactivate all other incompatible equipments first before activating self
+						if (Type == EquipmentType.MovementBuff)
+						{
+							foreach (Equipment equipment in Unit.Equipments)
+							{
+								if (equipment != this && equipment.Type == EquipmentType.MovementBuff && equipment.IsActivated)
+								{
+									equipment.IsActivated = false;
+								}
+							}
+						}
+						else if (Type == EquipmentType.MeleeAttack || Type == EquipmentType.MagicAttack)
+						{
+							foreach (Equipment equipment in Unit.Equipments)
+							{
+								if (equipment != this && (equipment.Type == EquipmentType.MeleeAttack || equipment.Type == EquipmentType.MagicAttack) && equipment.IsActivated)
+								{
+									equipment.IsActivated = false;
+								}
+							}
+						}
+					}
 					_IsActivated = value;
+
+					// effects
 					if (value)
 					{
 						AddEffect();
@@ -265,7 +286,7 @@ namespace DiceRoller
 				foreach (EquipmentDieSlot dieSlot in DieSlots)
 				{
 					dieSlot.Die.Expend();
-					dieSlot.AssignDie(null);
+					dieSlot.AssignDie(null, null);
 				}
 				IsActivated = false;
 			}
@@ -442,28 +463,6 @@ namespace DiceRoller
 					{
 						if (!self.IsActivated && self.IsRequirementFulfilled)
 						{
-							// deactivate all other incompatible equipments first
-							if (self.Type == EquipmentType.MovementBuff)
-							{
-								foreach (Equipment equipment in self.Unit.Equipments)
-								{
-									if (equipment != self && equipment.Type == EquipmentType.MovementBuff && equipment.IsActivated)
-									{
-										equipment.IsActivated = false;
-									}
-								}
-							}
-							else if (self.Type == EquipmentType.MeleeAttack || self.Type == EquipmentType.MagicAttack)
-							{
-								foreach (Equipment equipment in self.Unit.Equipments)
-								{
-									if (equipment != self && (equipment.Type == EquipmentType.MeleeAttack || equipment.Type == EquipmentType.MagicAttack) && equipment.IsActivated)
-									{
-										equipment.IsActivated = false;
-									}
-								}
-							}
-
 							self.IsActivated = true;
 						}
 						else if (self.IsActivated)

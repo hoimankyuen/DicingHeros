@@ -38,6 +38,7 @@ namespace DiceRoller
 		/// The die that was assigned to this die slot.
 		/// </summary>
 		public Die Die { get; private set; } = null;
+		private Action<EquipmentDieSlot> dieAssignmentCallback = null;
 
 		/// <summary>
 		/// Flag for if this a drag ended here at this die slot.
@@ -139,15 +140,25 @@ namespace DiceRoller
 		/// <summary>
 		/// Assign a die to this equipment die slot.
 		/// </summary>
-		public void AssignDie(Die die)
+		public void AssignDie(Die die, Action<EquipmentDieSlot> resultCallback)
 		{
 			if (this.Die != die)
 			{
-				// register event callbacks
+				// unlink previous die
 				if (this.Die != null)
+				{
+					dieAssignmentCallback.Invoke(null);
+					dieAssignmentCallback = null;
 					this.Die.onValueChanged -= RefreshFulfillment;
+				}
+
+				// link next die
 				if (die != null)
+				{
+					dieAssignmentCallback = resultCallback;
+					dieAssignmentCallback.Invoke(this);
 					die.onValueChanged += RefreshFulfillment;
+				}
 
 				// change value
 				this.Die = die;
@@ -274,7 +285,7 @@ namespace DiceRoller
 					{
 						if (self.Die != null)
 						{
-							self.Die.ResignFromCurrentSlot();
+							self.AssignDie(null, null);
 						}
 					}
 				}

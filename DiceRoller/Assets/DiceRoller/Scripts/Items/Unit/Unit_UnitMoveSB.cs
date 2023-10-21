@@ -87,6 +87,9 @@ namespace DiceRoller
 					yield return new WaitForFixedUpdate();
 				}
 
+				// wait until all movement is completed
+				yield return new WaitWhile(() => self.IsMoving);
+
 				// hide all displays on grid
 				board.HideArea(self, Tile.DisplayType.SelfPosition);
 				board.HideArea(self, Tile.DisplayType.Move);

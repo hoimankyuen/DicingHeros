@@ -420,7 +420,7 @@ namespace DiceRoller
 		/// </summary>
 		private void DetectTilesOccupation()
 		{
-			if (!IsMoving && Vector3.Distance(transform.position, _LastOccupiedPosition) > 0.0001f)
+			if (!IsMoving && Vector3.SqrMagnitude(transform.position - _LastOccupiedPosition) > 0.00000001f)
 			{
 				Board.current.GetCurrentTiles(transform.position, size, _OccupiedTiles);
 				if (!_OccupiedTiles.SequenceEqual(_LastOccupiedTiles))
@@ -462,18 +462,20 @@ namespace DiceRoller
 		/// Flag for if this item is still moving.
 		/// </summary>
 		public bool IsMoving { get; private set; } = false;
-		private float lastMovingTime = 0;
+		private float _lastMovingTime = 0;
+		private Vector3 _lastMovePosition = Vector3.zero;
 
 		/// <summary>
 		/// Detect movement and update the flags accordingly.
 		/// </summary>
 		private void DetectMovement()
 		{
-			if (rigidBody.velocity.sqrMagnitude > 0.01f || rigidBody.angularVelocity.sqrMagnitude > 0.01f)
+			if (!rigidBody.isKinematic && (rigidBody.velocity.sqrMagnitude > 0.01f || rigidBody.angularVelocity.sqrMagnitude > 0.01f || Vector3.SqrMagnitude(transform.position -  _lastMovePosition) > 0.00000001f))
 			{
-				lastMovingTime = Time.time;
+				_lastMovePosition = transform.position;
+				_lastMovingTime = Time.time;
 			}
-			IsMoving = Time.time - lastMovingTime < 0.25f;
+			IsMoving = (Time.time - _lastMovingTime) < 0.1f;
 		}
 
 		// ========================================================= Properties (IsFalling) =========================================================

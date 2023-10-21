@@ -60,12 +60,9 @@ namespace DiceRoller
 							{
 								//check for dragged target here
 								EquipmentDieSlot targetDieSlot = EquipmentDieSlot.GetFirstDragsRecipient();
-								if (targetDieSlot != null)
+								if (targetDieSlot != null && targetDieSlot.IsFulfillBy(self))
 								{
-									if (targetDieSlot.IsFulfillBy(self))
-									{
-										self.AssignedDieSlot = targetDieSlot;
-									}
+									self.AssignToSlot(targetDieSlot);
 								}
 
 								// always end drag afterwards
@@ -105,19 +102,6 @@ namespace DiceRoller
 					// reset caches
 					CacheUtils.ResetValueCache(ref lastIsHovering);
 				}
-
-				
-			}
-		}
-
-		/// <summary>
-		/// Resign this die from the die slot currently assigned to.
-		/// </summary>
-		public void ResignFromCurrentSlot()
-		{
-			if (AssignedDieSlot != null)
-			{
-				AssignedDieSlot = null;
 			}
 		}
 	}

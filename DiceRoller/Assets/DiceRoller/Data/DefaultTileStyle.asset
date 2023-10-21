@@ -19,20 +19,20 @@ MonoBehaviour:
     dashed: 0
   - type: 1
     frameColor: {r: 0, g: 0, b: 1, a: 1}
-    backgroundColor: {r: 0, g: 0, b: 1, a: 0}
-    dashed: 1
-  - type: 2
-    frameColor: {r: 1, g: 0, b: 0, a: 1}
-    backgroundColor: {r: 1, g: 0, b: 0, a: 0}
-    dashed: 1
-  - type: 3
-    frameColor: {r: 0.09451604, g: 0, b: 1, a: 1}
     backgroundColor: {r: 0, g: 0, b: 1, a: 0.2509804}
     dashed: 0
-  - type: 4
+  - type: 2
     frameColor: {r: 1, g: 0, b: 0, a: 1}
     backgroundColor: {r: 1, g: 0, b: 0, a: 0.2509804}
     dashed: 0
+  - type: 3
+    frameColor: {r: 0, g: 0, b: 1, a: 1}
+    backgroundColor: {r: 0, g: 0, b: 1, a: 0}
+    dashed: 1
+  - type: 4
+    frameColor: {r: 1, g: 0, b: 0, a: 1}
+    backgroundColor: {r: 1, g: 0, b: 0, a: 0}
+    dashed: 1
   - type: 5
     frameColor: {r: 0, g: 1, b: 0, a: 1}
     backgroundColor: {r: 0, g: 1, b: 0, a: 0.2509804}

@@ -506,7 +506,6 @@ namespace DiceRoller
 		{
 			if (CurrentDieState == DieState.Casted || CurrentDieState == DieState.Assigned)
 			{
-				AssignedDieSlot = null;
 				CurrentDieState = DieState.Expended;
 			}
 		}
@@ -521,41 +520,6 @@ namespace DiceRoller
 			get
 			{
 				return _AssignedDieSlot;
-			}
-			private set
-			{
-				if (_AssignedDieSlot != value)
-				{
-					// modify previous die slot
-					if (_AssignedDieSlot != null)
-					{
-						_AssignedDieSlot.AssignDie(null);
-					}
-
-					// modify next die slot
-					if (value != null)
-					{
-						if (value.Die != null)
-						{
-							value.Die.AssignedDieSlot = null;
-						}
-
-						value.AssignDie(this);
-					}
-
-					// modify self
-					_AssignedDieSlot = value;
-					if (value != null)
-					{
-						CurrentDieState = DieState.Assigned;
-					}
-					else
-					{
-						CurrentDieState = DieState.Casted;
-					}
-
-					onAssignedDieSlotChanged.Invoke();
-				}
 			}
 		}
 		private EquipmentDieSlot _AssignedDieSlot = null;
@@ -575,6 +539,49 @@ namespace DiceRoller
 		/// Event raised when this die is assigned to another die slot.
 		/// </summary>
 		public event Action onAssignedDieSlotChanged = () => { };
+
+		/// <summary>
+		/// Assign this die to a die slot, regardless if the slot is fulfilled. Actual assigning will be done via callback.
+		/// </summary>
+		public void AssignToSlot(EquipmentDieSlot slot)
+		{
+			if (_AssignedDieSlot != slot)
+			{
+				// modify previous die slot
+				if (_AssignedDieSlot != null)
+				{
+					_AssignedDieSlot.AssignDie(null, null);
+				}
+
+				// modify next die slot
+				if (slot != null)
+				{
+					if (slot.Die != null)
+					{
+						slot.Die.AssignToSlot(null);
+					}
+					slot.AssignDie(this, AssignedToSlotCallback);
+				}
+			}
+		}
+
+		/// <summary>
+		/// A callback for when the equipment slot accepts or not the assignment from the die.
+		/// </summary>
+		private void AssignedToSlotCallback(EquipmentDieSlot slot)
+		{
+			_AssignedDieSlot = slot;
+			if (slot != null)
+			{
+				CurrentDieState = DieState.Assigned;
+			}
+			else
+			{
+				CurrentDieState = DieState.Casted;
+			}
+
+			onAssignedDieSlotChanged.Invoke();
+		}
 
 		// ========================================================= State Machine Behaviour =========================================================
 
