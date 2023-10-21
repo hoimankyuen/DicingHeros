@@ -469,13 +469,40 @@ namespace DiceRoller
 
 		// ========================================================= Inqury =========================================================
 
+		private readonly float tileDetectionPadding = 0.1f; // in percentage
+
 		/// <summary>
-		/// Check if an object is within the area of this tile. Estimate the object as position and square size.
+		/// Check if an object is within the area of this tile. Estimate the object as position and circle size.
 		/// </summary>
-		public bool IsInTile(Vector3 position, float size)
+		public bool IsInTile(Vector3 position, float radius)
 		{
+			// wrong
 			Vector3 localPosition = transform.InverseTransformPoint(position);
-			return Mathf.Abs(localPosition.x) - Mathf.Abs(size / 2) < tileSize / 2 && Mathf.Abs(localPosition.z) - Mathf.Abs(size / 2) < tileSize / 2;
+			if (Mathf.Abs(localPosition.x) > tileSize * (0.5f - tileDetectionPadding) && Mathf.Abs(localPosition.z) > tileSize * (0.5f - tileDetectionPadding))
+			{
+				return Vector2.SqrMagnitude(new Vector2(Mathf.Abs(localPosition.x), Mathf.Abs(localPosition.z)) - Vector2.one * tileSize * (0.5f - tileDetectionPadding)) <= radius * radius;
+			}
+			else
+			{
+				return Mathf.Abs(localPosition.x) - tileSize * (0.5f - tileDetectionPadding) <= radius &&
+				Mathf.Abs(localPosition.z) - tileSize * (0.5f - tileDetectionPadding) <= radius;
+			}
+		}
+
+		/// <summary>
+		/// Check if an object is within the area of this tile. Estimate the object as position and axis aligned rectangle size.
+		/// </summary>
+		public bool IsInTile(Vector3 position, Vector3 size)
+		{
+			/*
+			return !(position.x - size.x * 0.5f < transform.position.x + tileSize * (0.5f - tileDetectionPadding) ||
+				position.x + size.x * 0.5f > transform.position.x - tileSize * (0.5f - tileDetectionPadding) ||
+				position.z - size.z * 0.5f < transform.position.z + tileSize * (0.5f - tileDetectionPadding) ||
+				position.z + size.z * 0.5f > transform.position.z - tileSize * (0.5f - tileDetectionPadding));
+			*/
+			Vector3 localPosition = transform.InverseTransformPoint(position);
+			return Mathf.Abs(localPosition.x) - tileSize * (0.5f - tileDetectionPadding) <= Mathf.Abs(size.x / 2) &&
+				Mathf.Abs(localPosition.z) - tileSize * (0.5f - tileDetectionPadding) <= Mathf.Abs(size.x / 2);	
 		}
 	}
 }

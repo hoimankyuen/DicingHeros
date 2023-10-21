@@ -237,6 +237,8 @@ namespace DiceRoller
 			public float heuristic;
 		}
 
+		private static readonly AttackAreaRule SimpleRangeRule =
+		new AttackAreaRule((target, starting, range) => Int2.GridDistance(target.boardPos, starting.boardPos) <= range);
 
 		/// <summary>
 		/// Get all tiles that an object is in.
@@ -253,7 +255,7 @@ namespace DiceRoller
 				for (int j = minBoardPos.z; j <= maxBoardPos.z; j++)
 				{
 					Int2 boardPos = new Int2(i, j);
-					if (tiles.ContainsKey(boardPos) && tiles[boardPos].IsInTile(position, size))
+					if (tiles.ContainsKey(boardPos) && tiles[boardPos].IsInTile(position, size / 2))
 					{
 						result.Add(tiles[boardPos]);
 					}
@@ -268,7 +270,7 @@ namespace DiceRoller
 		{
 			tempTiles.Clear();
 			tempTiles.Add(startingTile);
-			GetTilesInRange(tempTiles, range, result);
+			GetTilesByRule(tempTiles, SimpleRangeRule, range, result);
 			tempTiles.Clear();
 		}
 		/// <summary>
@@ -276,27 +278,7 @@ namespace DiceRoller
 		/// </summary>
 		public void GetTilesInRange(IEnumerable<Tile> startingTiles, int range, List<Tile> result)
 		{
-			// prepare containers
-			result.Clear();
-
-			// calculate the bound of starting tiles
-			Int2 min = Int2.MaxValue;
-			Int2 max = Int2.MinValue;
-			min.x = startingTiles.Select(tile => tile.boardPos.x).Min();
-			min.z = startingTiles.Select(tile => tile.boardPos.z).Min();
-			max.x = startingTiles.Select(tile => tile.boardPos.x).Max();
-			max.z = startingTiles.Select(tile => tile.boardPos.z).Max();
-
-			// search for tiles within range on a subset of all tiles
-			for (int x = min.x - range; x <= max.x + range; x++)
-			{
-				for (int z = min.z - range; z <= max.z + range; z++)
-				{
-					Int2 pos = new Int2(x, z);
-					if (tiles.ContainsKey(pos) && startingTiles.Any(t => Int2.GridDistance(pos, t.boardPos) <= range))
-						result.Add(tiles[pos]);
-				}
-			}	
+			GetTilesByRule(startingTiles, SimpleRangeRule, range, result);
 		}
 
 		/// <summary>
@@ -309,7 +291,6 @@ namespace DiceRoller
 			GetTilesByRule(tempTiles, rule, range, result);
 			tempTiles.Clear();
 		}
-
 		/// <summary>
 		/// Get all tiles that fulfills a given rule in relative to the starting tiles reguardless of connectivity, and return them in the supplied list.
 		/// </summary>
