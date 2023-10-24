@@ -85,6 +85,8 @@ namespace DiceRoller
 		public float tileSize = 1f;
 		public List<Tile> connectedTiles = new List<Tile>();
 		public Int2 boardPos = Int2.zero;
+		public Vector3 worldPos = Vector3.zero;
+		public bool active = false;
 
 		[Header("Resources")]
 		public TileStyle style = null;
@@ -128,6 +130,9 @@ namespace DiceRoller
 			}
 
 			tileRanges[0].Show(false);
+
+			worldPos = transform.position;
+			active = true;
 		}
 
 		/// <summary>

@@ -82,6 +82,7 @@ namespace DiceRoller
 					{
 						equipment.ClearAssignedDie();
 					}
+					yield return new WaitForSeconds(0.25f);
 				}
 
 				// set flag

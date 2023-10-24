@@ -15,7 +15,9 @@ namespace DiceRoller
 			MagicAttack,
 			MeleeSelfBuff,
 			MagicSelfBuff,
-			DefenceBuff,
+			DefenceSelfBuff,
+			RetainingSelfBuff,
+			SelfHeal,
 		}
 
 		// ========================================================= Constructor =========================================================
@@ -120,28 +122,6 @@ namespace DiceRoller
 		/// </summary>
 		public Unit Unit { get; private set; } = null;
 
-		// ========================================================= Properties (Information) =========================================================
-
-		/// <summary>
-		/// The name of this equipment.
-		/// </summary>
-		public abstract EquipmentDictionary.Name EquipmentName { get; }
-
-		/// <summary>
-		/// What type this equipment belongs to.
-		/// </summary>
-		public abstract EquipmentType Type { get; }
-
-		/// <summary>
-		/// The name to be displayed to the player.
-		/// </summary>
-		public abstract string DisplayableName { get; }
-
-		/// <summary>
-		/// The effect discription to be displayed to the player.
-		/// </summary>
-		public abstract string DisplayableEffectDiscription { get; }
-
 		// ========================================================= Properties (DieSlots) =========================================================
 
 		/// <summary>
@@ -164,6 +144,75 @@ namespace DiceRoller
 				dieSlot.AssignDie(null, null);
 			}
 		}
+
+		// ========================================================= Properties (Information) =========================================================
+
+		/// <summary>
+		/// The name of this equipment.
+		/// </summary>
+		public abstract EquipmentDictionary.Name EquipmentName { get; }
+
+		/// <summary>
+		/// What type this equipment belongs to.
+		/// </summary>
+		public abstract EquipmentType Type { get; }
+
+		/// <summary>
+		/// The name to be displayed to the player.
+		/// </summary>
+		public abstract string DisplayableName { get; }
+
+		/// <summary>
+		/// The effect discription to be displayed to the player.
+		/// </summary>
+		public abstract string DisplayableEffectDiscription { get; }
+
+		// ========================================================= Properties (Effect) =========================================================
+
+		/// <summary>
+		/// The change in the melee value when this equipment is activated.
+		/// </summary>
+		public virtual int MeleeDelta { get; } = 0;
+
+		/// <summary>
+		/// The change in the magic value when this equipment is activated.
+		/// </summary>
+		public virtual int MagicDelta { get; } = 0;
+
+		/// <summary>
+		/// The change in the defence value when this equipment is activated.
+		/// </summary>
+		public virtual int DefenceDelta { get; } = 0;
+
+		/// <summary>
+		/// The change in the movement value when this equipment is activated.
+		/// </summary>
+		public virtual int MovementDelta { get; } = 0;
+
+		/// <summary>
+		/// The change in the attack range value when this equipment is activated.
+		/// </summary>
+		public virtual int AttackRangeDelta { get; } = 0;
+
+		/// <summary>
+		/// The change in the attack range value when this equipment is activated.
+		/// </summary>
+		public virtual float KnockbackForceDelta { get; } = 0;
+
+		/// <summary>
+		/// The attack area rule used when this equipment is activated.
+		/// </summary>
+		public virtual AttackAreaRule AreaRule { get; } = new AttackAreaRule((target, starting, range) => Int2.GridDistance(target.boardPos, starting.boardPos) <= range);
+
+		/// <summary>
+		/// Forward implementation of the other effects of this equipment.
+		/// </summary>
+		protected virtual void AddOtherEffects() { }
+
+		/// <summary>
+		/// Backward implementation of the other effects of this equipment.
+		/// </summary>
+		protected virtual void RemoveOtherEffects() { }
 
 		// ========================================================= Properties (IsRequirementFulfilled) =========================================================
 
@@ -259,11 +308,11 @@ namespace DiceRoller
 					// effects
 					if (value)
 					{
-						AddEffect();
+						AddEffects();
 					}
 					else
 					{
-						RemoveEffect();
+						RemoveEffects();
 					}
 					onActivationChanged.Invoke();
 				}
@@ -292,93 +341,41 @@ namespace DiceRoller
 			}
 		}
 
-		/*
-		// ========================================================= Properties (EffectiveArea) =========================================================
+		// ========================================================= Effect activation =========================================================
 
 		/// <summary>
-		/// A Readonly list of all tiles that are in range of the effect by this equipment.
+		/// Apply all effects of this equipment.
 		/// </summary>
-		public IReadOnlyList<Tile> EffectiveArea
+		private void AddEffects()
 		{
-			get
-			{
-				if (_IsEffectiveAreaDirty)
-				{
-					RefreshEffectiveArea();
-				}
-				return _EffectiveArea.AsReadOnly();
-			}
-		}
-		private List<Tile> _EffectiveArea = new List<Tile>();
-		private bool _IsEffectiveAreaDirty = true;
-
-		/// <summary>
-		/// Event raised when the list of tiles that are in range of the effect by this equipment needs updating.
-		/// </summary>
-		public event Action OnEffectiveAreaDirty = () => { };
-
-		/// <summary>
-		/// Register all necessary callbacks needed for EffectiveArea.
-		/// </summary>
-		private void RegisterCallbacksForEffectiveArea()
-		{
-			OnAllOcupiedTilesDirty += SetAttackableAreaDirty;
-			OnAttackAreaRuleChanged += SetAttackableAreaDirty;
-			OnAttackRangeChanged += SetAttackableAreaDirty;
+			Unit.ChangeStat(
+				meleeDelta: MeleeDelta,
+				magicDelta: MagicDelta, 
+				defenceDelta: DefenceDelta,
+				movementDelta: MovementDelta,
+				attackRangeDelta: AttackRangeDelta,
+				knockbackForceDelta: KnockbackForceDelta);
+			Unit.ChangeAttackAreaRule(AreaRule);
+			Unit.ChangeAttackType(Type == EquipmentType.MagicAttack ? Unit.AttackType.Magical : Unit.AttackType.Physical);
+			AddOtherEffects();
 		}
 
 		/// <summary>
-		/// Deregister all necessary callbacks needed for EffectiveArea.
+		/// Remove all effects of this equipment.
 		/// </summary>
-		private void DeregisterCallbacksForEFffectiveArea()
+		private void RemoveEffects()
 		{
-			OnAllOcupiedTilesDirty -= SetAttackableAreaDirty;
-			OnAttackAreaRuleChanged -= SetAttackableAreaDirty;
-			OnAttackRangeChanged -= SetAttackableAreaDirty;
+			Unit.ChangeStat(
+				meleeDelta: -MeleeDelta,
+				magicDelta: -MagicDelta,
+				defenceDelta: -DefenceDelta,
+				movementDelta: -MovementDelta,
+				attackRangeDelta: -AttackRangeDelta,
+				knockbackForceDelta: -KnockbackForceDelta);
+			Unit.ResetAttackAreaRule();
+			Unit.ChangeAttackType(Unit.AttackType.Physical);
+			RemoveOtherEffects();
 		}
-
-		/// <summary>
-		/// Notify EffectiveArea needs updating.
-		/// </summary>
-		private void SetEffectiveAreaDirty()
-		{
-			if (!_IsEffectiveAreaDirty)
-			{
-				_IsEffectiveAreaDirty = true;
-				OnEffectiveAreaDirty.Invoke();
-			}
-		}
-
-		/// <summary>
-		/// Retrieve again the list of all tiles that in range of the effect by this equipment.
-		/// </summary>
-		private void RefreshEffectiveArea()
-		{
-			Board.current.GetTilesByRule(Unit.OccupiedTiles, AttackAreaRule, AttackRange, _AttackableArea);
-			_IsEffectiveAreaDirty = false;
-		}
-		*/
-
-		// ========================================================= Properties (Effects) =========================================================
-
-		/*
-		protected abstract int MeleeDelta { get; }
-		protected abstract int MagicDelta { get; }
-		protected abstract int DefenceDelta { get; }
-		protected abstract int MovementDelta { get; }
-		protected abstract int rangeDelta { get; }
-		protected abstract float knockbackForceDelta { get; }
-		*/
-
-		/// <summary>
-		/// Forward implementation of the effect of this equipment.
-		/// </summary>
-		protected abstract void AddEffect();
-
-		/// <summary>
-		/// Backward implementation of the effect of this equipment.
-		/// </summary>
-		protected abstract void RemoveEffect();
 
 		// ========================================================= State Machine Behaviour =========================================================
 

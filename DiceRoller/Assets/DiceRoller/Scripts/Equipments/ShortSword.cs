@@ -6,17 +6,6 @@ namespace DiceRoller
 {
 	public class ShortSword : Equipment
 	{
-		// ========================================================= Properties =========================================================
-
-		/// <summary>
-		/// The list of all slots and their requiremnts.
-		/// </summary>
-		public override IReadOnlyList<EquipmentDieSlot> DieSlots
-		{
-			get { return _DieSlots.AsReadOnly(); }
-		}
-		private List<EquipmentDieSlot> _DieSlots = new List<EquipmentDieSlot>();
-
 		// ========================================================= Constructor =========================================================
 
 		/// <summary>
@@ -27,7 +16,16 @@ namespace DiceRoller
 
 		}
 
-		// ========================================================= Die Assignment =========================================================
+		// ========================================================= Properties (DieSlots) =========================================================
+
+		/// <summary>
+		/// The list of all slots and their requiremnts.
+		/// </summary>
+		public override IReadOnlyList<EquipmentDieSlot> DieSlots
+		{
+			get { return _DieSlots.AsReadOnly(); }
+		}
+		private List<EquipmentDieSlot> _DieSlots = new List<EquipmentDieSlot>();
 
 		/// <summary>
 		/// Fill in all die slots. This will be called in the constructor.
@@ -41,74 +39,39 @@ namespace DiceRoller
 				3));
 		}
 
-		// ========================================================= Information =========================================================
+		// ========================================================= Properties (Information) =========================================================
 
 		/// <summary>
 		/// The name of this equipment.
 		/// </summary>
-		public override EquipmentDictionary.Name EquipmentName
-		{
-			get
-			{
-				return EquipmentDictionary.Name.ShortSword;
-			}
-		}
+		public override EquipmentDictionary.Name EquipmentName { get; } = EquipmentDictionary.Name.ShortSword;
 
 		/// <summary>
 		/// What type this equipment belongs to.
 		/// </summary>
-		public override EquipmentType Type
-		{
-			get
-			{
-				return EquipmentType.MeleeAttack;
-			}
-		}
+		public override EquipmentType Type { get; } = EquipmentType.MeleeAttack;
 
 
 		/// <summary>
 		/// The name to be displayed to the player.
 		/// </summary>
-		public override string DisplayableName
-		{
-			get
-			{
-				return "Short Sword";
-			}
-		}
+		public override string DisplayableName { get; } = "Short Sword";
 
 		/// <summary>
 		/// The effect discription to be displayed to the player.
 		/// </summary>
-		public override string DisplayableEffectDiscription
-		{
-			get
-			{
-				return "+ 4 Melee";
-			}
-		}
+		public override string DisplayableEffectDiscription { get; } = "+ 4 Melee";
 
-		// ========================================================= Activation =========================================================
+		// ========================================================= Properties (Effect) =========================================================
 
 		/// <summary>
-		/// Forward implementation of the effect of this equipment.
+		/// The change in the melee value when this equipment is activated.
 		/// </summary>
-		protected override void AddEffect()
-		{
-			Unit.ChangeStat(meleeDelta: 4, knockbackForceDelta: 0.1f);
-			Unit.ChangeAttackAreaRule(attackRule);
-		}
+		public override int MeleeDelta { get; } = 4;
 
 		/// <summary>
-		/// Backward implementation of the effect of this equipment.
+		/// The change in the attack range value when this equipment is activated.
 		/// </summary>
-		protected override void RemoveEffect()
-		{
-			Unit.ChangeStat(meleeDelta: -4, knockbackForceDelta: -0.1f);
-			Unit.ResetAttackAreaRule();
-		}
-
-		private static AttackAreaRule attackRule =
-			new AttackAreaRule((target, starting, range) => Int2.GridDistance(target.boardPos, starting.boardPos) <= range);
+		public override float KnockbackForceDelta { get; } = 0.1f;
 	}
 }

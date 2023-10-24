@@ -190,36 +190,36 @@ namespace DiceRoller
 		/// </summary>
 		private void DetectTileHover()
 		{
-			if (game.IsAITurn)
-				return;
-
-			// find the target tile that the mouse is pointing to
-			if (!InputUtils.IsMouseOnUI() && Die.GetFirstBeingInspected() == null && Unit.GetFirstBeingInspected() == null && !InputUtils.IsDragging)
+			if (game.PersonInControl == GameController.Person.Player)
 			{
-				if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, Camera.main.farClipPlane, LayerMask.GetMask("Tile")))
+				// find the target tile that the mouse is pointing to
+				if (!InputUtils.IsMouseOnUI() && Die.GetFirstBeingInspected() == null && Unit.GetFirstBeingInspected() == null && !InputUtils.IsDragging)
 				{
-					HoveringTile = hit.collider.GetComponentInParent<Tile>();
+					if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, Camera.main.farClipPlane, LayerMask.GetMask("Tile")))
+					{
+						HoveringTile = hit.collider.GetComponentInParent<Tile>();
+					}
+					else
+					{
+						HoveringTile = null;
+					}
 				}
 				else
 				{
 					HoveringTile = null;
 				}
 			}
-			else
-			{
-				HoveringTile = null;
-			}
 		}
 
 		/// <summary>
 		/// Directly set the tile that is being hovering. Used by AI actions only.
 		/// </summary>
-		public void SetHoveringTile(Tile tile)
+		public void SetAITileHover(Tile tile)
 		{
-			if (!game.IsAITurn)
-				return;
-
-			HoveringTile = tile;
+			if (game.PersonInControl == GameController.Person.AI)
+			{ 
+				HoveringTile = tile;
+			}
 		}
 
 		// ========================================================= Tile Inqury ========================================================
@@ -348,7 +348,7 @@ namespace DiceRoller
 				open.Add(new TileRangePair() { tile = startingTile, range = range });
 			}
 
-			// explore in a depth first manner
+			// explore in a breadth first manner
 			while (open.Count > 0)
 			{
 				// get the tile in the first of the list
@@ -363,7 +363,7 @@ namespace DiceRoller
 					{
 						if (connectedTile == null)
 							continue;
-						if (!connectedTile.gameObject.activeInHierarchy)
+						if (!connectedTile.active)
 							continue;
 						if (excludedTiles != null && excludedTiles.Contains(connectedTile))
 							continue;
@@ -431,7 +431,7 @@ namespace DiceRoller
 					tile = startingTile,
 					previous = null,
 					range = 0,
-					heuristic = Vector3.Distance(startingTile.transform.position, targetTile.transform.position) 
+					heuristic = Vector3.Distance(startingTile.worldPos, targetTile.worldPos) 
 				});
 			}
 
@@ -467,12 +467,12 @@ namespace DiceRoller
 				{
 					foreach (Tile connectedTile in current.tile.connectedTiles)
 					{
-						if (!connectedTile.gameObject.activeInHierarchy)
+						if (!connectedTile.active)
 							continue;
 						if (excludedTiles != null && excludedTiles.Contains(connectedTile))
 							continue;
 
-						float heuristic = current.range * connectedTile.tileSize + Vector3.Distance(connectedTile.transform.position, targetTile.transform.position);
+						float heuristic = current.range * connectedTile.tileSize + Vector3.Distance(connectedTile.worldPos, targetTile.worldPos);
 
 						if (open.Exists(x => x.tile == connectedTile && x.heuristic < heuristic))
 							continue;

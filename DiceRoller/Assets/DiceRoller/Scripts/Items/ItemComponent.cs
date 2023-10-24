@@ -129,14 +129,12 @@ namespace DiceRoller
 		/// </summary>
 		private void DetectHover()
 		{
-			if (!game.IsAITurn)
+			if (game.PersonInControl == GameController.Person.Player)
 			{
-				// player inputs
 				IsHovering = _IsUIHovering;
 			}
-			else
+			else if (game.PersonInControl == GameController.Person.AI)
 			{
-				// ai inputs
 				IsHovering = _IsAIHovering;
 			}
 		}
@@ -157,9 +155,8 @@ namespace DiceRoller
 		/// </summary>
 		private void DetectPress()
 		{
-			if (!game.IsAITurn)
+			if (game.PersonInControl == GameController.Person.Player)
 			{
-				// player inputs
 				for (int i = 0; i < 3; i++)
 				{
 					IsPressed[i] = false;
@@ -170,9 +167,8 @@ namespace DiceRoller
 					}
 				}
 			}
-			else
+			else if(game.PersonInControl == GameController.Person.AI)
 			{
-				// ai inputs
 				for (int i = 0; i < 3; i++)
 				{
 					IsPressed[i] = false;
@@ -209,9 +205,8 @@ namespace DiceRoller
 		private void DetectDrag()
 		{
 
-			if (!game.IsAITurn)
+			if (game.PersonInControl == GameController.Person.Player)
 			{
-				// player inputs
 				for (int i = 0; i < 3; i++)
 				{
 					IsStartedDrag[i] = false;
@@ -230,9 +225,8 @@ namespace DiceRoller
 					}
 				}
 			}
-			else
+			else if (game.PersonInControl == GameController.Person.Player)
 			{
-				// ai inputs
 				for (int i = 0; i < 3; i++)
 				{
 					IsStartedDrag[i] = false;

@@ -6,17 +6,6 @@ namespace DiceRoller
 {
 	public class SmallShield : Equipment
 	{
-		// ========================================================= Properties =========================================================
-
-		/// <summary>
-		/// The list of all slots and their requiremnts.
-		/// </summary>
-		public override IReadOnlyList<EquipmentDieSlot> DieSlots
-		{
-			get { return _DieSlots.AsReadOnly(); }
-		}
-		private List<EquipmentDieSlot> _DieSlots = new List<EquipmentDieSlot>();
-
 		// ========================================================= Constructor =========================================================
 
 		/// <summary>
@@ -27,7 +16,16 @@ namespace DiceRoller
 
 		}
 
-		// ========================================================= Die Assignment =========================================================
+		// ========================================================= Properties (DieSlots) =========================================================
+
+		/// <summary>
+		/// The list of all slots and their requiremnts.
+		/// </summary>
+		public override IReadOnlyList<EquipmentDieSlot> DieSlots
+		{
+			get { return _DieSlots.AsReadOnly(); }
+		}
+		private List<EquipmentDieSlot> _DieSlots = new List<EquipmentDieSlot>();
 
 		/// <summary>
 		/// Fill in all die slots. This will be called in the constructor.
@@ -41,68 +39,33 @@ namespace DiceRoller
 				2));
 		}
 
-		// ========================================================= Information =========================================================
+		// ========================================================= Properties (Information) =========================================================
 
 		/// <summary>
 		/// The name of this equipment.
 		/// </summary>
-		public override EquipmentDictionary.Name EquipmentName
-		{
-			get
-			{
-				return EquipmentDictionary.Name.SmallShield;
-			}
-		}
+		public override EquipmentDictionary.Name EquipmentName { get; } = EquipmentDictionary.Name.SmallShield;
 
 		/// <summary>
 		/// What type this equipment belongs to.
 		/// </summary>
-		public override EquipmentType Type
-		{
-			get
-			{
-				return EquipmentType.DefenceBuff;
-			}
-		}
+		public override EquipmentType Type { get; } = EquipmentType.DefenceSelfBuff;
 
 		/// <summary>
 		/// The name to be displayed to the player.
 		/// </summary>
-		public override string DisplayableName
-		{
-			get
-			{
-				return "Small Shield";
-			}
-		}
+		public override string DisplayableName { get; } = "Small Shield";
 
 		/// <summary>
 		/// The effect discription to be displayed to the player.
 		/// </summary>
-		public override string DisplayableEffectDiscription
-		{
-			get
-			{
-				return "+ 2 Defence";
-			}
-		}
+		public override string DisplayableEffectDiscription { get; } ="+ 2 Defence";
 
-		// ========================================================= Activation =========================================================
+		// ========================================================= Properties (Effect) =========================================================
 
 		/// <summary>
-		/// Forward implementation of the effect of this equipment.
+		/// The change in the defence value when this equipment is activated.
 		/// </summary>
-		protected override void AddEffect()
-		{
-			Unit.ChangeStat(defenceDelta: 2);
-		}
-
-		/// <summary>
-		/// Backward implementation of the effect of this equipment.
-		/// </summary>
-		protected override void RemoveEffect()
-		{
-			Unit.ChangeStat(defenceDelta: -2);
-		}
+		public override int DefenceDelta { get; } = 2;
 	}
 }

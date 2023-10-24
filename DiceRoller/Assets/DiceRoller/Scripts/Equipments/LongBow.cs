@@ -6,17 +6,6 @@ namespace DiceRoller
 {
 	public class LongBow : Equipment
 	{
-		// ========================================================= Properties =========================================================
-
-		/// <summary>
-		/// The list of all slots and their requiremnts.
-		/// </summary>
-		public override IReadOnlyList<EquipmentDieSlot> DieSlots
-		{
-			get { return _DieSlots.AsReadOnly(); }
-		}
-		private List<EquipmentDieSlot> _DieSlots = new List<EquipmentDieSlot>();
-
 		// ========================================================= Constructor =========================================================
 
 		/// <summary>
@@ -27,7 +16,16 @@ namespace DiceRoller
 
 		}
 
-		// ========================================================= Die Assignment =========================================================
+		// ========================================================= Properties (DieSlots) =========================================================
+
+		/// <summary>
+		/// The list of all slots and their requiremnts.
+		/// </summary>
+		public override IReadOnlyList<EquipmentDieSlot> DieSlots
+		{
+			get { return _DieSlots.AsReadOnly(); }
+		}
+		private List<EquipmentDieSlot> _DieSlots = new List<EquipmentDieSlot>();
 
 		/// <summary>
 		/// Fill in all die slots. This will be called in the constructor.
@@ -41,74 +39,43 @@ namespace DiceRoller
 				4));
 		}
 
-		// ========================================================= Information =========================================================
+		// ========================================================= Properties (Information) =========================================================
 
 		/// <summary>
 		/// The name of this equipment.
 		/// </summary>
-		public override EquipmentDictionary.Name EquipmentName
-		{
-			get
-			{
-				return EquipmentDictionary.Name.LongBow;
-			}
-		}
+		public override EquipmentDictionary.Name EquipmentName { get; } = EquipmentDictionary.Name.LongBow;
 
 		/// <summary>
 		/// What type this equipment belongs to.
 		/// </summary>
-		public override EquipmentType Type
-		{
-			get
-			{
-				return EquipmentType.MeleeAttack;
-			}
-		}
-
+		public override EquipmentType Type { get; } = EquipmentType.MeleeAttack;
 
 		/// <summary>
 		/// The name to be displayed to the player.
 		/// </summary>
-		public override string DisplayableName
-		{
-			get
-			{
-				return "Long Bow";
-			}
-		}
+		public override string DisplayableName { get; } = "Long Bow";
 
 		/// <summary>
 		/// The effect discription to be displayed to the player.
 		/// </summary>
-		public override string DisplayableEffectDiscription
-		{
-			get
-			{
-				return "+ 3 Melee\n 3 Range";
-			}
-		}
+		public override string DisplayableEffectDiscription { get; } = "+ 3 Melee\n 3 Range";
 
-		// ========================================================= Activation =========================================================
+		// ========================================================= Properties (Effect) =========================================================
 
 		/// <summary>
-		/// Forward implementation of the effect of this equipment.
+		/// The change in the melee value when this equipment is activated.
 		/// </summary>
-		protected override void AddEffect()
-		{
-			Unit.ChangeStat(meleeDelta: 3, attackRangeDelta: 2, knockbackForceDelta: 0.1f);
-			Unit.ChangeAttackAreaRule(attackRule);
-		}
+		public override int MeleeDelta { get; } = 3;
 
 		/// <summary>
-		/// Backward implementation of the effect of this equipment.
+		/// The change in the attack range value when this equipment is activated.
 		/// </summary>
-		protected override void RemoveEffect()
-		{
-			Unit.ChangeStat(meleeDelta: -3, attackRangeDelta: -2, knockbackForceDelta: -0.1f);
-			Unit.ResetAttackAreaRule();
-		}
+		public override int AttackRangeDelta { get; } = 2;
 
-		private static AttackAreaRule attackRule =
-			new AttackAreaRule((target, starting, range) => Int2.GridDistance(target.boardPos, starting.boardPos) <= range);
+		/// <summary>
+		/// The change in the attack range value when this equipment is activated.
+		/// </summary>
+		public override float KnockbackForceDelta { get; } = 0.1f;
 	}
 }

@@ -166,7 +166,7 @@ namespace DiceRoller
 						// use any activated equipment on the target that are used as defence
 						foreach (Equipment equipment in target.Equipments)
 						{
-							if (equipment.IsActivated && equipment.Type == Equipment.EquipmentType.DefenceBuff)
+							if (equipment.IsActivated && equipment.Type == Equipment.EquipmentType.DefenceSelfBuff)
 							{
 								equipment.ConsumeDie();
 							}

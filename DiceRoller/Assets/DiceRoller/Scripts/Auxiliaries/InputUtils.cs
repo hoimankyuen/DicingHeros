@@ -44,6 +44,20 @@ public class InputUtils
 		}
 	}
 
+	// ========================================================= Mouse BUtton Press Simulation =========================================================
+
+	private static bool usingSimulatedPress = false;
+	private static bool[] simulatedPresses = new bool[] { false, false, false };
+	public static void EnablePressSimulation(bool enable)
+	{
+		usingSimulatedPress = enable;
+	}
+
+	public static void SimulatePress(int button, bool press)
+	{
+		simulatedPresses[button] = press;
+	}
+
 	// ========================================================= Mouse BUtton Press Detection =========================================================
 
 	/// <summary>
@@ -52,23 +66,32 @@ public class InputUtils
 	/// <returns></returns>
 	public static bool GetMousePress(int button, ref Vector2 pressedPositionCache)
 	{
-		if (Input.GetMouseButtonDown(button) && !IsDragging)
+		if (usingSimulatedPress)
 		{
-			if (!EventSystem.current.IsPointerOverGameObject())
-			{
-				pressedPositionCache = Input.mousePosition;
-			}
+			// read simulated presses
+			return simulatedPresses[button];
 		}
-		if (Input.GetMouseButtonUp(button) && pressedPositionCache != Vector2.negativeInfinity)
+		else
 		{
-			if (Vector2.Distance(pressedPositionCache, Input.mousePosition) < dragInitializeDistance)
+			// read input from mouse
+			if (Input.GetMouseButtonDown(button) && !IsDragging)
 			{
 				if (!EventSystem.current.IsPointerOverGameObject())
 				{
-					return true;
+					pressedPositionCache = Input.mousePosition;
 				}
 			}
-			pressedPositionCache = Vector2.negativeInfinity;
+			if (Input.GetMouseButtonUp(button) && pressedPositionCache != Vector2.negativeInfinity)
+			{
+				if (Vector2.Distance(pressedPositionCache, Input.mousePosition) < dragInitializeDistance)
+				{
+					if (!EventSystem.current.IsPointerOverGameObject())
+					{
+						return true;
+					}
+				}
+				pressedPositionCache = Vector2.negativeInfinity;
+			}
 		}
 		return false;
 	}

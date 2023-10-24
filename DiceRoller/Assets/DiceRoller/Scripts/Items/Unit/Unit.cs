@@ -52,10 +52,6 @@ namespace DiceRoller
 		// readonly
 		private readonly float moveTimePerTile = 0.2f;
 
-		// components
-		private Transform modelTransform = null;
-		private Transform effectTransform = null;
-
 		// ========================================================= Monobehaviour Methods =========================================================
 
 		/// <summary>
@@ -65,7 +61,6 @@ namespace DiceRoller
 		protected override void Awake()
 		{
 			base.Awake();
-			RetrieveComponentReferences();
 		}
 
 		/// <summary>
@@ -78,6 +73,7 @@ namespace DiceRoller
 			RegisterToPlayer();
 
 			RegisterCallbacksForAllOccupiedTiles();
+			RegisterCallbacksForAllOccupiedTilesExceptSelf();
 			RegisterCallbacksForMovableArea();
 			RegisterCallbacksForAttackableArea();
 			RegisterCallbacksForPredictedAttackableArea();
@@ -111,6 +107,7 @@ namespace DiceRoller
 			DeregisterFromPlayer();
 
 			DeregisterCallbacksForAllOccupiedTiles();
+			DeregisterCallbacksForAllOccupiedTilesExceptSelf();
 			DeregisterCallbacksForMovableArea();
 			DeregisterCallbacksForAttackableArea();
 			DeregisterCallbacksForPredictedAttackableArea();
@@ -137,17 +134,6 @@ namespace DiceRoller
 		public bool Equals(Unit other)
 		{
 			return this == other;
-		}
-
-		// ========================================================= General Behaviour =========================================================
-
-		/// <summary>
-		/// Retrieve component references for this unit.
-		/// </summary>
-		private void RetrieveComponentReferences()
-		{
-			modelTransform = transform.Find("Model");
-			effectTransform = transform.Find("Effect");
 		}
 
 		// ========================================================= Team Behaviour =========================================================
@@ -339,31 +325,6 @@ namespace DiceRoller
 		{
 			return _DraggingUnits.Count > 0 ? _DraggingUnits[0] : null;
 		}
-
-		// ========================================================= Properties (AllOccupiedTilesExceptSelf) =========================================================
-
-		/// <summary>
-		/// A list of all occupied tiles except the ones that this unit occupied. Useful for movement calculation.
-		/// </summary>
-		public IReadOnlyCollection<Tile> AllOccupiedTilesExceptSelf
-		{
-			get
-			{
-				_AllOccupiedTilesExceptSelf.Clear();
-				foreach (Player player in game.GetAllPlayers())
-				{
-					foreach (Unit unit in player.Units)
-					{
-						if (unit != this)
-						{
-							_AllOccupiedTilesExceptSelf.AddRange(unit.OccupiedTiles.Except(_AllOccupiedTilesExceptSelf));
-						}
-					}
-				}
-				return _AllOccupiedTilesExceptSelf.AsReadOnly();
-			}
-		}
-		private List<Tile> _AllOccupiedTilesExceptSelf = new List<Tile>();
 
 		// ========================================================= Properties (Health) =========================================================
 
@@ -608,7 +569,6 @@ namespace DiceRoller
 		/// </summary>
 		public event Action OnKnockbackChanged = () => { };
 
-
 		/// <summary>
 		/// Set the stat values to the inital value.
 		/// </summary>
@@ -646,7 +606,7 @@ namespace DiceRoller
 			{
 				if (_IsAllOccupiedTilesDirty)
 				{
-					RefresAllOccupiedTiles();		
+					RefreshAllOccupiedTiles();		
 				}
 				return _AllOccupiedTiles.AsReadOnly();
 			}
@@ -690,7 +650,7 @@ namespace DiceRoller
 		/// <summary>
 		/// Retrieve again the list of all tiles that are occupied by any unit.
 		/// </summary>
-		private static void RefresAllOccupiedTiles()
+		private static void RefreshAllOccupiedTiles()
 		{
 			_AllOccupiedTiles.Clear();
 			foreach (Player player in GameController.current.GetAllPlayers())
@@ -701,6 +661,71 @@ namespace DiceRoller
 				}
 			}
 			_IsAllOccupiedTilesDirty = false;
+		}
+
+		// ========================================================= Properties (AllOccupiedTilesExceptSelf) =========================================================
+
+		/// <summary>
+		/// A list of all occupied tiles except the ones that this unit occupied. Useful for movement calculation.
+		/// </summary>
+		public IReadOnlyCollection<Tile> AllOccupiedTilesExceptSelf
+		{
+			get
+			{
+				if (_IsAllOccupiedTilesExceptSelfDirty)
+				{
+					RefreshAllOccupiedTilesExceptSelf();
+				}
+				return _AllOccupiedTilesExceptSelf.AsReadOnly();
+			}
+		}
+		private List<Tile> _AllOccupiedTilesExceptSelf = new List<Tile>();
+		private static bool _IsAllOccupiedTilesExceptSelfDirty = true;
+
+		/// <summary>
+		/// Event raised when the list of all tiles occupied by every unit needs updating.
+		/// </summary>
+		public static event Action OnAllOcupiedTilesExceptSelfDirty = () => { };
+
+		/// <summary>
+		/// Register all necessary callbacks needed for AllOccupiedTilesExceptSelf.
+		/// </summary>
+		private void RegisterCallbacksForAllOccupiedTilesExceptSelf()
+		{
+			OnAllOcupiedTilesDirty += SetAllOccupiedTilesExceptSelfDirty;
+			OnOccupiedTilesChanged += SetAllOccupiedTilesExceptSelfDirty;
+		}
+
+		/// <summary>
+		/// Deregister all necessary callbacks needed for AllOccupiedTilesExceptSelf.
+		/// </summary>
+		private void DeregisterCallbacksForAllOccupiedTilesExceptSelf()
+		{
+			OnAllOcupiedTilesDirty -= SetAllOccupiedTilesExceptSelfDirty;
+			OnOccupiedTilesChanged -= SetAllOccupiedTilesExceptSelfDirty;
+		}
+
+
+		/// <summary>
+		/// Notify AllOccupiedTilesExecptSelf needs updating.
+		/// </summary>
+		private static void SetAllOccupiedTilesExceptSelfDirty()
+		{
+			if (!_IsAllOccupiedTilesExceptSelfDirty)
+			{
+				_IsAllOccupiedTilesExceptSelfDirty = true;
+				OnAllOcupiedTilesExceptSelfDirty.Invoke();
+			}
+		}
+
+		/// <summary>
+		/// Retrieve again the list of all tiles that are occupied by any unit except the one this unit occupied.
+		/// </summary>
+		private void RefreshAllOccupiedTilesExceptSelf()
+		{
+			_AllOccupiedTilesExceptSelf.Clear();
+			_AllOccupiedTilesExceptSelf.AddRange(AllOccupiedTiles.Except(OccupiedTiles));
+			_IsAllOccupiedTilesExceptSelfDirty = false;
 		}
 
 		// ========================================================= Properties (MoveableArea) =========================================================
@@ -1039,27 +1064,19 @@ namespace DiceRoller
 					{
 						case UnitState.Standby:
 							ShowEffect(EffectType.Depleted, false);
-							rigidBody.isKinematic = false;
-							modelTransform.gameObject.SetActive(true);
-							effectTransform.gameObject.SetActive(true);
+							IsHidden = false;
 							break;
 						case UnitState.Moved:
 							ShowEffect(EffectType.Depleted, false);
-							rigidBody.isKinematic = false;
-							modelTransform.gameObject.SetActive(true);
-							effectTransform.gameObject.SetActive(true);
+							IsHidden = false;
 							break;
-						case UnitState.Depleted:
+						case UnitState.Depleted:				
 							ShowEffect(EffectType.Depleted, true);
-							rigidBody.isKinematic = false;
-							modelTransform.gameObject.SetActive(true);
-							effectTransform.gameObject.SetActive(true);
+							IsHidden = false;
 							break;
 						case UnitState.Defeated:
 							ShowEffect(EffectType.Depleted, false);
-							rigidBody.isKinematic = true;
-							modelTransform.gameObject.SetActive(false);
-							effectTransform.gameObject.SetActive(false);
+							IsHidden = true;
 							break;
 					}
 

@@ -44,6 +44,8 @@ namespace DiceRoller
 
 		// component
 		protected Rigidbody rigidBody = null;
+		protected Transform modelTransform = null;
+		protected Transform effectTransform = null;
 		protected Outline outline = null;
 		protected Overlay overlay = null;
 
@@ -58,6 +60,8 @@ namespace DiceRoller
 			rigidBody = GetComponent<Rigidbody>();
 			outline = GetComponent<Outline>();
 			overlay = GetComponent<Overlay>();
+			modelTransform = transform.Find("Model");
+			effectTransform = transform.Find("Effect");
 		}
 
 		/// <summary>
@@ -243,14 +247,12 @@ namespace DiceRoller
 		/// </summary>
 		private void DetectHover()
 		{
-			if (!game.IsAITurn)
+			if (game.PersonInControl == GameController.Person.Player)
 			{
-				// player inputs
 				IsHovering = _IsSelfHovering || _IsUIHovering;
 			}
-			else
+			else if (game.PersonInControl == GameController.Person.AI)
 			{
-				// ai inputs
 				IsHovering = _IsAIHovering;
 			}
 		}
@@ -273,9 +275,8 @@ namespace DiceRoller
 		/// </summary>
 		private void DetectPress()
 		{
-			if (!game.IsAITurn)
+			if (game.PersonInControl == GameController.Person.Player)
 			{
-				// player inputs
 				for (int i = 0; i < 3; i++)
 				{
 					IsPressed[i] = false;
@@ -288,9 +289,8 @@ namespace DiceRoller
 					}
 				}
 			}
-			else
+			else if (game.PersonInControl == GameController.Person.AI)
 			{
-				// ai inputs
 				for (int i = 0; i < 3; i++)
 				{
 					IsPressed[i] = false;
@@ -327,9 +327,8 @@ namespace DiceRoller
 		/// </summary>
 		private void DetectDrag()
 		{
-			if (!game.IsAITurn)
+			if (game.PersonInControl == GameController.Person.Player)
 			{
-				// player inputs
 				for (int i = 0; i < 3; i++)
 				{
 					IsStartedDrag[i] = false;
@@ -350,9 +349,8 @@ namespace DiceRoller
 					}
 				}
 			}
-			else
+			else if (game.PersonInControl == GameController.Person.AI)
 			{
-				// ai inputs
 				for (int i = 0; i < 3; i++)
 				{
 					IsStartedDrag[i] = false;
@@ -373,6 +371,36 @@ namespace DiceRoller
 				}
 			}
 		}
+
+		// ========================================================= Properties (IsHidden) =========================================================
+
+		/// <summary>
+		/// Flag for if this item is hidden from the game.
+		/// </summary>
+		public bool IsHidden 
+		{ 
+			get
+			{
+				return _IsHidden;
+			}
+			protected set
+			{
+				if (_IsHidden != value)
+				{
+					_IsHidden = value;
+					rigidBody.isKinematic = value;
+					modelTransform.gameObject.SetActive(!value);
+					effectTransform.gameObject.SetActive(!value);
+					OnIsHiddenChanged.Invoke();
+				}
+			}
+		}
+		private bool _IsHidden = false;
+
+		/// <summary>
+		/// Event raised when the hidden state of this item is changed.
+		/// </summary>
+		public event Action OnIsHiddenChanged = () => { };
 
 		// ========================================================= Properties (IsHoveringOnTile) =========================================================
 
@@ -409,6 +437,7 @@ namespace DiceRoller
 		private List<Tile> _OccupiedTiles = new List<Tile>();
 		private Vector3 _LastOccupiedPosition = Vector3.zero;
 		private List<Tile> _LastOccupiedTiles = new List<Tile>();
+		private bool _LastIsHidden = false;
 
 		/// <summary>
 		/// Flag raised when the tiles occupied by this item are changed.
@@ -420,11 +449,21 @@ namespace DiceRoller
 		/// </summary>
 		private void DetectTilesOccupation()
 		{
-			if (!IsMoving && Vector3.SqrMagnitude(transform.position - _LastOccupiedPosition) > 0.00000001f)
+			if (!IsMoving && (Vector3.SqrMagnitude(transform.position - _LastOccupiedPosition) > 0.00000001f || _LastIsHidden != IsHidden))
 			{
-				Board.current.GetCurrentTiles(transform.position, size, _OccupiedTiles);
+				// retrieve tile that this item are in.
+				if (IsHidden)
+				{
+					_OccupiedTiles.Clear();
+				}
+				else
+				{
+					Board.current.GetCurrentTiles(transform.position, size, _OccupiedTiles);
+				}
+
 				if (!_OccupiedTiles.SequenceEqual(_LastOccupiedTiles))
 				{
+					// change occupant information of the tiles
 					foreach (Tile t in _LastOccupiedTiles.Except(_OccupiedTiles))
 					{
 						t.RemoveOccupant(this);
@@ -439,6 +478,7 @@ namespace DiceRoller
 					// update cache
 					_LastOccupiedTiles.Clear();
 					_LastOccupiedTiles.AddRange(_OccupiedTiles);
+					_LastIsHidden = IsHidden;
 
 					// raise event
 					OnOccupiedTilesChanged.Invoke();
@@ -470,7 +510,7 @@ namespace DiceRoller
 		/// </summary>
 		private void DetectMovement()
 		{
-			if (!rigidBody.isKinematic && (rigidBody.velocity.sqrMagnitude > 0.01f || rigidBody.angularVelocity.sqrMagnitude > 0.01f || Vector3.SqrMagnitude(transform.position -  _lastMovePosition) > 0.00000001f))
+			if (!IsHidden && (rigidBody.velocity.sqrMagnitude > 0.01f || rigidBody.angularVelocity.sqrMagnitude > 0.01f || Vector3.SqrMagnitude(transform.position -  _lastMovePosition) > 0.00000001f))
 			{
 				_lastMovePosition = transform.position;
 				_lastMovingTime = Time.time;

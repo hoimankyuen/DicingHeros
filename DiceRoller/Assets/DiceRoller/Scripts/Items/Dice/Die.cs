@@ -56,9 +56,7 @@ namespace DiceRoller
 		public List<Face> faces = new List<Face>();
 		public bool startAsHolding = false;
 
-		// components
-		private Transform modelTransform = null;
-		private Transform effectTransform = null;	  
+		// components 
 		private LineRenderer lineRenderer = null;
 
 		// ========================================================= Monobehaviour Methods =========================================================
@@ -163,8 +161,6 @@ namespace DiceRoller
 		/// </summary>
 		private void RetrieveComponentReferences()
 		{
-			modelTransform = transform.Find("Model");
-			effectTransform = transform.Find("Effect");
 			lineRenderer = transform.Find("Effect/Line").GetComponent<LineRenderer>();
 		}
 
@@ -454,26 +450,18 @@ namespace DiceRoller
 				if (_CurrentDieState != value)
 				{
 					switch (value)
-					{
+					{	
 						case DieState.Holding:
-							rigidBody.isKinematic = true;
-							modelTransform.gameObject.SetActive(false);
-							effectTransform.gameObject.SetActive(false);
+							IsHidden = true;
 							break;
 						case DieState.Casted:
-							rigidBody.isKinematic = false;
-							modelTransform.gameObject.SetActive(true);
-							effectTransform.gameObject.SetActive(true);
+							IsHidden = false;
 							break;
 						case DieState.Assigned:
-							rigidBody.isKinematic = false;
-							modelTransform.gameObject.SetActive(true);
-							effectTransform.gameObject.SetActive(true);
+							IsHidden = false;
 							break;
 						case DieState.Expended:
-							rigidBody.isKinematic = true;
-							modelTransform.gameObject.SetActive(false);
-							effectTransform.gameObject.SetActive(false);
+							IsHidden = true;
 							break;
 					}
 					_CurrentDieState = value;
@@ -571,15 +559,17 @@ namespace DiceRoller
 		private void AssignedToSlotCallback(EquipmentDieSlot slot)
 		{
 			_AssignedDieSlot = slot;
-			if (slot != null)
+			if (CurrentDieState != DieState.Holding && CurrentDieState != DieState.Expended)
 			{
-				CurrentDieState = DieState.Assigned;
+				if (slot != null)
+				{
+					CurrentDieState = DieState.Assigned;
+				}
+				else
+				{
+					CurrentDieState = DieState.Casted;
+				}
 			}
-			else
-			{
-				CurrentDieState = DieState.Casted;
-			}
-
 			onAssignedDieSlotChanged.Invoke();
 		}
 

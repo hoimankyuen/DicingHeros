@@ -28,8 +28,6 @@ namespace DiceRoller
 		private Dictionary<int, Player> playersDict = new Dictionary<int, Player>();
 		private List<Turn> previousTurns = new List<Turn>();
 
-
-
 		// ========================================================= Monobehaviour Methods =========================================================
 
 		/// <summary>
@@ -132,17 +130,35 @@ namespace DiceRoller
 		/// </summary>
 		public event Action OnTurnChanged = () => { };
 
-		// ========================================================= Properties (IsAITurn) =========================================================
+		// ========================================================= Properties (Input) =========================================================
+
+		public enum Person
+		{ 
+			None,
+			Player,
+			AI,
+		}
 
 		/// <summary>
-		/// Flag for if the current turn is controlled by AI.
+		/// Flag to notify all gameplay component what type of player is in control.
 		/// </summary>
-		public bool IsAITurn
+		public Person PersonInControl 
 		{
 			get
 			{
-				return CurrentPlayer != null ? CurrentPlayer.isAI : false;
-			} 
+				if (CurrentPlayer == null)
+				{
+					return Person.None;
+				}
+				else if (CurrentPlayer.isAI)
+				{
+					return Person.AI;
+				}
+				else
+				{
+					return Person.Player;
+				}
+			}
 		}
 
 		// ========================================================= Inquiries =========================================================
