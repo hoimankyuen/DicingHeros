@@ -71,7 +71,7 @@ namespace DiceRoller
 		/// <summary>
 		/// The change in the attack range value when this equipment is activated.
 		/// </summary>
-		public override int AttackRangeDelta { get; } = 2;
+		public override int MeleeRangeDelta { get; } = 2;
 
 		/// <summary>
 		/// The change in the attack range value when this equipment is activated.

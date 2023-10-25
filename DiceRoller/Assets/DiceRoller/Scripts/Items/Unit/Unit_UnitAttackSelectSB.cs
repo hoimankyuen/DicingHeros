@@ -145,16 +145,17 @@ namespace DiceRoller
 						self.NextAttack = new UnitAttack(target, damage, self.KnockbackForce);
 
 						// use any activated equipment that are used at attack state
+						AttackType attackType = self.CurrentAttackType;
 						foreach (Equipment equipment in self.Equipments)
-						{
-							if (self.CurrentAttackType == AttackType.Physical)
+						{			
+							if (attackType == AttackType.Physical)
 							{
 								if (equipment.IsActivated && (equipment.Type == Equipment.EquipmentType.MeleeAttack || equipment.Type == Equipment.EquipmentType.MeleeSelfBuff))
 								{
 									equipment.ConsumeDie();
 								}
 							}
-							else if (self.CurrentAttackType == AttackType.Magical)
+							else if (attackType == AttackType.Magical)
 							{
 								if (equipment.IsActivated && (equipment.Type == Equipment.EquipmentType.MagicAttack || equipment.Type == Equipment.EquipmentType.MagicSelfBuff))
 								{

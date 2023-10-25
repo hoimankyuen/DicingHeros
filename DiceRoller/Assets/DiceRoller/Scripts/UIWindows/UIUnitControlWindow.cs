@@ -14,6 +14,7 @@ namespace DiceRoller
 		public Button cancelButton;
 
 		// reference
+		private GameController game => GameController.current;
 		private StateMachine stateMachine => StateMachine.current;
 
 		// ========================================================= Monobehaviour Methods =========================================================
@@ -84,40 +85,52 @@ namespace DiceRoller
 
 		public void SkipMove()
 		{
-			Unit unit = Unit.GetFirstSelected();
-			if (unit != null)
+			if (game.PersonInControl == GameController.Person.Player)
 			{
-				unit.SkipMoveSelect();
-				unit.SkipAttackSelect();
+				Unit unit = Unit.GetFirstSelected();
+				if (unit != null)
+				{
+					unit.SkipMoveSelect();
+					unit.SkipAttackSelect();
+				}
 			}
 		}
 
 		public void SwapToMove()
 		{
-			Unit unit = Unit.GetFirstSelected();
-			if (unit != null)
+			if (game.PersonInControl == GameController.Person.Player)
 			{
-				unit.ChangeToMoveSelect();
+				Unit unit = Unit.GetFirstSelected();
+				if (unit != null)
+				{
+					unit.ChangeToMoveSelect();
+				}
 			}
 		}
 
 		public void SwapToAttack()
 		{
-			Unit unit = Unit.GetFirstSelected();
-			if (unit != null)
+			if (game.PersonInControl == GameController.Person.Player)
 			{
-				unit.ChangeToAttackSelect(); 
+				Unit unit = Unit.GetFirstSelected();
+				if (unit != null)
+				{
+					unit.ChangeToAttackSelect();
+				}
 			}
 		}
 
 		public void Cancel()
 		{
-			Unit unit = Unit.GetFirstSelected();
-			if (unit != null)
+			if (game.PersonInControl == GameController.Person.Player)
 			{
-				unit.CancelMoveSelect();
-				unit.CancelAttackSelect();
-				unit.CancelDepletedSelect();
+				Unit unit = Unit.GetFirstSelected();
+				if (unit != null)
+				{
+					unit.CancelMoveSelect();
+					unit.CancelAttackSelect();
+					unit.CancelDepletedSelect();
+				}
 			}
 		}
 	}

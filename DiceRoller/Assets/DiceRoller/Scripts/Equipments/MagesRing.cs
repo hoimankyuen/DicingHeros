@@ -75,8 +75,8 @@ namespace DiceRoller
 		public override int MagicDelta { get; } = 3;
 
 		/// <summary>
-		/// The change in the attack range value when this equipment is activated.
+		/// The change in the magic range value when this equipment is activated.
 		/// </summary>
-		public override int AttackRangeDelta { get; } = 1;
+		public override int MagicRangeDelta { get; } = 1;
 	}
 }

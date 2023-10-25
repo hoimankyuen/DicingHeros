@@ -110,8 +110,11 @@ namespace DiceRoller
 
 		public void SelectAll()
 		{
-			Die.SelectAll_Navigation();
-			Die.SelectAll_DieActionSelect();
+			if (game.PersonInControl == GameController.Person.Player)
+			{
+				Die.SelectAll_Navigation();
+				Die.SelectAll_DieActionSelect();
+			}
 		}
 	}
 }

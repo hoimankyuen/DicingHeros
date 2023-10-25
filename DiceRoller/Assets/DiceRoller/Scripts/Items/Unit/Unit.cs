@@ -42,7 +42,8 @@ namespace DiceRoller
 		public int baseMagic = 1;
 		public int baseDefence = 4;
 		public int baseMovement = 4;
-		public int baseRange = 1;
+		public int baseMeleeRange = 1;
+		public int baseMagicRange = 1;
 		public float baseKnockbackForce = 0.25f;
 		public List<EquipmentDictionary.Name> startingEquipment = new List<EquipmentDictionary.Name>();
 
@@ -518,30 +519,57 @@ namespace DiceRoller
 		public event Action OnMovementChanged = () => { };
 
 		/// <summary>
-		/// The current attack range value of this unit.
+		/// The current melee range value of this unit.
 		/// </summary>
-		public int AttackRange
+		public int MeleeRange
 		{
 			get
 			{
-				return _AttackRange;
+				return _MeleeRange;
 			}
 			private set
 			{
 				int clampedValue = value < 0 ? 0 : value;
-				if (_AttackRange != clampedValue)
+				if (_MeleeRange != clampedValue)
 				{
-					_AttackRange = clampedValue;
-					OnAttackRangeChanged.Invoke();
+					_MeleeRange = clampedValue;
+					OnMeleeRangeChanged.Invoke();
 				}
 			}
 		}
-		private int _AttackRange = 0;
+		private int _MeleeRange = 0;
 
 		/// <summary>
-		/// Event raised when the melee stat of this unit is changed.
+		/// Event raised when the melee range stat of this unit is changed.
 		/// </summary>
-		public event Action OnAttackRangeChanged = () => { };
+		public event Action OnMeleeRangeChanged = () => { };
+
+
+		/// <summary>
+		/// The current magic range value of this unit.
+		/// </summary>
+		public int MagicRange
+		{
+			get
+			{
+				return _MagicRange;
+			}
+			private set
+			{
+				int clampedValue = value < 0 ? 0 : value;
+				if (_MagicRange != clampedValue)
+				{
+					_MagicRange = clampedValue;
+					OnMagicRangeChanged.Invoke();
+				}
+			}
+		}
+		private int _MagicRange = 0;
+
+		/// <summary>
+		/// Event raised when the magic range stat of this unit is changed.
+		/// </summary>
+		public event Action OnMagicRangeChanged = () => { };
 
 		/// <summary>
 		/// The current knockback force of this unit.
@@ -578,20 +606,22 @@ namespace DiceRoller
 			Magic = baseMagic;
 			Defence = baseDefence;
 			Movement = baseMovement;
-			AttackRange = baseRange;
+			MeleeRange = baseMeleeRange;
+			MagicRange = baseMagicRange;
 			KnockbackForce = baseKnockbackForce;
 		}
 
 		/// <summary>
 		/// Apply a change on one or more stat variables.
 		/// </summary>
-		public void ChangeStat(int meleeDelta = 0, int magicDelta = 0, int defenceDelta = 0, int movementDelta = 0, int attackRangeDelta = 0, float knockbackForceDelta = 0)
+		public void ChangeStat(int meleeDelta = 0, int magicDelta = 0, int defenceDelta = 0, int movementDelta = 0, int meleeRangeDelta = 0, int magicRangeDelta = 0, float knockbackForceDelta = 0)
 		{
 			Melee += meleeDelta;
 			Defence += defenceDelta;
 			Magic += magicDelta;
 			Movement += movementDelta;
-			AttackRange += attackRangeDelta;
+			MeleeRange += meleeRangeDelta;
+			MagicRange += magicRangeDelta;
 			KnockbackForce += knockbackForceDelta;
 		}
 
@@ -822,7 +852,9 @@ namespace DiceRoller
 		{
 			OnAllOcupiedTilesDirty += SetAttackableAreaDirty;
 			OnAttackAreaRuleChanged += SetAttackableAreaDirty;
-			OnAttackRangeChanged += SetAttackableAreaDirty;
+			OnCurrentAttackTypeChanged += SetAttackableAreaDirty;
+			OnMeleeRangeChanged += SetAttackableAreaDirty;
+			OnMagicRangeChanged += SetAttackableAreaDirty;
 		}
 
 		/// <summary>
@@ -832,7 +864,9 @@ namespace DiceRoller
 		{
 			OnAllOcupiedTilesDirty -= SetAttackableAreaDirty;
 			OnAttackAreaRuleChanged -= SetAttackableAreaDirty;
-			OnAttackRangeChanged -= SetAttackableAreaDirty;
+			OnCurrentAttackTypeChanged -= SetAttackableAreaDirty;
+			OnMeleeRangeChanged -= SetAttackableAreaDirty;
+			OnMagicRangeChanged -= SetAttackableAreaDirty;
 		}
 
 		/// <summary>
@@ -852,7 +886,14 @@ namespace DiceRoller
 		/// </summary>
 		private void RefreshAttackableArea()
 		{
-			board.GetTilesByRule(OccupiedTiles, AttackAreaRule, AttackRange, _AttackableArea);
+			if (CurrentAttackType == AttackType.Physical)
+			{
+				board.GetTilesByRule(OccupiedTiles, AttackAreaRule, MeleeRange, _AttackableArea);
+			}
+			else
+			{
+				board.GetTilesByRule(OccupiedTiles, AttackAreaRule,  MagicRange, _AttackableArea);
+			}
 			_IsAttackableAreaDirty = false;
 		}
 
@@ -887,7 +928,7 @@ namespace DiceRoller
 		{
 			OnMoveableAreaDirty += SetPredictedAttakableAreaDirty;
 			OnAttackAreaRuleChanged += SetPredictedAttakableAreaDirty;
-			OnAttackRangeChanged += SetPredictedAttakableAreaDirty;
+			OnMeleeRangeChanged += SetPredictedAttakableAreaDirty;
 		}
 
 		/// <summary>
@@ -897,7 +938,7 @@ namespace DiceRoller
 		{
 			OnMoveableAreaDirty -= SetPredictedAttakableAreaDirty;
 			OnAttackAreaRuleChanged -= SetPredictedAttakableAreaDirty;
-			OnAttackRangeChanged -= SetPredictedAttakableAreaDirty;
+			OnMeleeRangeChanged -= SetPredictedAttakableAreaDirty;
 		}
 
 		/// <summary>
@@ -917,7 +958,7 @@ namespace DiceRoller
 		/// </summary>
 		private void RefreshPredictedAttackableArea()
 		{
-			board.GetTilesByRule(MovableArea, AttackAreaRule, AttackRange, _PredictedAttackableArea);
+			board.GetTilesByRule(MovableArea, AttackAreaRule, MeleeRange, _PredictedAttackableArea);
 			_IsPredictedAttackableAreaDirty = false;
 		}
 
@@ -1026,15 +1067,12 @@ namespace DiceRoller
 		/// </summary>
 		public event Action OnAttackAreaRuleChanged = () => { };
 
-		private static readonly AttackAreaRule DefaultMeleeRule =
-			new AttackAreaRule((target, starting, range) => Int2.GridDistance(target.boardPos, starting.boardPos) <= range);
-
 		/// <summary>
 		/// Reset the rule to determine which tiles are attackable to the basic melee form.
 		/// </summary>
 		public void ResetAttackAreaRule()
 		{
-			_AttackAreaRule = DefaultMeleeRule;
+			_AttackAreaRule = AttackAreaRule.Adjacent;
 		}
 
 		/// <summary>

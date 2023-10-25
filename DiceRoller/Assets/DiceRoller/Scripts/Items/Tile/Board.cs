@@ -226,31 +226,12 @@ namespace DiceRoller
 		}
 
 		// ========================================================= Tile Inqury ========================================================
+		
 		private struct TileRangePair
 		{
 			public Tile tile;
 			public int range;
 		}
-
-		private struct TilePathRangeHeuristicPair
-		{
-			public Tile tile;
-			public Tile previous;
-			public int range;
-			public float heuristic;
-		}
-
-		private class TilePathRangeHeuristicPairComparer : IComparer<TilePathRangeHeuristicPair>
-		{
-			public int Compare(TilePathRangeHeuristicPair a, TilePathRangeHeuristicPair b)
-			{
-				return a.heuristic.CompareTo(b.heuristic);
-			}
-		}
-		private TilePathRangeHeuristicPairComparer tilePathRangeHeuristicPairComparer = new TilePathRangeHeuristicPairComparer();
-
-		private static readonly AttackAreaRule SimpleRangeRule =
-		new AttackAreaRule((target, starting, range) => Int2.GridDistance(target.boardPos, starting.boardPos) <= range);
 
 		/// <summary>
 		/// Get all tiles that an object is in.
@@ -282,7 +263,7 @@ namespace DiceRoller
 		{
 			tempTileList.Clear();
 			tempTileList.Add(startingTile);
-			GetTilesByRule(tempTileList, SimpleRangeRule, range, result);
+			GetTilesByRule(tempTileList, AttackAreaRule.Adjacent, range, result);
 			tempTileList.Clear();
 		}
 		/// <summary>
@@ -290,7 +271,7 @@ namespace DiceRoller
 		/// </summary>
 		public void GetTilesInRange(IEnumerable<Tile> startingTiles, int range, List<Tile> result)
 		{
-			GetTilesByRule(startingTiles, SimpleRangeRule, range, result);
+			GetTilesByRule(startingTiles, AttackAreaRule.Adjacent, range, result);
 		}
 
 		/// <summary>
@@ -390,6 +371,26 @@ namespace DiceRoller
 			}
 		}
 
+		// ========================================================= Shortest Path ========================================================
+
+
+		private struct TilePathRangeHeuristicPair
+		{
+			public Tile tile;
+			public Tile previous;
+			public int g;
+			public int f;
+		}
+
+		private class TilePathRangeHeuristicPairComparer : IComparer<TilePathRangeHeuristicPair>
+		{
+			public int Compare(TilePathRangeHeuristicPair a, TilePathRangeHeuristicPair b)
+			{
+				return a.f.CompareTo(b.f);
+			}
+		}
+		private TilePathRangeHeuristicPairComparer tilePathRangeHeuristicPairComparer = new TilePathRangeHeuristicPairComparer();
+
 		/// <summary>
 		/// Find the shortest path between a set of starting tile(s) to a specific target tile.
 		/// </summary>
@@ -444,8 +445,9 @@ namespace DiceRoller
 				{ 
 					tile = startingTile,
 					previous = null,
-					range = 0,
-					heuristic = Vector3.Distance(startingTile.worldPos, targetTile.worldPos) 
+					g = 0,
+					//f = Vector3.Distance(startingTile.worldPos, targetTile.worldPos) 
+					f = 0
 				});
 			}
 
@@ -459,22 +461,23 @@ namespace DiceRoller
 			while (open.Count > 0)
 			{
 				// get the tile in the open list with the smallest heuristic, since the list is always sorted, the first elements should suffice
-				TilePathRangeHeuristicPair current = open[0];
+				TilePathRangeHeuristicPair q = open[0];
 				open.RemoveAt(0);
 
 				// check if solution is already found, return path if so
-				if (current.tile == targetTile)
+				if (q.tile == targetTile)
 				{
-					result.Add(current.tile);
+					result.Add(q.tile);
 					do
 					{
-						if (current.previous != null)
+						if (q.previous != null)
 						{
-							result.Insert(0, current.previous);
-							current = closed.FirstOrDefault(x => x.tile == current.previous);
+							result.Add(q.previous);
+							q = closed.FirstOrDefault(x => x.tile == q.previous);
 						}
 					}
-					while (current.previous != null);
+					while (q.previous != null);
+					result.Reverse();
 
 					open.Clear();
 					closed.Clear();
@@ -482,42 +485,38 @@ namespace DiceRoller
 				}
 
 				// explore its connections
-				if (current.range < range)
+				if (q.g < range)
 				{
-					foreach (Tile connectedTile in current.tile.connectedTiles)
+					foreach (Tile r in q.tile.connectedTiles)
 					{
-						if (!connectedTile.active)
+						if (!r.active)
 							continue;
-						if (excludedTileSet.Contains(connectedTile))
-							continue;
-
-						float heuristic = current.range * connectedTile.tileSize + Vector3.Distance(connectedTile.worldPos, targetTile.worldPos);
-
-						if (open.Exists(x => x.tile == connectedTile && x.heuristic < heuristic))
+						if (excludedTileSet.Contains(r))
 							continue;
 
-						if (closed.Exists(x => x.tile == connectedTile && x.heuristic < heuristic))
+						int g = q.g + 1;
+						int h = Int2.GridDistance(r.boardPos, targetTile.boardPos);
+						int f = g + h;
+
+						if (open.Exists(x => x.tile == r && x.f <= f))
+							continue;
+						if (closed.Exists(x => x.tile == r && x.f <= f))
 							continue;
 
 						TilePathRangeHeuristicPair newPair = new TilePathRangeHeuristicPair()
 						{
-							tile = connectedTile,
-							previous = current.tile,
-							range = current.range + 1,
-							heuristic = heuristic
+							tile = r,
+							previous = q.tile,
+							g = g,
+							f = f
 						};
 						int index = open.BinarySearch(newPair, tilePathRangeHeuristicPairComparer);
 						open.Insert(index < 0 ? ~index : index, newPair);
 					}
 				}
 
-				closed.Add(new TilePathRangeHeuristicPair() 
-				{ 
-					tile = current.tile,
-					previous = current.previous,
-					range = current.range,
-					heuristic = current.heuristic
-				});
+				// add current to closed
+				closed.Add(q);
 			}
 
 			// completed without a path found

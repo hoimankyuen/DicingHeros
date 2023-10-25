@@ -20,5 +20,7 @@ namespace DiceRoller
         {
             return rule(target, starting, range);
         }
+
+        public static readonly AttackAreaRule Adjacent = new AttackAreaRule((target, starting, range) => Int2.GridDistance(target.boardPos, starting.boardPos) <= range);
     }
 }

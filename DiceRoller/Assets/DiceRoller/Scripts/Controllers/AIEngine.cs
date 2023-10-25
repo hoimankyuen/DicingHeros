@@ -134,10 +134,21 @@ namespace DiceRoller
 							}
 							message += "to ";
 						}
-						message += string.Format("| attack {0} for {1} damage to {2} health remaining", Target.name, DamageDone, AfterHealthPercentage);
+						message += string.Format("| attack {0} for {1} damage to {2}% health remaining", Target.name, DamageDone, AfterHealthPercentage);
 					}
 					return message;
 				}
+			}
+		}
+
+		private struct AttackInfo
+		{
+			public Unit unit;
+			public Tile tile;
+			public AttackInfo(Unit unit, Tile tile)
+			{
+				this.unit = unit;
+				this.tile = tile;
 			}
 		}
 
@@ -155,6 +166,12 @@ namespace DiceRoller
 
 		// temp working variables
 		private readonly List<Die> emptyDieList = new List<Die>();
+
+		private readonly List<int> tempIntList1 = new List<int>();
+		private readonly List<Die> tempDieList1 = new List<Die>();
+		private readonly List<Die> tempDieList2 = new List<Die>();
+		private readonly List<Equipment> tempEquipmentList1 = new List<Equipment>();
+		private readonly List<AttackInfo> tempAttackInfoList = new List<AttackInfo>();
 
 		// debug settings
 		private readonly bool isDebuging = true;
@@ -264,6 +281,12 @@ namespace DiceRoller
 			List<Unit> enemyUnits = new List<Unit>();
 			List<PossibleAction> possibleActions = new List<PossibleAction>();
 
+			Debug.Log("Retrieved Die:");
+			foreach (Die die in selfDice)
+			{
+				Debug.Log(die.name + ", value = " + die.Value);
+			}
+
 			// do actions
 			for (int i = 0; i < player.Units.Count; i++)
 			{
@@ -284,13 +307,17 @@ namespace DiceRoller
 					float startTime = Time.time;
 					ShowDebugMessage("AIEngine: Finding all possible actions ...");
 					yield return GetAllPossibleActionsAsync(selfUnits, enemyUnits, selfDice, possibleActions);
-					ShowDebugMessage("AIEngine: " + possibleActions.Count + " possible actions found! (Time Elasped: " + (int)((Time.time - startTime) * 1000) + "ms)");
-					ShowDebugMessage("AIEngine: Selecting best action...");
+
+					for (int j = 0; j < possibleActions.Count; j++)
+					{
+						ShowDebugMessage("AIEngine: Possible action " + (i + 1) + " : " + possibleActions[j].ToString());
+					}
+
+					ShowDebugMessage("AIEngine: " + possibleActions.Count + " possible actions found! (Time Elasped: " + (int)((Time.time - startTime) * 1000) + "ms). Selecting best action ...");
 					PossibleAction bestAction = SelectBestAction(possibleActions);
 
-					ShowDebugMessage("AIEngine: " + (bestAction == null ? "No action selected.Skipping iteration..." : "Running selected action = " + bestAction));
+					ShowDebugMessage("AIEngine: " + (bestAction == null ? "No action selected.Skipping iteration..." : "Executing selected action = " + bestAction));
 					yield return UnitActionSequence(bestAction);
-					ShowDebugMessage("AIEngine: Action completed!");
 				}
 				else
 				{
@@ -364,7 +391,7 @@ namespace DiceRoller
 			yield return new WaitUntil(() => stateMachine.State == SMState.UnitMoveSelect);
 
 			// check fulfillment again
-			bool useMovementEquipment = false;
+			bool useMovementEquipmentFailed = false;
 			foreach (PossibleAction.EquipmentUsage equipmentUsage in action.MovementEquipmentUsages)
 			{
 				for (int i = 0; i < equipmentUsage.Dice.Count(); i++)
@@ -373,15 +400,18 @@ namespace DiceRoller
 					EquipmentDieSlot slot = equipmentUsage.Equipment.DieSlots[i];
 					if (!slot.IsFulfillBy(die))
 					{
-						useMovementEquipment = true;
+						useMovementEquipmentFailed = true;
 						break;
 					}
 				}
 			}
 
 			// skip move if needed
-			if (action.Position == null || useMovementEquipment || !action.Attacker.MovableArea.Contains(action.Position))
+			if (action.Position == null || useMovementEquipmentFailed)
 			{
+				if (useMovementEquipmentFailed)
+					ShowDebugMessage("AIEngine: Movement Failed! Reason: Equipment failed to activate.");
+
 				action.Attacker.SkipMoveSelect();
 				yield return new WaitUntil(() => stateMachine.State == SMState.Navigation);
 				yield return null;
@@ -395,22 +425,17 @@ namespace DiceRoller
 				{
 					Die die = equipmentUsage.Dice.ElementAt(i);
 					EquipmentDieSlot slot = equipmentUsage.Equipment.DieSlots[i];
-					if (!slot.IsFulfillBy(die))
-					{
-						useMovementEquipment = true;
-						break;
-					}
 
 					die.OnAIMouseEnter();
 					yield return new WaitForSeconds(0.25f);
-					die.OnAIMousePress(0);
+					die.OnAIMouseStartDrag(0);
 					yield return new WaitForSeconds(0.25f);
 					die.OnAIMouseExit();
 					yield return new WaitForSeconds(0.5f);
 
 					slot.OnAIMouseEnter();
 					yield return new WaitForSeconds(0.25f);
-					slot.OnAIMouseCompletetDrag(0);
+					die.OnAIMouseCompletetDrag(0);
 					yield return new WaitForSeconds(0.25f);
 					slot.OnAIMouseExit();
 					yield return new WaitForSeconds(0.5f);
@@ -432,8 +457,10 @@ namespace DiceRoller
 
 			// check the fulfillment again
 			bool useAttackEquipmentFailed = false;
-			int range = action.Attacker.AttackRange;
+			int meleeRange = action.Attacker.MeleeRange;
+			int magicRange = action.Attacker.MagicRange;
 			AttackAreaRule areaRule = action.Attacker.AttackAreaRule;
+			bool isMagicAttack = false;
 			foreach (PossibleAction.EquipmentUsage equipmentUsage in action.AttackEquipmentUsages)
 			{
 				for (int i = 0; i < equipmentUsage.Dice.Count(); i++)
@@ -447,15 +474,23 @@ namespace DiceRoller
 					}
 					if (equipmentUsage.Equipment.Type == Equipment.EquipmentType.MeleeAttack || equipmentUsage.Equipment.Type == Equipment.EquipmentType.MagicAttack)
 						areaRule = equipmentUsage.Equipment.AreaRule;
-					range += equipmentUsage.Equipment.AttackRangeDelta;
+					meleeRange += equipmentUsage.Equipment.MeleeRangeDelta;
+					magicRange += equipmentUsage.Equipment.MagicRangeDelta;
+					if (equipmentUsage.Equipment.Type == Equipment.EquipmentType.MagicAttack)
+						isMagicAttack = true;
 				}
 			}
 			List<Tile> attackableArea = new List<Tile>();
-			board.GetTilesByRule(action.Attacker.OccupiedTiles, areaRule, range, attackableArea);
+			board.GetTilesByRule(action.Attacker.OccupiedTiles, areaRule, isMagicAttack ? magicRange : meleeRange, attackableArea);
 
 			// skip attack if needed
 			if (action.Target == null || useAttackEquipmentFailed || action.Target.OccupiedTiles.Intersect(attackableArea).Count() <= 0)
 			{
+				if (useAttackEquipmentFailed)
+					ShowDebugMessage("AIEngine: Attack Failed! Reason: Equipment failed to activate.");
+				else if (action.Target != null && action.Target.OccupiedTiles.Intersect(attackableArea).Count() <= 0)
+					ShowDebugMessage("AIEngine: Attack Failed! Reason: Target unit cannot be reached by attack.");
+
 				action.Attacker.SkipAttackSelect();
 				yield return new WaitUntil(() => stateMachine.State == SMState.Navigation);
 				yield return null;
@@ -469,8 +504,6 @@ namespace DiceRoller
 				{
 					Die die = equipmentUsage.Dice.ElementAt(i);
 					EquipmentDieSlot slot = equipmentUsage.Equipment.DieSlots[i];
-
-					Debug.Log("Assigning " + die.name + " to " + slot.Equipment.DisplayableName);
 
 					die.OnAIMouseEnter();
 					yield return new WaitForSeconds(0.25f);
@@ -503,22 +536,10 @@ namespace DiceRoller
 			yield return null;
 		}
 
-		// ========================================================= Calculations ========================================================
+		// ========================================================= Possible Action Discover ========================================================
 
-		private struct AttackInfo
-		{
-			public Unit unit;
-			public Tile tile;
-			public AttackInfo(Unit unit, Tile tile)
-			{
-				this.unit = unit;
-				this.tile = tile;
-			}
-		}
-
-		private List<Die> tempDieList = new List<Die>();
-		private List<AttackInfo> tempAttackInfoList = new List<AttackInfo>();
-
+		/// <summary>
+		/// Retrieve all possible actions for all units and put them in the supplied result list. This coroutine will wait until the async calculations was complete.
 		private IEnumerator GetAllPossibleActionsAsync(IEnumerable<Unit> selfUnits, IEnumerable<Unit> enemyUnits, IEnumerable<Die> selfDice, List<PossibleAction> results)
 		{
 			// calculate enemy center
@@ -532,163 +553,184 @@ namespace DiceRoller
 				enemyCenter = enemyCenter / enemyUnits.Count();
 			}
 
+			bool completed = false;
+
 			// async execution of cpu bounded search
 			Task task = Task.Run(() =>
 			{
 				// search for all actions
-				List<Die> usingDice = tempDieList;
+				List<int> combinations = tempIntList1;
+				List<Die> usingDice = tempDieList1;
+				List<Equipment> usingEquipments = tempEquipmentList1;
 				List<AttackInfo> attackInfos = tempAttackInfoList;
-				usingDice.Clear();
-				attackInfos.Clear();
 
 				results.Clear();
 				foreach (Unit selfUnit in selfUnits)
 				{
-					// find each attack options by magic equipment attack
-					foreach (Equipment equipment in selfUnit.Equipments.Where(x => x.Type == Equipment.EquipmentType.MagicAttack))
+					// find attack options of all combinations of equipment
+					GetValidCombinations(selfUnit, combinations);
+					foreach (int combination in combinations)
 					{
-						if (DiceFulfills(selfDice, equipment, usingDice))
+						// retrieve equipment combination information
+						DecodeCombination(selfUnit, combination, usingEquipments, out int movement, out int meleeRange, out int magicRange, out AttackAreaRule areaRule, out bool isMagicAttack);
+
+						// discover attack options
+						if (DiceFulfills(usingEquipments, selfDice, usingDice))
 						{
-							GetTargetableEnemies(selfUnit, enemyUnits, selfUnit.Movement, equipment.AreaRule, selfUnit.AttackRange + equipment.AttackRangeDelta, attackInfos);
+							// find attack options for all target in range
+							GetTargetableEnemies(selfUnit, enemyUnits, movement, areaRule, isMagicAttack ? magicRange : meleeRange, attackInfos);
 							foreach (AttackInfo attackInfo in attackInfos)
 							{
-								int rawDamge = Mathf.Max(selfUnit.Magic + equipment.MagicDelta - attackInfo.unit.Defence, 0);
-								int damageDone = attackInfo.unit.Health - rawDamge >= 0 ? rawDamge : attackInfo.unit.Health;
-
-								PossibleAction possibleAction = new PossibleAction(attacker: selfUnit);
-
-								possibleAction.SetMovement(
-									position: attackInfo.tile,
-									distanceToEnemyCenter: Vector3.Distance(attackInfo.tile.worldPos, enemyCenter));
-
-								possibleAction.AddAttackEquipmentUsage(
-									equipment: equipment,
-									dice: usingDice);
-
-								possibleAction.SetAttack(target: attackInfo.unit,
-									damageDone: damageDone,
-									beforeHealthPercentage: 1.0f * attackInfo.unit.Health / attackInfo.unit.maxHealth,
-									afterHealthPercentage: 1.0f * (attackInfo.unit.Health - damageDone) / attackInfo.unit.maxHealth);
-
-								results.Add(possibleAction);
+								results.Add(GeneratePossibleAction(selfUnit, attackInfo, enemyCenter, usingEquipments, usingDice));
 							}
 						}
-					}
-
-					// find each attack options by melee equipment attack
-					foreach (Equipment equipment in selfUnit.Equipments.Where(x => x.Type == Equipment.EquipmentType.MeleeAttack))
-					{
-						if (DiceFulfills(selfDice, equipment, usingDice))
-						{
-							GetTargetableEnemies(selfUnit, enemyUnits, selfUnit.Movement, equipment.AreaRule, selfUnit.AttackRange + equipment.AttackRangeDelta, attackInfos);
-							foreach (AttackInfo attackInfo in attackInfos)
-							{
-								int rawDamge = Mathf.Max(selfUnit.Melee + equipment.MeleeDelta - attackInfo.unit.Defence, 0);
-								int damageDone = attackInfo.unit.Health - rawDamge >= 0 ? rawDamge : attackInfo.unit.Health;
-
-								PossibleAction possibleAction = new PossibleAction(attacker: selfUnit);
-
-								possibleAction.SetMovement(
-									position: attackInfo.tile,
-									distanceToEnemyCenter: Vector3.Distance(attackInfo.tile.worldPos, enemyCenter));
-
-								possibleAction.AddAttackEquipmentUsage(
-									equipment: equipment,
-									dice: usingDice);
-
-								possibleAction.SetAttack(target: attackInfo.unit,
-									damageDone: damageDone,
-									beforeHealthPercentage: 1.0f * attackInfo.unit.Health / attackInfo.unit.maxHealth,
-									afterHealthPercentage: 1.0f * (attackInfo.unit.Health - damageDone) / attackInfo.unit.maxHealth);
-
-								results.Add(possibleAction);
-							}
-						}
-					}
-
-					// find each attack options by melee attack without equipments
-					GetTargetableEnemies(selfUnit, enemyUnits, selfUnit.Movement, selfUnit.AttackAreaRule, selfUnit.AttackRange, attackInfos);
-					foreach (AttackInfo attackInfo in attackInfos)
-					{
-
-						int rawDamge = Mathf.Max(selfUnit.Melee - attackInfo.unit.Defence, 0);
-						int damageDone = attackInfo.unit.Health - rawDamge >= 0 ? rawDamge : attackInfo.unit.Health;
-
-						PossibleAction possibleAction = new PossibleAction(attacker: selfUnit);
-
-						possibleAction.SetMovement(
-							position: attackInfo.tile,
-							distanceToEnemyCenter: Vector3.Distance(attackInfo.tile.worldPos, enemyCenter));
-
-						possibleAction.SetAttack(target: attackInfo.unit,
-							damageDone: damageDone,
-							beforeHealthPercentage: 1.0f * attackInfo.unit.Health / attackInfo.unit.maxHealth,
-							afterHealthPercentage: 1.0f * (attackInfo.unit.Health - damageDone) / attackInfo.unit.maxHealth);
-
-						results.Add(possibleAction);
 					}
 
 					// find each move only options
-					Unit nearestUnit = null;
-					int shortestDistance = int.MaxValue;
-					List<Tile> pathToNearestUnit = new List<Tile>();
-					Tile targetPosition = null;
-					foreach (Unit enemyUnit in enemyUnits)
+					Tile nearestTile = GetNearestMovableTileToEnemy(selfUnit, enemyUnits);
+					if (nearestTile != null)
 					{
-						int distance = Int2.GridDistance(selfUnit.OccupiedTiles.ElementAt(0).boardPos, enemyUnit.OccupiedTiles.ElementAt(0).boardPos);
-						if (distance < shortestDistance)
-						{
-							nearestUnit = enemyUnit;
-						}
-					}
-					if (nearestUnit != null)
-					{
-						board.GetShortestPath(selfUnit.OccupiedTiles, Unit.AllOccupiedTiles.Except(selfUnit.OccupiedTiles).Except(nearestUnit.OccupiedTiles), nearestUnit.OccupiedTiles.ElementAt(0), 20, pathToNearestUnit);
-						pathToNearestUnit.RemoveAll(x => nearestUnit.OccupiedTiles.Contains(x));
-						if (pathToNearestUnit.Count > 0)
-						{
-							targetPosition = pathToNearestUnit[Math.Min(pathToNearestUnit.Count - 1, selfUnit.Movement)];
-						}
-					}
-					if (targetPosition != null)
-					{
-						PossibleAction possibleAction = new PossibleAction(attacker: selfUnit);
-
-						possibleAction.SetMovement(
-							position: targetPosition,
-							distanceToEnemyCenter: Vector3.Distance(targetPosition.worldPos, enemyCenter));
-
-						results.Add(possibleAction);
+						usingEquipments.Clear();
+						usingDice.Clear();
+						results.Add(GeneratePossibleAction(selfUnit, new AttackInfo(null, nearestTile), enemyCenter, usingEquipments, usingDice));
 					}
 
 					// add the skip option
-					results.Add(new PossibleAction(attacker: selfUnit));
+					results.Add(GeneratePossibleAction(selfUnit, new AttackInfo(null, null), enemyCenter, usingEquipments, usingDice));
 				}
-				});
+				completed = true;
+			});
 
-				// wait for search to complete
-				task.Wait();
-				yield return new WaitUntil(() => task.IsCompleted);
-
-				yield return null;
+			// wait for search to complete
+			yield return new WaitUntil(() => completed);
+			yield return null;
 		}
 
 		/// <summary>
-		/// Check if there is enough dice in the dice list to fulfill all requirment of a equipment.
+		/// Retrieve a list of valid equipment combination and put them in the supplied list.
 		/// </summary>
-		private bool DiceFulfills(IEnumerable<Die> dice, Equipment equipment, List<Die> selectedDice)
+		private void GetValidCombinations(Unit selfUnit, List<int> results)
 		{
+			results.Clear();
+
+			// try every combination of equipments for attack, using binary from right to left i.e.rightmost bit is first equipment
+			int combinationCount = (int)Mathf.Pow(2, selfUnit.Equipments.Count);
+			for (int combination = 0; combination < combinationCount; combination++)
+			{
+				// count equipment types
+				int movementCount = 0;
+				int meleeBuffCount = 0;
+				int meleeAttackCount = 0;
+				int magicBuffCount = 0;
+				int magicAttackCount = 0;
+				for (int i = 0; i < selfUnit.Equipments.Count; i++)
+				{
+					if (HasFlag(combination, i))
+					{
+						switch (selfUnit.Equipments[i].Type)
+						{
+							case Equipment.EquipmentType.MovementBuff:
+								movementCount++;
+								break;
+							case Equipment.EquipmentType.MeleeSelfBuff:
+								meleeBuffCount++;
+								break;
+							case Equipment.EquipmentType.MeleeAttack:
+								meleeAttackCount++;
+								break;
+							case Equipment.EquipmentType.MagicSelfBuff:
+								magicBuffCount++;
+								break;
+							case Equipment.EquipmentType.MagicAttack:
+								magicAttackCount++;
+								break;
+							default:
+								break;
+						}
+					}
+				}
+
+				// skip combinations with more than one movement
+				if (movementCount > 1)
+				{
+					continue;
+				}
+				// skip combinations with more than one attack
+				if (meleeAttackCount + magicAttackCount > 1)
+				{
+					continue;
+				}
+				// skip combinations with melee attack and more than one magic buff
+				if (magicAttackCount == 0 && magicBuffCount > 0)
+				{
+					continue;
+				}
+				// skip combinations with magic attack and more than one melee buff
+				if (magicAttackCount > 1 && meleeBuffCount > 0)
+				{
+					continue;
+				}
+				results.Add(combination);
+			}
+		}
+
+		/// <summary>
+		/// Decode the combination into equipment list and useful informations.
+		/// </summary>
+		private void DecodeCombination(Unit selfUnit, int combination, List<Equipment> usingEquipments, out int movement, out int meleeRange, out int magicRange, out AttackAreaRule areaRule, out bool isMagicAttack)
+		{
+			usingEquipments.Clear();
+			movement = selfUnit.Movement;
+			meleeRange = selfUnit.MeleeRange;
+			magicRange = selfUnit.MagicRange;
+			areaRule = AttackAreaRule.Adjacent;
+			isMagicAttack = false;
+
+			for (int i = 0; i < selfUnit.Equipments.Count; i++)
+			{
+				if (HasFlag(combination, i))
+				{
+					usingEquipments.Add(selfUnit.Equipments[i]);
+					movement += selfUnit.Equipments[i].MovementDelta;
+					meleeRange += selfUnit.Equipments[i].MeleeRangeDelta;
+					magicRange += selfUnit.Equipments[i].MagicRangeDelta;
+					if (selfUnit.Equipments[i].Type == Equipment.EquipmentType.MeleeAttack || selfUnit.Equipments[i].Type == Equipment.EquipmentType.MagicAttack)
+						areaRule = selfUnit.Equipments[i].AreaRule;
+					if (selfUnit.Equipments[i].Type == Equipment.EquipmentType.MagicAttack)
+						isMagicAttack = true;
+				}
+			}
+		}
+
+		/// <summary>
+		/// Check if a int combination has a particular flag set to 1.
+		/// </summary>
+		private bool HasFlag(int combination, int flag)
+		{
+			return (combination & 1 << flag) == (1 << flag);
+		}
+
+		/// <summary>
+		/// Check if there is enough dice in the dice list to fulfill all requirment of a equipment, and put the selected dice in the supplied result list.
+		/// </summary>
+		private bool DiceFulfills(IEnumerable<Equipment> equipments, IEnumerable<Die> dice, List<Die> results)
+		{
+			results.Clear();
+
 			// initialize container
 			List<List<Die>> fulfillment = new List<List<Die>>();
-			selectedDice.Clear();
-			for (int i = 0; i < equipment.DieSlots.Count; i++)
+			fulfillment.Clear();
+			foreach (Equipment equipment in equipments)
 			{
-				fulfillment.Add(new List<Die>());
-				selectedDice.Add(null);
+				for (int i = 0; i < equipment.DieSlots.Count; i++)
+				{
+					fulfillment.Add(new List<Die>());
+					results.Add(null);
+				}
 			}
 
 			// special case for no slots
-			if (equipment.DieSlots.Count == 0)
+			if (results.Count == 0)
 				return true;
 
 			// sorted dice according to value
@@ -697,15 +739,20 @@ namespace DiceRoller
 			sortedDice.Sort((a, b) => a.Value.CompareTo(b.Value));
 
 			// calculate individual fulfillment
-			for (int i = 0; i < equipment.DieSlots.Count; i++)
+			int slotOffset = 0;
+			foreach (Equipment equipment in equipments)
 			{
-				for (int j = 0; j < sortedDice.Count; j++)
-				{ 
-					if (equipment.DieSlots[i].IsFulfillBy(sortedDice[j]))
+				for (int i = 0; i < equipment.DieSlots.Count; i++)
+				{
+					for (int j = 0; j < sortedDice.Count; j++)
 					{
-						fulfillment[i].Add(sortedDice[j]);
+						if (equipment.DieSlots[i].IsFulfillBy(sortedDice[j]))
+						{
+							fulfillment[slotOffset + i].Add(sortedDice[j]);
+						}
 					}
 				}
+				slotOffset += equipment.DieSlots.Count;
 			}
 
 			// pick dice
@@ -716,7 +763,7 @@ namespace DiceRoller
 				int leastFulfillmentSlotDieCount = int.MaxValue;
 				for (int j = 0; j < fulfillment.Count; j++)
 				{
-					if (selectedDice[j] == null && fulfillment[j].Count < leastFulfillmentSlotDieCount && fulfillment[j].Count > 0)
+					if (results[j] == null && fulfillment[j].Count < leastFulfillmentSlotDieCount && fulfillment[j].Count > 0)
 					{
 						leastFulfillmentSlot = j;
 						leastFulfillmentSlotDieCount = fulfillment[j].Count;
@@ -727,7 +774,7 @@ namespace DiceRoller
 				if (leastFulfillmentSlot != -1)
 				{
 					Die selectedDie = fulfillment[leastFulfillmentSlot][0];
-					selectedDice[leastFulfillmentSlot] = selectedDie;
+					results[leastFulfillmentSlot] = selectedDie;
 					for (int j = 0; j < fulfillment.Count; j++)
 					{
 						fulfillment[j].Remove(selectedDie);
@@ -736,9 +783,9 @@ namespace DiceRoller
 			}
 
 			// determine fulfillment 
-			if (selectedDice.Any(x => x == null))
+			if (results.Any(x => x == null))
 			{
-				selectedDice.Clear();
+				results.Clear();
 				return false;
 			}
 			else
@@ -748,20 +795,20 @@ namespace DiceRoller
 		}
 
 		/// <summary>
-		/// Retrieve a list of all attackable enemies with the current stats.
+		/// Retrieve a list of all attackable enemies with the current stats, and put them in the supplied result list.
 		/// </summary>
-		private void GetTargetableEnemies(Unit attacker, IEnumerable<Unit> enemies, int movement, AttackAreaRule rule, int range, List<AttackInfo> results)
+		private void GetTargetableEnemies(Unit selfUnit, IEnumerable<Unit> enemyUnits, int movement, AttackAreaRule rule, int range, List<AttackInfo> results)
 		{
 			List<Tile> movableTiles = new List<Tile>();
 			List<Tile> attackableTiles = new List<Tile>();
 
 			results.Clear();
-			board.GetConnectedTilesInRange(attacker.OccupiedTiles, Unit.AllOccupiedTiles.Except(attacker.OccupiedTiles), movement, movableTiles);
+			board.GetConnectedTilesInRange(selfUnit.OccupiedTiles, Unit.AllOccupiedTiles.Except(selfUnit.OccupiedTiles), movement, movableTiles);
 			foreach (Tile movableTile in movableTiles)
 			{
 				// search each tile for attacking since GetConnectedTilesInRange is found using BFS, no sorting is required
 				board.GetTilesByRule(movableTile, rule, range, attackableTiles);
-				foreach (Unit enemy in enemies)
+				foreach (Unit enemy in enemyUnits)
 				{
 					if (!results.Any(x => x.unit == enemy) && attackableTiles.Intersect(enemy.OccupiedTiles).Count() > 0)
 					{
@@ -770,6 +817,121 @@ namespace DiceRoller
 				}
 			}
 		}
+
+		/// <summary>
+		/// Retrieve the tile that is movable and nearest to any enemy.
+		/// </summary>
+		private Tile GetNearestMovableTileToEnemy(Unit selfUnit, IEnumerable<Unit> enemyUnits)
+		{
+			Unit nearestUnit = null;
+			Tile nearestTile = null;
+			int shortestDistance = int.MaxValue;
+			List<Tile> pathToNearestTile = new List<Tile>();
+			foreach (Unit enemyUnit in enemyUnits)
+			{
+				foreach (Tile enemyOccupliedTile in enemyUnit.OccupiedTiles)
+				{
+					foreach (Tile selfOccupliedTile in selfUnit.OccupiedTiles)
+					{				
+						int distance = Int2.GridDistance(enemyOccupliedTile.boardPos, selfOccupliedTile.boardPos);
+						if (distance < shortestDistance)
+						{
+							nearestUnit = enemyUnit;
+							nearestTile = enemyOccupliedTile;
+							shortestDistance = distance;
+						}
+					}
+				}
+			}
+			if (nearestTile != null)
+			{
+				board.GetShortestPath(selfUnit.OccupiedTiles, Unit.AllOccupiedTiles.Except(selfUnit.OccupiedTiles).Except(nearestUnit.OccupiedTiles), nearestUnit.OccupiedTiles.ElementAt(0), 20, pathToNearestTile);
+				pathToNearestTile.RemoveAll(x => nearestUnit.OccupiedTiles.Contains(x));
+				if (pathToNearestTile.Count > 0)
+				{
+					return pathToNearestTile[Math.Min(pathToNearestTile.Count - 1, selfUnit.Movement)];
+				}
+			}
+			return null;
+		}
+
+		/// <summary>
+		/// Generate a PossibleAction object from the supplied information.
+		/// </summary>
+		private PossibleAction GeneratePossibleAction(Unit selfUnit, AttackInfo attackInfo, Vector3 enemyCenter, List<Equipment> usedEquipments, List<Die> usedDice)
+		{
+			PossibleAction possibleAction = new PossibleAction(attacker: selfUnit);
+
+			// add equipment info to possible action
+			int diceOffset = 0;
+			for (int i = 0; i < usedEquipments.Count; i++)
+			{
+				if (usedEquipments[i].Type == Equipment.EquipmentType.MovementBuff)
+				{
+					possibleAction.AddMovementEquipmentUsage(
+					equipment: usedEquipments[i],
+					dice: usedDice.GetRange(diceOffset, usedEquipments[i].DieSlots.Count));
+				}
+				else
+				{
+					possibleAction.AddAttackEquipmentUsage(
+					equipment: usedEquipments[i],
+					dice: usedDice.GetRange(diceOffset, usedEquipments[i].DieSlots.Count));
+				}
+				diceOffset += usedEquipments[i].DieSlots.Count;
+			}
+
+			// add movement info to possible action
+			if (attackInfo.tile != null)
+			{
+				possibleAction.SetMovement(
+					position: attackInfo.tile,
+					distanceToEnemyCenter: Vector3.Distance(attackInfo.tile.worldPos, enemyCenter));
+			}
+
+			// add attack info to possible action
+			if (attackInfo.unit != null)
+			{
+				// calcaulate damage done
+				int rawDamage = 0;
+				Equipment magicAttackEquipment = usedEquipments.FirstOrDefault(x => x.Type == Equipment.EquipmentType.MagicAttack);
+				Equipment meleeAttackEquipment = usedEquipments.FirstOrDefault(x => x.Type == Equipment.EquipmentType.MeleeAttack);
+				if (magicAttackEquipment != null)
+				{
+					int rawMagicDamgeDelta = 0;
+					foreach (Equipment equipment in usedEquipments)
+					{
+						rawMagicDamgeDelta += equipment.MagicDelta;
+					}
+					rawDamage = Mathf.Max(selfUnit.Magic + rawMagicDamgeDelta - attackInfo.unit.Defence, 0);
+
+				}
+				else if (meleeAttackEquipment != null)
+				{
+					int rawMeleeDamageDelta = 0;
+					foreach (Equipment equipment in usedEquipments)
+					{
+						rawMeleeDamageDelta += equipment.MeleeDelta;
+					}
+					rawDamage = Mathf.Max(selfUnit.Melee + rawMeleeDamageDelta - attackInfo.unit.Defence, 0);
+				}
+				else
+				{
+					rawDamage = Mathf.Max(selfUnit.Melee - attackInfo.unit.Defence, 0);
+				}
+				int damageDone = attackInfo.unit.Health - rawDamage >= 0 ? rawDamage : attackInfo.unit.Health;
+
+				// finalize
+				possibleAction.SetAttack(target: attackInfo.unit,
+					damageDone: damageDone,
+					beforeHealthPercentage: 1.0f * attackInfo.unit.Health / attackInfo.unit.maxHealth,
+					afterHealthPercentage: 1.0f * (attackInfo.unit.Health - damageDone) / attackInfo.unit.maxHealth);
+			}
+
+			return possibleAction;
+		}
+
+		// ========================================================= Best Action Selection ========================================================
 
 		/// <summary>
 		/// Select the best action by a certain criteria.

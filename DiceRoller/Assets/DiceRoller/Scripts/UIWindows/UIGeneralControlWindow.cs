@@ -49,7 +49,10 @@ namespace DiceRoller
 
 		public void ProgressTurn()
 		{
-			game.ProgressTurn();
+			if (game.PersonInControl == GameController.Person.Player)
+			{
+				game.ProgressTurn();
+			}
 		}
 	}
 }

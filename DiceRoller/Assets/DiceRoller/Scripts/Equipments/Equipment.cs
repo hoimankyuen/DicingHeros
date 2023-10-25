@@ -190,9 +190,15 @@ namespace DiceRoller
 		public virtual int MovementDelta { get; } = 0;
 
 		/// <summary>
-		/// The change in the attack range value when this equipment is activated.
+		/// The change in the melee range value when this equipment is activated.
 		/// </summary>
-		public virtual int AttackRangeDelta { get; } = 0;
+		public virtual int MeleeRangeDelta { get; } = 0;
+
+		/// <summary>
+		/// The change in the magic range value when this equipment is activated.
+		/// </summary>
+		public virtual int MagicRangeDelta { get; } = 0;
+
 
 		/// <summary>
 		/// The change in the attack range value when this equipment is activated.
@@ -202,7 +208,7 @@ namespace DiceRoller
 		/// <summary>
 		/// The attack area rule used when this equipment is activated.
 		/// </summary>
-		public virtual AttackAreaRule AreaRule { get; } = new AttackAreaRule((target, starting, range) => Int2.GridDistance(target.boardPos, starting.boardPos) <= range);
+		public virtual AttackAreaRule AreaRule { get; } = AttackAreaRule.Adjacent;
 
 		/// <summary>
 		/// Forward implementation of the other effects of this equipment.
@@ -353,10 +359,17 @@ namespace DiceRoller
 				magicDelta: MagicDelta, 
 				defenceDelta: DefenceDelta,
 				movementDelta: MovementDelta,
-				attackRangeDelta: AttackRangeDelta,
+				meleeRangeDelta: MeleeRangeDelta,
+				magicRangeDelta: MagicRangeDelta,
 				knockbackForceDelta: KnockbackForceDelta);
-			Unit.ChangeAttackAreaRule(AreaRule);
-			Unit.ChangeAttackType(Type == EquipmentType.MagicAttack ? Unit.AttackType.Magical : Unit.AttackType.Physical);
+			if (AreaRule != AttackAreaRule.Adjacent)
+			{
+				Unit.ChangeAttackAreaRule(AreaRule);
+			}
+			if (Type == EquipmentType.MagicAttack)
+			{
+				Unit.ChangeAttackType(Unit.AttackType.Magical);
+			}
 			AddOtherEffects();
 		}
 
@@ -370,10 +383,17 @@ namespace DiceRoller
 				magicDelta: -MagicDelta,
 				defenceDelta: -DefenceDelta,
 				movementDelta: -MovementDelta,
-				attackRangeDelta: -AttackRangeDelta,
+				meleeRangeDelta: -MeleeRangeDelta,
+				magicRangeDelta: -MagicRangeDelta,
 				knockbackForceDelta: -KnockbackForceDelta);
-			Unit.ResetAttackAreaRule();
-			Unit.ChangeAttackType(Unit.AttackType.Physical);
+			if (AreaRule != AttackAreaRule.Adjacent)
+			{
+				Unit.ResetAttackAreaRule();
+			}
+			if (Type == EquipmentType.MagicAttack)
+			{
+				Unit.ChangeAttackType(Unit.AttackType.Physical);
+			}
 			RemoveOtherEffects();
 		}
 
@@ -410,9 +430,6 @@ namespace DiceRoller
 			// cache
 			private bool isUserSelectedAtEnter = false;
 			private bool lastIsHovering = false;
-
-			private List<Tile> effectArea = new List<Tile>();
-			private List<Tile> lastEffectArea = new List<Tile>();
 
 			/// <summary>
 			/// Constructor.
