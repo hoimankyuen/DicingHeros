@@ -505,6 +505,20 @@ namespace DiceRoller
 
 		// ========================================================= Calculations ========================================================
 
+		private struct AttackInfo
+		{
+			public Unit unit;
+			public Tile tile;
+			public AttackInfo(Unit unit, Tile tile)
+			{
+				this.unit = unit;
+				this.tile = tile;
+			}
+		}
+
+		private List<Die> tempDieList = new List<Die>();
+		private List<AttackInfo> tempAttackInfoList = new List<AttackInfo>();
+
 		private IEnumerator GetAllPossibleActionsAsync(IEnumerable<Unit> selfUnits, IEnumerable<Unit> enemyUnits, IEnumerable<Die> selfDice, List<PossibleAction> results)
 		{
 			// calculate enemy center
@@ -518,22 +532,15 @@ namespace DiceRoller
 				enemyCenter = enemyCenter / enemyUnits.Count();
 			}
 
-			// cache positions
-			Dictionary<Unit, Vector3> positions = new Dictionary<Unit, Vector3>();
-			foreach (Player player in game.GetAllPlayers())
-			{
-				foreach (Unit unit in player.Units)
-				{
-					positions[unit] = unit.transform.position;
-				}
-			}
-
 			// async execution of cpu bounded search
 			Task task = Task.Run(() =>
 			{
 				// search for all actions
-				List<Die> usingDice = new List<Die>();
-				List<Tuple<Unit, Tile>> attackPossibilites = new List<Tuple<Unit, Tile>>();
+				List<Die> usingDice = tempDieList;
+				List<AttackInfo> attackInfos = tempAttackInfoList;
+				usingDice.Clear();
+				attackInfos.Clear();
+
 				results.Clear();
 				foreach (Unit selfUnit in selfUnits)
 				{
@@ -542,26 +549,26 @@ namespace DiceRoller
 					{
 						if (DiceFulfills(selfDice, equipment, usingDice))
 						{
-							GetTargetableEnemies(selfUnit, enemyUnits, selfUnit.Movement, equipment.AreaRule, selfUnit.AttackRange + equipment.AttackRangeDelta, attackPossibilites);
-							foreach (Tuple<Unit, Tile> attackPossibility in attackPossibilites)
+							GetTargetableEnemies(selfUnit, enemyUnits, selfUnit.Movement, equipment.AreaRule, selfUnit.AttackRange + equipment.AttackRangeDelta, attackInfos);
+							foreach (AttackInfo attackInfo in attackInfos)
 							{
-								int rawDamge = Mathf.Max(selfUnit.Magic + equipment.MagicDelta - attackPossibility.Item1.Defence, 0);
-								int damageDone = attackPossibility.Item1.Health - rawDamge >= 0 ? rawDamge : attackPossibility.Item1.Health;
+								int rawDamge = Mathf.Max(selfUnit.Magic + equipment.MagicDelta - attackInfo.unit.Defence, 0);
+								int damageDone = attackInfo.unit.Health - rawDamge >= 0 ? rawDamge : attackInfo.unit.Health;
 
 								PossibleAction possibleAction = new PossibleAction(attacker: selfUnit);
 
 								possibleAction.SetMovement(
-									position: attackPossibility.Item2,
-									distanceToEnemyCenter: Vector3.Distance(attackPossibility.Item2.worldPos, enemyCenter));
+									position: attackInfo.tile,
+									distanceToEnemyCenter: Vector3.Distance(attackInfo.tile.worldPos, enemyCenter));
 
 								possibleAction.AddAttackEquipmentUsage(
 									equipment: equipment,
 									dice: usingDice);
 
-								possibleAction.SetAttack(target: attackPossibility.Item1,
+								possibleAction.SetAttack(target: attackInfo.unit,
 									damageDone: damageDone,
-									beforeHealthPercentage: 1.0f * attackPossibility.Item1.Health / attackPossibility.Item1.maxHealth,
-									afterHealthPercentage: 1.0f * (attackPossibility.Item1.Health - damageDone) / attackPossibility.Item1.maxHealth);
+									beforeHealthPercentage: 1.0f * attackInfo.unit.Health / attackInfo.unit.maxHealth,
+									afterHealthPercentage: 1.0f * (attackInfo.unit.Health - damageDone) / attackInfo.unit.maxHealth);
 
 								results.Add(possibleAction);
 							}
@@ -573,26 +580,26 @@ namespace DiceRoller
 					{
 						if (DiceFulfills(selfDice, equipment, usingDice))
 						{
-							GetTargetableEnemies(selfUnit, enemyUnits, selfUnit.Movement, equipment.AreaRule, selfUnit.AttackRange + equipment.AttackRangeDelta, attackPossibilites);
-							foreach (Tuple<Unit, Tile> attackPossibility in attackPossibilites)
+							GetTargetableEnemies(selfUnit, enemyUnits, selfUnit.Movement, equipment.AreaRule, selfUnit.AttackRange + equipment.AttackRangeDelta, attackInfos);
+							foreach (AttackInfo attackInfo in attackInfos)
 							{
-								int rawDamge = Mathf.Max(selfUnit.Melee + equipment.MeleeDelta - attackPossibility.Item1.Defence, 0);
-								int damageDone = attackPossibility.Item1.Health - rawDamge >= 0 ? rawDamge : attackPossibility.Item1.Health;
+								int rawDamge = Mathf.Max(selfUnit.Melee + equipment.MeleeDelta - attackInfo.unit.Defence, 0);
+								int damageDone = attackInfo.unit.Health - rawDamge >= 0 ? rawDamge : attackInfo.unit.Health;
 
 								PossibleAction possibleAction = new PossibleAction(attacker: selfUnit);
 
 								possibleAction.SetMovement(
-									position: attackPossibility.Item2,
-									distanceToEnemyCenter: Vector3.Distance(attackPossibility.Item2.worldPos, enemyCenter));
+									position: attackInfo.tile,
+									distanceToEnemyCenter: Vector3.Distance(attackInfo.tile.worldPos, enemyCenter));
 
 								possibleAction.AddAttackEquipmentUsage(
 									equipment: equipment,
 									dice: usingDice);
 
-								possibleAction.SetAttack(target: attackPossibility.Item1,
+								possibleAction.SetAttack(target: attackInfo.unit,
 									damageDone: damageDone,
-									beforeHealthPercentage: 1.0f * attackPossibility.Item1.Health / attackPossibility.Item1.maxHealth,
-									afterHealthPercentage: 1.0f * (attackPossibility.Item1.Health - damageDone) / attackPossibility.Item1.maxHealth);
+									beforeHealthPercentage: 1.0f * attackInfo.unit.Health / attackInfo.unit.maxHealth,
+									afterHealthPercentage: 1.0f * (attackInfo.unit.Health - damageDone) / attackInfo.unit.maxHealth);
 
 								results.Add(possibleAction);
 							}
@@ -600,23 +607,23 @@ namespace DiceRoller
 					}
 
 					// find each attack options by melee attack without equipments
-					GetTargetableEnemies(selfUnit, enemyUnits, selfUnit.Movement, selfUnit.AttackAreaRule, selfUnit.AttackRange, attackPossibilites);
-					foreach (Tuple<Unit, Tile> attackPossibility in attackPossibilites)
+					GetTargetableEnemies(selfUnit, enemyUnits, selfUnit.Movement, selfUnit.AttackAreaRule, selfUnit.AttackRange, attackInfos);
+					foreach (AttackInfo attackInfo in attackInfos)
 					{
 
-						int rawDamge = Mathf.Max(selfUnit.Melee - attackPossibility.Item1.Defence, 0);
-						int damageDone = attackPossibility.Item1.Health - rawDamge >= 0 ? rawDamge : attackPossibility.Item1.Health;
+						int rawDamge = Mathf.Max(selfUnit.Melee - attackInfo.unit.Defence, 0);
+						int damageDone = attackInfo.unit.Health - rawDamge >= 0 ? rawDamge : attackInfo.unit.Health;
 
 						PossibleAction possibleAction = new PossibleAction(attacker: selfUnit);
 
 						possibleAction.SetMovement(
-							position: attackPossibility.Item2,
-							distanceToEnemyCenter: Vector3.Distance(attackPossibility.Item2.worldPos, enemyCenter));
+							position: attackInfo.tile,
+							distanceToEnemyCenter: Vector3.Distance(attackInfo.tile.worldPos, enemyCenter));
 
-						possibleAction.SetAttack(target: attackPossibility.Item1,
+						possibleAction.SetAttack(target: attackInfo.unit,
 							damageDone: damageDone,
-							beforeHealthPercentage: 1.0f * attackPossibility.Item1.Health / attackPossibility.Item1.maxHealth,
-							afterHealthPercentage: 1.0f * (attackPossibility.Item1.Health - damageDone) / attackPossibility.Item1.maxHealth);
+							beforeHealthPercentage: 1.0f * attackInfo.unit.Health / attackInfo.unit.maxHealth,
+							afterHealthPercentage: 1.0f * (attackInfo.unit.Health - damageDone) / attackInfo.unit.maxHealth);
 
 						results.Add(possibleAction);
 					}
@@ -657,66 +664,13 @@ namespace DiceRoller
 					// add the skip option
 					results.Add(new PossibleAction(attacker: selfUnit));
 				}
-			});
+				});
 
-			// wait for search to complete
-			task.Wait();
-			yield return new WaitUntil(() => task.IsCompleted);
-		}
+				// wait for search to complete
+				task.Wait();
+				yield return new WaitUntil(() => task.IsCompleted);
 
-		/// <summary>
-		/// Select the best action by a certain criteria.
-		/// </summary>
-		private PossibleAction SelectBestAction(IEnumerable<PossibleAction> possibleActions)
-		{
-			// criteria: afterHealthPercentage > usingDice > distanceToEnemyCenter
-			PossibleAction bestAction = null;
-			if (possibleActions.Count() > 0)
-			{
-				bestAction = possibleActions.ElementAt(0);
-				foreach (PossibleAction possibleAction in possibleActions)
-				{
-					// afterHealthPercentage
-					if (possibleAction.AfterHealthPercentage < bestAction.AfterHealthPercentage)
-					{
-						bestAction = possibleAction;
-						continue;
-					}
-					if (possibleAction.AfterHealthPercentage > bestAction.AfterHealthPercentage)
-					{
-						continue;
-					}
-
-					// die count
-					int possibleActionDieCount = 0;
-					foreach (PossibleAction.EquipmentUsage equipmentUsage in possibleAction.AttackEquipmentUsages)
-						possibleActionDieCount += equipmentUsage.Dice.Count();
-					int bestActionDieCount = 0;
-					foreach (PossibleAction.EquipmentUsage equipmentUsage in bestAction.AttackEquipmentUsages)
-						bestActionDieCount += equipmentUsage.Dice.Count();
-					if (possibleActionDieCount < bestActionDieCount)
-					{
-						bestAction = possibleAction;
-						continue;
-					}
-					if (possibleActionDieCount > bestActionDieCount)
-					{
-						continue;
-					}
-
-					// distanceToEnemyCenter
-					if (possibleAction.DistanceToEnemyCenter < bestAction.DistanceToEnemyCenter)
-					{
-						bestAction = possibleAction;
-						continue;
-					}
-					if (possibleAction.DistanceToEnemyCenter > bestAction.DistanceToEnemyCenter)
-					{
-						continue;
-					}
-				}
-			}
-			return bestAction;
+				yield return null;
 		}
 
 		/// <summary>
@@ -796,12 +750,12 @@ namespace DiceRoller
 		/// <summary>
 		/// Retrieve a list of all attackable enemies with the current stats.
 		/// </summary>
-		private void GetTargetableEnemies(Unit attacker, IEnumerable<Unit> enemies, int movement, AttackAreaRule rule, int range, List<Tuple<Unit, Tile>> results)
+		private void GetTargetableEnemies(Unit attacker, IEnumerable<Unit> enemies, int movement, AttackAreaRule rule, int range, List<AttackInfo> results)
 		{
 			List<Tile> movableTiles = new List<Tile>();
 			List<Tile> attackableTiles = new List<Tile>();
-			results.Clear();
 
+			results.Clear();
 			board.GetConnectedTilesInRange(attacker.OccupiedTiles, Unit.AllOccupiedTiles.Except(attacker.OccupiedTiles), movement, movableTiles);
 			foreach (Tile movableTile in movableTiles)
 			{
@@ -809,12 +763,67 @@ namespace DiceRoller
 				board.GetTilesByRule(movableTile, rule, range, attackableTiles);
 				foreach (Unit enemy in enemies)
 				{
-					if (!results.Any(x => x.Item1 == enemy) && attackableTiles.Intersect(enemy.OccupiedTiles).Count() > 0)
+					if (!results.Any(x => x.unit == enemy) && attackableTiles.Intersect(enemy.OccupiedTiles).Count() > 0)
 					{
-						results.Add(new Tuple<Unit, Tile>(enemy, movableTile));
+						results.Add(new AttackInfo(enemy, movableTile));
 					}
 				}
 			}
+		}
+
+		/// <summary>
+		/// Select the best action by a certain criteria.
+		/// </summary>
+		private PossibleAction SelectBestAction(IEnumerable<PossibleAction> possibleActions)
+		{
+			// criteria: afterHealthPercentage > usingDice > distanceToEnemyCenter
+			PossibleAction bestAction = null;
+			if (possibleActions.Count() > 0)
+			{
+				bestAction = possibleActions.ElementAt(0);
+				foreach (PossibleAction possibleAction in possibleActions)
+				{
+					// afterHealthPercentage
+					if (possibleAction.AfterHealthPercentage < bestAction.AfterHealthPercentage)
+					{
+						bestAction = possibleAction;
+						continue;
+					}
+					if (possibleAction.AfterHealthPercentage > bestAction.AfterHealthPercentage)
+					{
+						continue;
+					}
+
+					// die count
+					int possibleActionDieCount = 0;
+					foreach (PossibleAction.EquipmentUsage equipmentUsage in possibleAction.AttackEquipmentUsages)
+						possibleActionDieCount += equipmentUsage.Dice.Count();
+					int bestActionDieCount = 0;
+					foreach (PossibleAction.EquipmentUsage equipmentUsage in bestAction.AttackEquipmentUsages)
+						bestActionDieCount += equipmentUsage.Dice.Count();
+					if (possibleActionDieCount < bestActionDieCount)
+					{
+						bestAction = possibleAction;
+						continue;
+					}
+					if (possibleActionDieCount > bestActionDieCount)
+					{
+						continue;
+					}
+
+					// distanceToEnemyCenter
+					if (possibleAction.DistanceToEnemyCenter < bestAction.DistanceToEnemyCenter)
+					{
+						bestAction = possibleAction;
+						continue;
+					}
+					if (possibleAction.DistanceToEnemyCenter > bestAction.DistanceToEnemyCenter)
+					{
+						continue;
+					}
+				}
+			}
+			return bestAction;
 		}
 	}
 }

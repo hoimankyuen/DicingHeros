@@ -25,10 +25,13 @@ namespace DiceRoller
 		private readonly Dictionary<Int2, Tile> tiles = new Dictionary<Int2, Tile>();
 
 		// temp working variables
-		private readonly List<Tile> tempTiles = new List<Tile>();
-		private readonly List<TileRangePair> tempTileRangePairs = new List<TileRangePair>();
-		private readonly List<TilePathRangeHeuristicPair> tempTilePathRangeHeuristicPairs1 = new List<TilePathRangeHeuristicPair>();
-		private readonly List<TilePathRangeHeuristicPair> tempTilePathRangeHeuristicPairs2 = new List<TilePathRangeHeuristicPair>();
+		private readonly List<Tile> tempTileList = new List<Tile>();
+		private readonly HashSet<Tile> tempTileSet = new HashSet<Tile>();
+		private readonly List<TileRangePair> tempTileRangePairList = new List<TileRangePair>();
+		private readonly List<TilePathRangeHeuristicPair> tempTilePathRangeHeuristicPairList1 = new List<TilePathRangeHeuristicPair>();
+		private readonly List<TilePathRangeHeuristicPair> tempTilePathRangeHeuristicPairList2 = new List<TilePathRangeHeuristicPair>();
+		private readonly HashSet<TilePathRangeHeuristicPair> tempTilePathRangeHeuristicPairSet1 = new HashSet<TilePathRangeHeuristicPair>();
+		private readonly HashSet<TilePathRangeHeuristicPair> tempTilePathRangeHeuristicPairSet2 = new HashSet<TilePathRangeHeuristicPair>();
 
 		// ========================================================= Monobehaviour Methods =========================================================
 
@@ -237,6 +240,15 @@ namespace DiceRoller
 			public float heuristic;
 		}
 
+		private class TilePathRangeHeuristicPairComparer : IComparer<TilePathRangeHeuristicPair>
+		{
+			public int Compare(TilePathRangeHeuristicPair a, TilePathRangeHeuristicPair b)
+			{
+				return a.heuristic.CompareTo(b.heuristic);
+			}
+		}
+		private TilePathRangeHeuristicPairComparer tilePathRangeHeuristicPairComparer = new TilePathRangeHeuristicPairComparer();
+
 		private static readonly AttackAreaRule SimpleRangeRule =
 		new AttackAreaRule((target, starting, range) => Int2.GridDistance(target.boardPos, starting.boardPos) <= range);
 
@@ -268,10 +280,10 @@ namespace DiceRoller
 		/// </summary>
 		public void GetTilesInRange(Tile startingTile, int range, List<Tile> result)
 		{
-			tempTiles.Clear();
-			tempTiles.Add(startingTile);
-			GetTilesByRule(tempTiles, SimpleRangeRule, range, result);
-			tempTiles.Clear();
+			tempTileList.Clear();
+			tempTileList.Add(startingTile);
+			GetTilesByRule(tempTileList, SimpleRangeRule, range, result);
+			tempTileList.Clear();
 		}
 		/// <summary>
 		/// Get all tiles that are within a certain range from the starting tiles regardless of connectivity, and return them in the supplied list.
@@ -286,10 +298,10 @@ namespace DiceRoller
 		/// </summary>
 		public void GetTilesByRule(Tile startingTile, AttackAreaRule rule, int range, List<Tile> result)
 		{
-			tempTiles.Clear();
-			tempTiles.Add(startingTile);
-			GetTilesByRule(tempTiles, rule, range, result);
-			tempTiles.Clear();
+			tempTileList.Clear();
+			tempTileList.Add(startingTile);
+			GetTilesByRule(tempTileList, rule, range, result);
+			tempTileList.Clear();
 		}
 		/// <summary>
 		/// Get all tiles that fulfills a given rule in relative to the starting tiles reguardless of connectivity, and return them in the supplied list.
@@ -338,7 +350,7 @@ namespace DiceRoller
 		public void GetConnectedTilesInRange(IEnumerable<Tile> startingTiles, IEnumerable<Tile> excludedTiles, int range, List<Tile> result)
 		{
 			// prepare containers
-			List<TileRangePair> open = tempTileRangePairs;
+			List<TileRangePair> open = tempTileRangePairList;
 			open.Clear();
 			result.Clear();
 
@@ -383,10 +395,10 @@ namespace DiceRoller
 		/// </summary>
 		public void GetShortestPath(Tile startingTile, Tile targetTile, int range, List<Tile> result)
 		{
-			tempTiles.Clear();
-			tempTiles.Add(startingTile);
-			GetShortestPath(tempTiles, null, targetTile, range, result);
-			tempTiles.Clear();
+			tempTileList.Clear();
+			tempTileList.Add(startingTile);
+			GetShortestPath(tempTileList, null, targetTile, range, result);
+			tempTileList.Clear();
 		}
 		/// <summary>
 		/// Find the shortest path between a set of starting tile(s) to a specific target tile.
@@ -400,10 +412,10 @@ namespace DiceRoller
 		/// </summary>
 		public void GetShortestPath(Tile startingTile, IEnumerable<Tile> excludedTiles, Tile targetTile, int range, List<Tile> result)
 		{
-			tempTiles.Clear();
-			tempTiles.Add(startingTile);
-			GetShortestPath(tempTiles, excludedTiles, targetTile, range, result);
-			tempTiles.Clear();
+			tempTileList.Clear();
+			tempTileList.Add(startingTile);
+			GetShortestPath(tempTileList, excludedTiles, targetTile, range, result);
+			tempTileList.Clear();
 		}
 		/// <summary>
 		/// Find the shortest path between a set of starting tile(s) to a specific target tile.
@@ -411,8 +423,10 @@ namespace DiceRoller
 		public void GetShortestPath(IEnumerable<Tile> startingTiles, IEnumerable<Tile> excludedTiles, Tile targetTile, int range, List<Tile> result)
 		{
 			// prepare containers
-			List<TilePathRangeHeuristicPair> open = tempTilePathRangeHeuristicPairs1;
-			List<TilePathRangeHeuristicPair> closed = tempTilePathRangeHeuristicPairs2;
+			HashSet<Tile> excludedTileSet = tempTileSet;
+			List<TilePathRangeHeuristicPair> open = tempTilePathRangeHeuristicPairList1;
+			List<TilePathRangeHeuristicPair> closed = tempTilePathRangeHeuristicPairList2;
+			excludedTileSet.Clear();
 			open.Clear();
 			closed.Clear();
 			result.Clear();
@@ -435,11 +449,16 @@ namespace DiceRoller
 				});
 			}
 
+			// setup exculded tile set for faster access
+			foreach (Tile tile in excludedTiles)
+			{
+				excludedTileSet.Add(tile);
+			}
+
 			// explore in a A* manner
 			while (open.Count > 0)
 			{
-				// get the tile in the open list with the smallest heuristic
-				open.Sort((a, b) => a.heuristic.CompareTo(b.heuristic));
+				// get the tile in the open list with the smallest heuristic, since the list is always sorted, the first elements should suffice
 				TilePathRangeHeuristicPair current = open[0];
 				open.RemoveAt(0);
 
@@ -452,7 +471,7 @@ namespace DiceRoller
 						if (current.previous != null)
 						{
 							result.Insert(0, current.previous);
-							current = closed.Find(x => x.tile == current.previous);
+							current = closed.FirstOrDefault(x => x.tile == current.previous);
 						}
 					}
 					while (current.previous != null);
@@ -469,7 +488,7 @@ namespace DiceRoller
 					{
 						if (!connectedTile.active)
 							continue;
-						if (excludedTiles != null && excludedTiles.Contains(connectedTile))
+						if (excludedTileSet.Contains(connectedTile))
 							continue;
 
 						float heuristic = current.range * connectedTile.tileSize + Vector3.Distance(connectedTile.worldPos, targetTile.worldPos);
@@ -479,14 +498,16 @@ namespace DiceRoller
 
 						if (closed.Exists(x => x.tile == connectedTile && x.heuristic < heuristic))
 							continue;
-						
-						open.Add(new TilePathRangeHeuristicPair()
+
+						TilePathRangeHeuristicPair newPair = new TilePathRangeHeuristicPair()
 						{
 							tile = connectedTile,
 							previous = current.tile,
 							range = current.range + 1,
 							heuristic = heuristic
-						});
+						};
+						int index = open.BinarySearch(newPair, tilePathRangeHeuristicPairComparer);
+						open.Insert(index < 0 ? ~index : index, newPair);
 					}
 				}
 
@@ -598,10 +619,10 @@ namespace DiceRoller
 		{
 			if (area != null)
 			{
-				tempTiles.Clear();
-				tempTiles.Add(area);
-				ShowArea(holder, displayType, tempTiles);
-				tempTiles.Clear();
+				tempTileList.Clear();
+				tempTileList.Add(area);
+				ShowArea(holder, displayType, tempTileList);
+				tempTileList.Clear();
 			}
 			else
 			{
