@@ -1,0 +1,3 @@
+== Issues ==
+- Sometime cannot select target tile in Unit_UnitMoveSelectSB (possibly isSelctedAtEnter give wrong value)
+- Find a way to end a async task if it takes too long

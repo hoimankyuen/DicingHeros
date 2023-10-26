@@ -602,7 +602,11 @@ namespace DiceRoller
 			});
 
 			// wait for search to complete
-			yield return new WaitUntil(() => completed);
+			yield return new WaitUntil(() => task.IsCompleted || task.IsFaulted);
+			if (task.IsFaulted)
+			{
+				ShowDebugMessage("AIEngine: Get Possible Action async has faulted and aborted.");
+			}
 			yield return null;
 		}
 
