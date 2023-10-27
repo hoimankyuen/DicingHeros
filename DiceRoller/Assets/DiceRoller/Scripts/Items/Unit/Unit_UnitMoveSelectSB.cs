@@ -152,7 +152,7 @@ namespace DiceRoller
 					}
 
 					// show attackable area on the board
-					if (CacheUtils.HasValueChanged(self.MeleeRange, ref lastAttackRange))
+					if (CacheUtils.HasValueChanged(self.PhysicalRange, ref lastAttackRange))
 					{
 						attackableAreaDirty = true;
 					}
@@ -164,7 +164,7 @@ namespace DiceRoller
 					{		
 						if (targetTile != null && reachable)
 						{
-							board.GetTilesByRule(targetTile, self.AttackAreaRule, self.MeleeRange, nextAttackableArea);
+							board.GetTilesByRule(targetTile, self.AttackAreaRule, self.PhysicalRange, nextAttackableArea);
 							board.ShowArea(self, Tile.DisplayType.AttackPossible, nextAttackableArea);
 						}
 						else

@@ -64,17 +64,17 @@ namespace DiceRoller
 		// ========================================================= Properties (Effect) =========================================================
 
 		/// <summary>
-		/// The change in the melee value when this equipment is activated.
+		/// The change in the physical attack value when this equipment is activated.
 		/// </summary>
-		public override int MeleeDelta { get; } = 3;
+		public override int PhysicalAttackDelta { get; } = 3;
 
 		/// <summary>
-		/// The change in the attack range value when this equipment is activated.
+		/// The change in the physical range value when this equipment is activated.
 		/// </summary>
-		public override int MeleeRangeDelta { get; } = 2;
+		public override int PhysicalRangeDelta { get; } = 2;
 
 		/// <summary>
-		/// The change in the attack range value when this equipment is activated.
+		/// The change in the knockback force value when this equipment is activated.
 		/// </summary>
 		public override float KnockbackForceDelta { get; } = 0.1f;
 	}

@@ -53,6 +53,9 @@ namespace DiceRoller
 				float startTime = 0;
 				float duration = 0;
 
+				float currentMass = self.rigidBody.mass;
+				self.rigidBody.mass = 10000f;
+
 				// move to first tile on path if needed
 				if (Vector3.Distance(self.transform.position, path[0].transform.position) > 0.01f)
 				{
@@ -89,6 +92,8 @@ namespace DiceRoller
 
 				// wait until all movement is completed
 				yield return new WaitWhile(() => self.IsMoving);
+				yield return new WaitForFixedUpdate();
+				self.rigidBody.mass = currentMass;
 
 				// hide all displays on grid
 				board.HideArea(self, Tile.DisplayType.SelfPosition);

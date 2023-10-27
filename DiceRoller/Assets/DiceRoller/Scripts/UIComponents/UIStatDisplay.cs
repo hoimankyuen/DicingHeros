@@ -63,9 +63,9 @@ namespace DiceRoller
             if (target == null)
                 return;
 
-            target.OnMeleeChanged += RefreshDisplay;
-            target.OnMagicChanged += RefreshDisplay;
-            target.OnDefenceChanged += RefreshDisplay;
+            target.OnPhysicalAttackChanged += RefreshDisplay;
+            target.OnMagicalAttackChanged += RefreshDisplay;
+            target.OnPhysicalDefenceChanged += RefreshDisplay;
             target.OnMovementChanged += RefreshDisplay;
             target.OnCurrentAttackTypeChanged += RefreshDisplay;
         }
@@ -78,9 +78,9 @@ namespace DiceRoller
             if (target == null)
                 return;
 
-            target.OnMeleeChanged -= RefreshDisplay;
-            target.OnMagicChanged -= RefreshDisplay;
-            target.OnDefenceChanged -= RefreshDisplay;
+            target.OnPhysicalAttackChanged -= RefreshDisplay;
+            target.OnMagicalAttackChanged -= RefreshDisplay;
+            target.OnPhysicalDefenceChanged -= RefreshDisplay;
             target.OnMovementChanged -= RefreshDisplay;
             target.OnCurrentAttackTypeChanged -= RefreshDisplay;
         }
@@ -113,22 +113,22 @@ namespace DiceRoller
             else
             {
                 // show information of the inspecting unit
-                attackIcon.color = unit.Melee > unit.baseMelee ? Color.green : unit.Melee < unit.baseMelee ? Color.red : Color.white;
-                attackValue.color = unit.Melee > unit.baseMelee ? Color.green : unit.Melee < unit.baseMelee ? Color.red : Color.white;
-                attackValue.text = unit.Melee.ToString();
+                attackIcon.color = unit.PhysicalAttack > unit.basePhysicalAttack ? Color.green : unit.PhysicalAttack < unit.basePhysicalAttack ? Color.red : Color.white;
+                attackValue.color = unit.PhysicalAttack > unit.basePhysicalAttack ? Color.green : unit.PhysicalAttack < unit.basePhysicalAttack ? Color.red : Color.white;
+                attackValue.text = unit.PhysicalAttack.ToString();
                 if (unit.CurrentAttackType != Unit.AttackType.Physical)
                 {
                     attackIcon.color = attackIcon.color * 0.5f + Color.black * 0.5f;
                     attackValue.color = attackValue.color * 0.5f + Color.black * 0.5f;
                 }
 
-                defenceIcon.color = unit.Defence > unit.baseDefence ? Color.green : unit.Defence < unit.baseDefence ? Color.red : Color.white;
-                defenceValue.color = unit.Defence > unit.baseDefence ? Color.green : unit.Defence < unit.baseDefence ? Color.red : Color.white;
-                defenceValue.text =unit.Defence.ToString();
+                defenceIcon.color = unit.PhysicalDefence > unit.basePhysicalDefence ? Color.green : unit.PhysicalDefence < unit.basePhysicalDefence ? Color.red : Color.white;
+                defenceValue.color = unit.PhysicalDefence > unit.basePhysicalDefence ? Color.green : unit.PhysicalDefence < unit.basePhysicalDefence ? Color.red : Color.white;
+                defenceValue.text =unit.PhysicalDefence.ToString();
 
-                magicIcon.color = unit.Magic > unit.baseMagic ? Color.green : unit.Magic < unit.baseMagic ? Color.red : Color.white;
-                magicValue.color = unit.Magic > unit.baseMagic ? Color.green : unit.Magic < unit.baseMagic ? Color.red : Color.white;
-                magicValue.text = unit.Magic.ToString();
+                magicIcon.color = unit.MagicalAttack > unit.baseMagicalAttack ? Color.green : unit.MagicalAttack < unit.baseMagicalAttack ? Color.red : Color.white;
+                magicValue.color = unit.MagicalAttack > unit.baseMagicalAttack ? Color.green : unit.MagicalAttack < unit.baseMagicalAttack ? Color.red : Color.white;
+                magicValue.text = unit.MagicalAttack.ToString();
                 if (unit.CurrentAttackType != Unit.AttackType.Magical)
                 {
                     magicIcon.color = magicIcon.color * 0.5f + Color.black * 0.5f;

@@ -68,7 +68,8 @@ namespace DiceRoller
 		/// </summary>
 		private void Update()
 		{
-			UpdatePositionApparence();
+			UpdatePosition();
+			UpdateApparence();
 		}
 
 		/// <summary>
@@ -80,7 +81,7 @@ namespace DiceRoller
 			Die.OnItemBeingDraggedChanged -= UpdateDraggingItem;
 		}
 
-		// ========================================================= Behaviour Methods =========================================================
+		// ========================================================= Icons =========================================================
 
 		/// <summary>
 		/// Set the icon shown with the cursor.
@@ -100,6 +101,11 @@ namespace DiceRoller
 			iconSprite = sprite;
 		}
 
+		// ========================================================= Dragging =========================================================
+
+		/// <summary>
+		/// Change the dragging item to what is currently being dragged.
+		/// </summary>
 		private void UpdateDraggingItem()
 		{
 			if (Unit.GetFirstBeingDragged() != null)
@@ -119,7 +125,7 @@ namespace DiceRoller
 		/// <summary>
 		/// Set the dragging item by this cursor.
 		/// </summary>
-		public void SetDraggingItem(Item item)
+		private void SetDraggingItem(Item item)
 		{
 			draggingItem = item;
 			if (draggingItem == null)
@@ -146,27 +152,49 @@ namespace DiceRoller
 			}
 		}
 
+		// ========================================================= Position =========================================================
+
 		/// <summary>
 		/// Update the position and apparence of the target indicator to make it appears on the correct position.
 		/// </summary>
-		private void UpdatePositionApparence()
+		private void UpdatePosition()
 		{
-			// move the pointer to mouse point
-			transform.position = Input.mousePosition;
+			transform.position = InputUtils.MousePosition;
+		}
 
-			if (EventSystem.current.IsPointerOverGameObject())
+		// ========================================================= Apparence =========================================================
+
+		/// <summary>
+		/// Update the position and apparence of the target indicator to make it appears on the correct position.
+		/// </summary>
+		private void UpdateApparence()
+		{
+			if (GameController.current.PersonInControl != GameController.Person.AI)
 			{
-				// show standard cursor when pointing on UI
-				pointerImage.sprite = icons.normalCursor;
-				actionImage.enabled = false;
+				// player is in control
+				if (EventSystem.current.IsPointerOverGameObject())
+				{
+					// show standard cursor when pointing on UI
+					pointerImage.enabled = true;
+					pointerImage.sprite = icons.normalCursor;
+					actionImage.enabled = false;
+				}
+				else
+				{
+					// show selected icon otherwise
+					pointerImage.enabled = true;
+					pointerImage.sprite = iconType == IconType.None ? icons.normalCursor : icons.iconCursor;
+					actionImage.enabled = iconType != IconType.None;
+					actionImage.sprite = iconType == IconType.Custom ? iconSprite : icons.icons[iconType];
+				}
 			}
 			else
 			{
-				// show selected icon otherwise
-				pointerImage.sprite = iconType == IconType.None ? icons.normalCursor : icons.iconCursor;
-				actionImage.enabled = iconType != IconType.None;
-				actionImage.sprite = iconType == IconType.Custom ? iconSprite : icons.icons[iconType];
+				// ai is in control
+				pointerImage.enabled = false;
+				actionImage.enabled = false;
 			}
 		}
+
 	}
 }

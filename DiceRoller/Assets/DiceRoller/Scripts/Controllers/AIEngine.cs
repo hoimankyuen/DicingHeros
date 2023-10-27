@@ -457,8 +457,8 @@ namespace DiceRoller
 
 			// check the fulfillment again
 			bool useAttackEquipmentFailed = false;
-			int meleeRange = action.Attacker.MeleeRange;
-			int magicRange = action.Attacker.MagicRange;
+			int meleeRange = action.Attacker.PhysicalRange;
+			int magicRange = action.Attacker.MagicalRange;
 			AttackAreaRule areaRule = action.Attacker.AttackAreaRule;
 			bool isMagicAttack = false;
 			foreach (PossibleAction.EquipmentUsage equipmentUsage in action.AttackEquipmentUsages)
@@ -474,8 +474,8 @@ namespace DiceRoller
 					}
 					if (equipmentUsage.Equipment.Type == Equipment.EquipmentType.MeleeAttack || equipmentUsage.Equipment.Type == Equipment.EquipmentType.MagicAttack)
 						areaRule = equipmentUsage.Equipment.AreaRule;
-					meleeRange += equipmentUsage.Equipment.MeleeRangeDelta;
-					magicRange += equipmentUsage.Equipment.MagicRangeDelta;
+					meleeRange += equipmentUsage.Equipment.PhysicalRangeDelta;
+					magicRange += equipmentUsage.Equipment.MagicalRangeDelta;
 					if (equipmentUsage.Equipment.Type == Equipment.EquipmentType.MagicAttack)
 						isMagicAttack = true;
 				}
@@ -685,8 +685,8 @@ namespace DiceRoller
 		{
 			usingEquipments.Clear();
 			movement = selfUnit.Movement;
-			meleeRange = selfUnit.MeleeRange;
-			magicRange = selfUnit.MagicRange;
+			meleeRange = selfUnit.PhysicalRange;
+			magicRange = selfUnit.MagicalRange;
 			areaRule = AttackAreaRule.Adjacent;
 			isMagicAttack = false;
 
@@ -696,8 +696,8 @@ namespace DiceRoller
 				{
 					usingEquipments.Add(selfUnit.Equipments[i]);
 					movement += selfUnit.Equipments[i].MovementDelta;
-					meleeRange += selfUnit.Equipments[i].MeleeRangeDelta;
-					magicRange += selfUnit.Equipments[i].MagicRangeDelta;
+					meleeRange += selfUnit.Equipments[i].PhysicalRangeDelta;
+					magicRange += selfUnit.Equipments[i].MagicalRangeDelta;
 					if (selfUnit.Equipments[i].Type == Equipment.EquipmentType.MeleeAttack || selfUnit.Equipments[i].Type == Equipment.EquipmentType.MagicAttack)
 						areaRule = selfUnit.Equipments[i].AreaRule;
 					if (selfUnit.Equipments[i].Type == Equipment.EquipmentType.MagicAttack)
@@ -902,26 +902,26 @@ namespace DiceRoller
 				Equipment meleeAttackEquipment = usedEquipments.FirstOrDefault(x => x.Type == Equipment.EquipmentType.MeleeAttack);
 				if (magicAttackEquipment != null)
 				{
-					int rawMagicDamgeDelta = 0;
+					int rawMagicalAttackDelta = 0;
 					foreach (Equipment equipment in usedEquipments)
 					{
-						rawMagicDamgeDelta += equipment.MagicDelta;
+						rawMagicalAttackDelta += equipment.MagicalAttackDelta;
 					}
-					rawDamage = Mathf.Max(selfUnit.Magic + rawMagicDamgeDelta - attackInfo.unit.Defence, 0);
+					rawDamage = Mathf.Max(selfUnit.MagicalAttack + rawMagicalAttackDelta - attackInfo.unit.MagicalDefence, 0);
 
 				}
 				else if (meleeAttackEquipment != null)
 				{
-					int rawMeleeDamageDelta = 0;
+					int rawPhysicalAttackDelta = 0;
 					foreach (Equipment equipment in usedEquipments)
 					{
-						rawMeleeDamageDelta += equipment.MeleeDelta;
+						rawPhysicalAttackDelta += equipment.PhysicalAttackDelta;
 					}
-					rawDamage = Mathf.Max(selfUnit.Melee + rawMeleeDamageDelta - attackInfo.unit.Defence, 0);
+					rawDamage = Mathf.Max(selfUnit.PhysicalAttack + rawPhysicalAttackDelta - attackInfo.unit.PhysicalDefence, 0);
 				}
 				else
 				{
-					rawDamage = Mathf.Max(selfUnit.Melee - attackInfo.unit.Defence, 0);
+					rawDamage = Mathf.Max(selfUnit.PhysicalAttack - attackInfo.unit.PhysicalDefence, 0);
 				}
 				int damageDone = attackInfo.unit.Health - rawDamage >= 0 ? rawDamage : attackInfo.unit.Health;
 

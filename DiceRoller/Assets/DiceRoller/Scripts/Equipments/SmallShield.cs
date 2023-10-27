@@ -64,8 +64,13 @@ namespace DiceRoller
 		// ========================================================= Properties (Effect) =========================================================
 
 		/// <summary>
-		/// The change in the defence value when this equipment is activated.
+		/// The change in the physical defence value when this equipment is activated.
 		/// </summary>
-		public override int DefenceDelta { get; } = 2;
+		public override int PhysicalDefenceDelta { get; } = 2;
+
+		/// <summary>
+		/// The change in the magical defence value when this equipment is activated.
+		/// </summary>
+		public override int MagicalDefenceDelta { get; } = 2;
 	}
 }

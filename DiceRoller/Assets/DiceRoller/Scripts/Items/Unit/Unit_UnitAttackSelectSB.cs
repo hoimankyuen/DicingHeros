@@ -110,11 +110,11 @@ namespace DiceRoller
 							int damage = 0;
 							if (self.CurrentAttackType == AttackType.Physical)
 							{
-								damage = Mathf.Max(self.Melee - target.Defence, 0);
+								damage = Mathf.Max(self.PhysicalAttack - target.PhysicalDefence, 0);
 							}
 							else if (self.CurrentAttackType == AttackType.Magical)
 							{
-								damage = Mathf.Max(self.Magic - target.Defence, 0);
+								damage = Mathf.Max(self.MagicalAttack - target.PhysicalDefence, 0);
 							}
 
 							// add pending damage and status to new target
@@ -135,11 +135,11 @@ namespace DiceRoller
 						int damage = 0;
 						if (self.CurrentAttackType == AttackType.Physical)
 						{
-							damage = Mathf.Max(self.Melee - target.Defence, 0);
+							damage = Mathf.Max(self.PhysicalAttack - target.PhysicalDefence, 0);
 						}
 						else if (self.CurrentAttackType == AttackType.Magical)
 						{
-							damage = Mathf.Max(self.Magic - target.Defence, 0);
+							damage = Mathf.Max(self.MagicalAttack - target.MagicalDefence, 0);
 						}
 						// fill in attack parameters
 						self.NextAttack = new UnitAttack(target, damage, self.KnockbackForce);

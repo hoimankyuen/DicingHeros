@@ -44,18 +44,60 @@ public class InputUtils
 		}
 	}
 
-	// ========================================================= Mouse BUtton Press Simulation =========================================================
+	// ========================================================= Mouse Simulation =========================================================
 
-	private static bool usingSimulatedPress = false;
+	private static bool usingSimulatedMouse = false;
+	private static Vector3 simulatedMousePosition = Vector3.one * -100f;
 	private static bool[] simulatedPresses = new bool[] { false, false, false };
+	
+	/// <summary>
+	/// Start of stop mouse simulation. This will take away control for the player. Used for mouse action look alikes.
+	/// </summary>
 	public static void EnablePressSimulation(bool enable)
 	{
-		usingSimulatedPress = enable;
+		usingSimulatedMouse = enable;
+
+		simulatedMousePosition = Vector3.one * -100f;
+		simulatedPresses[0] = false;
+		simulatedPresses[1] = false;
+		simulatedPresses[2] = false;
 	}
 
+	/// <summary>
+	/// Simulate a mouse press. Used for mouse action look alikes.
+	/// </summary>
 	public static void SimulatePress(int button, bool press)
 	{
 		simulatedPresses[button] = press;
+	}
+
+	/// <summary>
+	/// <summary>
+	/// Simulate a mouse position. 
+	/// </summary>
+	public static void SimulateMousePosition(Vector3 position)
+	{
+		simulatedMousePosition = position;
+	}
+
+	// ========================================================= Mouse Position Detection =========================================================
+
+	/// <summary>
+	/// Utility function for getting the currect mouse position.
+	/// </summary>
+	public static Vector3 MousePosition
+	{
+		get
+		{
+			if (usingSimulatedMouse)
+			{
+				return simulatedMousePosition;
+			}
+			else
+			{
+				return Input.mousePosition;
+			}
+		}
 	}
 
 	// ========================================================= Mouse BUtton Press Detection =========================================================
@@ -66,7 +108,7 @@ public class InputUtils
 	/// <returns></returns>
 	public static bool GetMousePress(int button, ref Vector2 pressedPositionCache)
 	{
-		if (usingSimulatedPress)
+		if (usingSimulatedMouse)
 		{
 			// read simulated presses
 			return simulatedPresses[button];

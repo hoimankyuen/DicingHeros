@@ -34,16 +34,16 @@ namespace DiceRoller
 			Stay,
 		}
 
-
 		// parameters
 		[Header("Unit Parameters")]
 		public int maxHealth = 20;
-		public int baseMelee = 3;
-		public int baseMagic = 1;
-		public int baseDefence = 4;
+		public int basePhysicalAttack = 3;
+		public int basePhysicalDefence = 4;
+		public int basePhysicalRange = 1;
+		public int baseMagicalAttack = 1;
+		public int baseMagicalDefence = 4;
+		public int baseMagicalRange = 1;
 		public int baseMovement = 4;
-		public int baseMeleeRange = 1;
-		public int baseMagicRange = 1;
 		public float baseKnockbackForce = 0.25f;
 		public List<EquipmentDictionary.Name> startingEquipment = new List<EquipmentDictionary.Name>();
 
@@ -212,6 +212,14 @@ namespace DiceRoller
 		public static Unit GetFirstBeingInspected()
 		{
 			return _InspectingUnits.Count > 0 ? _InspectingUnits[0] : null;
+		}
+
+		/// <summary>
+		/// Retrieve all units being currently inspected.
+		/// </summary>
+		public static IReadOnlyCollection<Unit> GetAllBeingInspected()
+		{
+			return _InspectingUnits.AsReadOnly();
 		}
 
 		// ========================================================= Properties (IsSelected) =========================================================
@@ -415,161 +423,162 @@ namespace DiceRoller
 		// ========================================================= Properties (Stats) =========================================================
 
 		/// <summary>
-		/// The current melee value of this unit.
+		/// The current physical attack value of this unit.
 		/// </summary>
-		public int Melee
+		public int PhysicalAttack
 		{
 			get
 			{
-				return _Melee;
+				return _PhysicalAttack;
 			}
 			private set
 			{
 				int clampedValue = value < 0 ? 0 : value;
-				if (_Melee != clampedValue)
+				if (_PhysicalAttack != clampedValue)
 				{
-					_Melee = clampedValue;
-					OnMeleeChanged.Invoke();
+					_PhysicalAttack = clampedValue;
+					OnPhysicalAttackChanged.Invoke();
 				}
 			}
 		}
-		private int _Melee = 0;
+		private int _PhysicalAttack = 0;
 
 		/// <summary>
-		/// Event raised when the melee stat of this unit is changed.
+		/// Event raised when the physical attack stat of this unit is changed.
 		/// </summary>
-		public event Action OnMeleeChanged = () => { };
+		public event Action OnPhysicalAttackChanged = () => { };
 
 		/// <summary>
-		/// The current magic value of this unit.
+		
+
+		/// <summary>
+		/// The current magical defence value of this unit.
 		/// </summary>
-		public int Magic
+		public int PhysicalDefence
 		{
 			get
 			{
-				return _Magic;
+				return _PhysicalDefence;
 			}
 			private set
 			{
 				int clampedValue = value < 0 ? 0 : value;
-				if (_Magic != clampedValue)
+				if (_PhysicalDefence != clampedValue)
 				{
-					_Magic = clampedValue;
-					OnMagicChanged.Invoke();
+					_PhysicalDefence = clampedValue;
+					OnPhysicalDefenceChanged.Invoke();
 				}
 			}
 		}
-		private int _Magic = 0;
+		private int _PhysicalDefence = 0;
 
 		/// <summary>
-		/// Event raised when the melee stat of this unit is changed.
+		/// Event raised when the phhysical defence stat of this unit is changed.
 		/// </summary>
-		public event Action OnMagicChanged = () => { };
+		public event Action OnPhysicalDefenceChanged = () => { };
 
-		/// <summary>
-		/// The current defence value of this unit.
+		/// The current magical attack value of this unit.
 		/// </summary>
-		public int Defence
+		public int MagicalAttack
 		{
 			get
 			{
-				return _Defence;
+				return _MagicalAttack;
 			}
 			private set
 			{
 				int clampedValue = value < 0 ? 0 : value;
-				if (_Defence != clampedValue)
+				if (_MagicalAttack != clampedValue)
 				{
-					_Defence = clampedValue;
-					OnDefenceChanged.Invoke();
+					_MagicalAttack = clampedValue;
+					OnMagicalAttackChanged.Invoke();
 				}
 			}
 		}
-		private int _Defence = 0;
+		private int _MagicalAttack = 0;
 
 		/// <summary>
-		/// Event raised when the melee stat of this unit is changed.
+		/// Event raised when the magical attack stat of this unit is changed.
 		/// </summary>
-		public event Action OnDefenceChanged = () => { };
+		public event Action OnMagicalAttackChanged = () => { };
 
 		/// <summary>
-		/// The current movement value of this unit.
+		/// The current magical defence value of this unit.
 		/// </summary>
-		public int Movement
+		public int MagicalDefence
 		{
 			get
 			{
-				return _Movement;
+				return _MagicalDefence;
 			}
 			private set
 			{
 				int clampedValue = value < 0 ? 0 : value;
-				if (_Movement != clampedValue)
+				if (_MagicalDefence != clampedValue)
 				{
-					_Movement = clampedValue;
-					OnMovementChanged.Invoke();
+					_MagicalDefence = clampedValue;
+					OnMagicalDefenceChanged.Invoke();
 				}
 			}
 		}
-		private int _Movement = 0;
+		private int _MagicalDefence = 0;
 
 		/// <summary>
-		/// Event raised when the melee stat of this unit is changed.
+		/// The current physical range value of this unit.
 		/// </summary>
-		public event Action OnMovementChanged = () => { };
-
-		/// <summary>
-		/// The current melee range value of this unit.
-		/// </summary>
-		public int MeleeRange
+		public int PhysicalRange
 		{
 			get
 			{
-				return _MeleeRange;
+				return _PhysicalRange;
 			}
 			private set
 			{
 				int clampedValue = value < 0 ? 0 : value;
-				if (_MeleeRange != clampedValue)
+				if (_PhysicalRange != clampedValue)
 				{
-					_MeleeRange = clampedValue;
-					OnMeleeRangeChanged.Invoke();
+					_PhysicalRange = clampedValue;
+					OnPhysicalRangeChanged.Invoke();
 				}
 			}
 		}
-		private int _MeleeRange = 0;
+		private int _PhysicalRange = 0;
 
 		/// <summary>
-		/// Event raised when the melee range stat of this unit is changed.
+		/// Event raised when the physical range stat of this unit is changed.
 		/// </summary>
-		public event Action OnMeleeRangeChanged = () => { };
+		public event Action OnPhysicalRangeChanged = () => { };
 
+		/// <summary>
+		/// Event raised when the magical defence stat of this unit is changed.
+		/// </summary>
+		public event Action OnMagicalDefenceChanged = () => { };
 
 		/// <summary>
 		/// The current magic range value of this unit.
 		/// </summary>
-		public int MagicRange
+		public int MagicalRange
 		{
 			get
 			{
-				return _MagicRange;
+				return _MagicalRange;
 			}
 			private set
 			{
 				int clampedValue = value < 0 ? 0 : value;
-				if (_MagicRange != clampedValue)
+				if (_MagicalRange != clampedValue)
 				{
-					_MagicRange = clampedValue;
-					OnMagicRangeChanged.Invoke();
+					_MagicalRange = clampedValue;
+					OnMagicalRangeChanged.Invoke();
 				}
 			}
 		}
-		private int _MagicRange = 0;
+		private int _MagicalRange = 0;
 
 		/// <summary>
-		/// Event raised when the magic range stat of this unit is changed.
+		/// Event raised when the magical range stat of this unit is changed.
 		/// </summary>
-		public event Action OnMagicRangeChanged = () => { };
+		public event Action OnMagicalRangeChanged = () => { };
 
 		/// <summary>
 		/// The current knockback force of this unit.
@@ -593,36 +602,64 @@ namespace DiceRoller
 		private float _KnockbackForce = 0;
 
 		/// <summary>
-		/// Event raised when the melee stat of this unit is changed.
+		/// Event raised when the knock back stat of this unit is changed.
 		/// </summary>
 		public event Action OnKnockbackChanged = () => { };
+
+		/// <summary>
+		/// The current movement value of this unit.
+		/// </summary>
+		public int Movement
+		{
+			get
+			{
+				return _Movement;
+			}
+			private set
+			{
+				int clampedValue = value < 0 ? 0 : value;
+				if (_Movement != clampedValue)
+				{
+					_Movement = clampedValue;
+					OnMovementChanged.Invoke();
+				}
+			}
+		}
+		private int _Movement = 0;
+
+		/// <summary>
+		/// Event raised when the movement stat of this unit is changed.
+		/// </summary>
+		public event Action OnMovementChanged = () => { };
 
 		/// <summary>
 		/// Set the stat values to the inital value.
 		/// </summary>
 		public void SetupInitalStat()
 		{
-			Melee = baseMelee;
-			Magic = baseMagic;
-			Defence = baseDefence;
-			Movement = baseMovement;
-			MeleeRange = baseMeleeRange;
-			MagicRange = baseMagicRange;
+			PhysicalAttack = basePhysicalAttack;
+			PhysicalDefence = basePhysicalDefence;
+			PhysicalRange = basePhysicalRange;
+			MagicalAttack = baseMagicalAttack;
+			MagicalDefence = baseMagicalDefence;
+			MagicalRange = baseMagicalRange;
 			KnockbackForce = baseKnockbackForce;
+			Movement = baseMovement;
 		}
 
 		/// <summary>
 		/// Apply a change on one or more stat variables.
 		/// </summary>
-		public void ChangeStat(int meleeDelta = 0, int magicDelta = 0, int defenceDelta = 0, int movementDelta = 0, int meleeRangeDelta = 0, int magicRangeDelta = 0, float knockbackForceDelta = 0)
+		public void ChangeStat(int physicalAttackDelta = 0, int physicalDefenceDelta = 0, int physicalRangeDelta = 0, int magicalAttackDelta = 0, int magicalDefenceDelta = 0, int magicalRangeDelta = 0, float knockbackForceDelta = 0, int movementDelta = 0)
 		{
-			Melee += meleeDelta;
-			Defence += defenceDelta;
-			Magic += magicDelta;
-			Movement += movementDelta;
-			MeleeRange += meleeRangeDelta;
-			MagicRange += magicRangeDelta;
+			PhysicalAttack += physicalAttackDelta;
+			PhysicalDefence += physicalDefenceDelta;
+			PhysicalRange += physicalRangeDelta;
+			MagicalAttack += magicalAttackDelta;
+			MagicalDefence += magicalDefenceDelta;
+			MagicalRange += magicalRangeDelta;
 			KnockbackForce += knockbackForceDelta;
+			Movement += movementDelta;
 		}
 
 		// ========================================================= Properties (AllOccupiedTiles) =========================================================
@@ -853,8 +890,8 @@ namespace DiceRoller
 			OnAllOcupiedTilesDirty += SetAttackableAreaDirty;
 			OnAttackAreaRuleChanged += SetAttackableAreaDirty;
 			OnCurrentAttackTypeChanged += SetAttackableAreaDirty;
-			OnMeleeRangeChanged += SetAttackableAreaDirty;
-			OnMagicRangeChanged += SetAttackableAreaDirty;
+			OnPhysicalRangeChanged += SetAttackableAreaDirty;
+			OnMagicalRangeChanged += SetAttackableAreaDirty;
 		}
 
 		/// <summary>
@@ -865,8 +902,8 @@ namespace DiceRoller
 			OnAllOcupiedTilesDirty -= SetAttackableAreaDirty;
 			OnAttackAreaRuleChanged -= SetAttackableAreaDirty;
 			OnCurrentAttackTypeChanged -= SetAttackableAreaDirty;
-			OnMeleeRangeChanged -= SetAttackableAreaDirty;
-			OnMagicRangeChanged -= SetAttackableAreaDirty;
+			OnPhysicalRangeChanged -= SetAttackableAreaDirty;
+			OnMagicalRangeChanged -= SetAttackableAreaDirty;
 		}
 
 		/// <summary>
@@ -888,11 +925,11 @@ namespace DiceRoller
 		{
 			if (CurrentAttackType == AttackType.Physical)
 			{
-				board.GetTilesByRule(OccupiedTiles, AttackAreaRule, MeleeRange, _AttackableArea);
+				board.GetTilesByRule(OccupiedTiles, AttackAreaRule, PhysicalRange, _AttackableArea);
 			}
 			else
 			{
-				board.GetTilesByRule(OccupiedTiles, AttackAreaRule,  MagicRange, _AttackableArea);
+				board.GetTilesByRule(OccupiedTiles, AttackAreaRule,  MagicalRange, _AttackableArea);
 			}
 			_IsAttackableAreaDirty = false;
 		}
@@ -928,7 +965,7 @@ namespace DiceRoller
 		{
 			OnMoveableAreaDirty += SetPredictedAttakableAreaDirty;
 			OnAttackAreaRuleChanged += SetPredictedAttakableAreaDirty;
-			OnMeleeRangeChanged += SetPredictedAttakableAreaDirty;
+			OnPhysicalRangeChanged += SetPredictedAttakableAreaDirty;
 		}
 
 		/// <summary>
@@ -938,7 +975,7 @@ namespace DiceRoller
 		{
 			OnMoveableAreaDirty -= SetPredictedAttakableAreaDirty;
 			OnAttackAreaRuleChanged -= SetPredictedAttakableAreaDirty;
-			OnMeleeRangeChanged -= SetPredictedAttakableAreaDirty;
+			OnPhysicalRangeChanged -= SetPredictedAttakableAreaDirty;
 		}
 
 		/// <summary>
@@ -958,7 +995,7 @@ namespace DiceRoller
 		/// </summary>
 		private void RefreshPredictedAttackableArea()
 		{
-			board.GetTilesByRule(MovableArea, AttackAreaRule, MeleeRange, _PredictedAttackableArea);
+			board.GetTilesByRule(MovableArea, AttackAreaRule, PhysicalRange, _PredictedAttackableArea);
 			_IsPredictedAttackableAreaDirty = false;
 		}
 

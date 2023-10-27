@@ -65,14 +65,14 @@ namespace DiceRoller
 		// ========================================================= Properties (Effect) =========================================================
 
 		/// <summary>
-		/// The change in the magic value when this equipment is activated.
+		/// The change in the magical attack value when this equipment is activated.
 		/// </summary>
-		public override int MagicDelta { get; } = 8;
+		public override int MagicalAttackDelta { get; } = 8;
 
 		/// <summary>
-		/// The change in the magic range value when this equipment is activated.
+		/// The change in the magical range value when this equipment is activated.
 		/// </summary>
-		public override int MagicRangeDelta { get; } = 2;
+		public override int MagicalRangeDelta { get; } = 2;
 
 		/// <summary>
 		/// The attack area rule used when this equipment is activated.

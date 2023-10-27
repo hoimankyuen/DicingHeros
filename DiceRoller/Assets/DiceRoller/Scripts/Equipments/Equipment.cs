@@ -170,40 +170,45 @@ namespace DiceRoller
 		// ========================================================= Properties (Effect) =========================================================
 
 		/// <summary>
-		/// The change in the melee value when this equipment is activated.
+		/// The change in the physical attack value when this equipment is activated.
 		/// </summary>
-		public virtual int MeleeDelta { get; } = 0;
+		public virtual int PhysicalAttackDelta { get; } = 0;
+
 
 		/// <summary>
-		/// The change in the magic value when this equipment is activated.
+		/// The change in the physical defence value when this equipment is activated.
 		/// </summary>
-		public virtual int MagicDelta { get; } = 0;
+		public virtual int PhysicalDefenceDelta { get; } = 0;
 
 		/// <summary>
-		/// The change in the defence value when this equipment is activated.
+		/// The change in the physical range value when this equipment is activated.
 		/// </summary>
-		public virtual int DefenceDelta { get; } = 0;
+		public virtual int PhysicalRangeDelta { get; } = 0;
 
 		/// <summary>
-		/// The change in the movement value when this equipment is activated.
+		/// The change in the magical attack value when this equipment is activated.
 		/// </summary>
-		public virtual int MovementDelta { get; } = 0;
+		public virtual int MagicalAttackDelta { get; } = 0;
 
 		/// <summary>
-		/// The change in the melee range value when this equipment is activated.
+		/// The change in the magical defence value when this equipment is activated.
 		/// </summary>
-		public virtual int MeleeRangeDelta { get; } = 0;
+		public virtual int MagicalDefenceDelta { get; } = 0;
 
 		/// <summary>
-		/// The change in the magic range value when this equipment is activated.
+		/// The change in the magical range value when this equipment is activated.
 		/// </summary>
-		public virtual int MagicRangeDelta { get; } = 0;
-
+		public virtual int MagicalRangeDelta { get; } = 0;
 
 		/// <summary>
 		/// The change in the attack range value when this equipment is activated.
 		/// </summary>
 		public virtual float KnockbackForceDelta { get; } = 0;
+
+		/// <summary>
+		/// The change in the movement value when this equipment is activated.
+		/// </summary>
+		public virtual int MovementDelta { get; } = 0;
 
 		/// <summary>
 		/// The attack area rule used when this equipment is activated.
@@ -355,13 +360,14 @@ namespace DiceRoller
 		private void AddEffects()
 		{
 			Unit.ChangeStat(
-				meleeDelta: MeleeDelta,
-				magicDelta: MagicDelta, 
-				defenceDelta: DefenceDelta,
-				movementDelta: MovementDelta,
-				meleeRangeDelta: MeleeRangeDelta,
-				magicRangeDelta: MagicRangeDelta,
-				knockbackForceDelta: KnockbackForceDelta);
+				physicalAttackDelta: PhysicalAttackDelta,
+				physicalDefenceDelta: PhysicalDefenceDelta,
+				physicalRangeDelta: PhysicalRangeDelta,
+				magicalAttackDelta: MagicalAttackDelta, 
+				magicalDefenceDelta: MagicalDefenceDelta,
+				magicalRangeDelta: MagicalRangeDelta,
+				knockbackForceDelta: KnockbackForceDelta,
+				movementDelta: MovementDelta);
 			if (AreaRule != AttackAreaRule.Adjacent)
 			{
 				Unit.ChangeAttackAreaRule(AreaRule);
@@ -379,13 +385,14 @@ namespace DiceRoller
 		private void RemoveEffects()
 		{
 			Unit.ChangeStat(
-				meleeDelta: -MeleeDelta,
-				magicDelta: -MagicDelta,
-				defenceDelta: -DefenceDelta,
-				movementDelta: -MovementDelta,
-				meleeRangeDelta: -MeleeRangeDelta,
-				magicRangeDelta: -MagicRangeDelta,
-				knockbackForceDelta: -KnockbackForceDelta);
+				physicalAttackDelta: -PhysicalAttackDelta,
+				physicalDefenceDelta: -PhysicalDefenceDelta,
+				physicalRangeDelta: -PhysicalRangeDelta,
+				magicalAttackDelta: -MagicalAttackDelta,
+				magicalDefenceDelta: -MagicalDefenceDelta,
+				magicalRangeDelta: -MagicalRangeDelta,
+				knockbackForceDelta: -KnockbackForceDelta,
+				movementDelta: -MovementDelta);
 			if (AreaRule != AttackAreaRule.Adjacent)
 			{
 				Unit.ResetAttackAreaRule();
