@@ -1,6 +1,5 @@
 == Issues ==
 - Sometime cannot select target tile in Unit_UnitMoveSelectSB (possibly isSelctedAtEnter give wrong value)
-- Find a way to end a async task if it takes too long
 -
 
 == Big Todo ==
@@ -10,5 +9,7 @@
 - Level
 
 == Small Todo ==
+- Find a way to end a async task if it takes too long
 - Make unit indicator scale with distance?
 - Split namespaces ?
+- Make blocking obsticle

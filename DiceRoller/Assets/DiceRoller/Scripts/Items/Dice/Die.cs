@@ -241,6 +241,14 @@ namespace DiceRoller
 			return _InspectingDice.Count > 0 ? _InspectingDice[0] : null;
 		}
 
+		/// <summary>
+		/// Retrieve all dice being currently inspected.
+		/// </summary>
+		public static IReadOnlyCollection<Die> GetAllBeingInspected()
+		{
+			return _InspectingDice.AsReadOnly();
+		}
+
 		// ========================================================= Properties (IsSelected) =========================================================
 
 		/// <summary>

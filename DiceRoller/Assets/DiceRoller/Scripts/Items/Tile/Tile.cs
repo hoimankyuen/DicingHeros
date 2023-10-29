@@ -63,11 +63,11 @@ namespace DiceRoller
 		public class RangeDisplayEntry
 		{
 			public object holder;
-			public TileRange range;
-			public RangeDisplayEntry(object holder, TileRange range)
+			public TileRangeDisplay rangeDisplay;
+			public RangeDisplayEntry(object holder, TileRangeDisplay range)
 			{
 				this.holder = holder;
-				this.range = range;
+				this.rangeDisplay = range;
 			}
 		}
 
@@ -95,7 +95,7 @@ namespace DiceRoller
 		private GameController game { get { return GameController.current; } }
 
 		// component
-		private List<TileRange> tileRanges = new List<TileRange>();
+		private List<TileRangeDisplay> tileRanges = new List<TileRangeDisplay>();
 		private SpriteRenderer pathRenderer = null;
 		private new Collider collider = null;
 
@@ -120,7 +120,7 @@ namespace DiceRoller
 		/// </summary>
 		private void Awake()
 		{
-			tileRanges.Add(transform.Find("Sprites/Ranges/Range").GetComponent<TileRange>());
+			tileRanges.Add(transform.Find("Sprites/Ranges/Range").GetComponent<TileRangeDisplay>());
 			pathRenderer = transform.Find("Sprites/Path").GetComponent<SpriteRenderer>();
 			collider = transform.Find("Collider").GetComponent<Collider>();
 
@@ -240,7 +240,7 @@ namespace DiceRoller
 			SpriteRenderer displaySpriteRenderer = transform.Find("Sprites/Tile").GetComponent<SpriteRenderer>();
 			displaySpriteRenderer.transform.localScale = new Vector3(tileSize / 1.28f, tileSize / 1.28f, 1f);
 
-			TileRange tileRange = transform.Find("Sprites/Ranges/Range").GetComponent<TileRange>();
+			TileRangeDisplay tileRange = transform.Find("Sprites/Ranges/Range").GetComponent<TileRangeDisplay>();
 			tileRange.transform.localScale = new Vector3(tileSize / 1.28f, tileSize / 1.28f, 1f);
 
 			SpriteRenderer pathSpriteRenderer = transform.Find("Sprites/Path").GetComponent<SpriteRenderer>();
@@ -288,44 +288,11 @@ namespace DiceRoller
 		{
 			if (targetTile == this)
 			{
-				// find all adjacencies of this tile
-				TileRange.Adj adjacencies = TileRange.Adj.None;
-
-				// check if there is already an entry of the same display type and holder
-				RangeDisplayEntry entry = registeredDisplay[displayType].FirstOrDefault(x => x.holder == holder);
-				if (entry == null)
-				{
-					// add new range
-					TileRange targetRange = tileRanges.Find(x => !x.IsShowing());
-					if (targetRange == null)
-					{
-						targetRange = Instantiate(tileRanges[0], tileRanges[0].transform.parent).GetComponent<TileRange>();
-					}
-					targetRange.SetTileStyle(style);
-					targetRange.SetColor(style.frameColors[displayType], style.backgroundColors[displayType]);
-					targetRange.SetAdjancencies(adjacencies, style.dashed[displayType]);
-					targetRange.Show(true);
-					registeredDisplay[displayType].Add(new RangeDisplayEntry(holder, targetRange));
-				}
-				else
-				{
-					// modify existing range
-					entry.range.SetTileStyle(style);
-					entry.range.SetColor(style.frameColors[displayType], style.backgroundColors[displayType]);
-					entry.range.SetAdjancencies(adjacencies, style.dashed[displayType]);
-				}
-				ResolveRangeOrder();
+				Show(holder, displayType, true, TileRangeDisplay.Adj.None);
 			}
 			else
 			{
-				// remove entry and return range to pool
-				RangeDisplayEntry entry = registeredDisplay[displayType].FirstOrDefault(x => x.holder == holder);
-				if (entry != null)
-				{
-					entry.range.Show(false);
-					registeredDisplay[displayType].Remove(entry);
-				}
-
+				Show(holder, displayType, false);
 			}
 		}
 
@@ -337,47 +304,62 @@ namespace DiceRoller
 			if (targetTiles.Contains(this))
 			{
 				// find all adjacencies of this tile
-				TileRange.Adj adjacencies = TileRange.Adj.None;
+				TileRangeDisplay.Adj adjacencies = TileRangeDisplay.Adj.None;
 				if (targetTiles.Any(x => x.boardPos == (boardPos + new Int2(-1, 1))))
-					adjacencies |= TileRange.Adj.TopLeft;
+					adjacencies |= TileRangeDisplay.Adj.TopLeft;
 				if (targetTiles.Any(x => x.boardPos == (boardPos + new Int2(0, 1))))
-					adjacencies |= TileRange.Adj.Top;
+					adjacencies |= TileRangeDisplay.Adj.Top;
 				if (targetTiles.Any(x => x.boardPos == (boardPos + new Int2(1, 1))))
-					adjacencies |= TileRange.Adj.TopRight;
+					adjacencies |= TileRangeDisplay.Adj.TopRight;
 				if (targetTiles.Any(x => x.boardPos == (boardPos + new Int2(-1, 0))))
-					adjacencies |= TileRange.Adj.Left;
+					adjacencies |= TileRangeDisplay.Adj.Left;
 				if (targetTiles.Any(x => x.boardPos == (boardPos + new Int2(1, 0))))
-					adjacencies |= TileRange.Adj.Right;
+					adjacencies |= TileRangeDisplay.Adj.Right;
 				if (targetTiles.Any(x => x.boardPos == (boardPos + new Int2(-1, -1))))
-					adjacencies |= TileRange.Adj.BottomLeft;
+					adjacencies |= TileRangeDisplay.Adj.BottomLeft;
 				if (targetTiles.Any(x => x.boardPos == (boardPos + new Int2(0, -1))))
-					adjacencies |= TileRange.Adj.Bottom;
+					adjacencies |= TileRangeDisplay.Adj.Bottom;
 				if (targetTiles.Any(x => x.boardPos == (boardPos + new Int2(1, -1))))
-					adjacencies |= TileRange.Adj.BottomRight;
+					adjacencies |= TileRangeDisplay.Adj.BottomRight;
 
+				Show(holder, displayType, true, adjacencies);
+			}
+			else
+			{
+				Show(holder, displayType, false);
+			}
+		}
+
+		/// <summary>
+		/// Inner method for add or remove the range display of this tile. 
+		/// </summary>
+		private void Show(object holder, DisplayType displayType, bool show,  TileRangeDisplay.Adj adjacencies = TileRangeDisplay.Adj.None)
+		{
+			if (show)
+			{
 				// check if there is already an entry of the same display type and holder
 				RangeDisplayEntry entry = registeredDisplay[displayType].FirstOrDefault(x => x.holder == holder);
 				if (entry == null)
 				{
 					// add new range
-					TileRange targetRange = tileRanges.Find(x => !x.IsShowing());
-					if (targetRange == null)
+					TileRangeDisplay rangeDisplay = tileRanges.Find(x => !x.IsShowing());
+					if (rangeDisplay == null)
 					{
-						targetRange = Instantiate(tileRanges[0], tileRanges[0].transform.parent).GetComponent<TileRange>();
-					}			
-					targetRange.SetTileStyle(style);
-					targetRange.SetColor(style.frameColors[displayType], style.backgroundColors[displayType]);
-					targetRange.SetAdjancencies(adjacencies, style.dashed[displayType]);
-					targetRange.Show(true);
-					registeredDisplay[displayType].Add(new RangeDisplayEntry(holder, targetRange));
+						rangeDisplay = Instantiate(tileRanges[0], tileRanges[0].transform.parent).GetComponent<TileRangeDisplay>();
+						tileRanges.Add(rangeDisplay);
+					}
+					rangeDisplay.SetTileStyle(style);
+					rangeDisplay.SetColor(style.frameColors[displayType], style.backgroundColors[displayType]);
+					rangeDisplay.SetAdjancencies(adjacencies, style.dashed[displayType]);
+					rangeDisplay.Show(true);
+					registeredDisplay[displayType].Add(new RangeDisplayEntry(holder, rangeDisplay));
 				}
 				else
 				{
 					// modify existing range
-					entry.range.SetTileStyle(style);
-					entry.range.SetColor(style.frameColors[displayType], style.backgroundColors[displayType]);
-					entry.range.SetAdjancencies(adjacencies, style.dashed[displayType]);
-					entry.range.Show(true);
+					entry.rangeDisplay.SetTileStyle(style);
+					entry.rangeDisplay.SetColor(style.frameColors[displayType], style.backgroundColors[displayType]);
+					entry.rangeDisplay.SetAdjancencies(adjacencies, style.dashed[displayType]);
 				}
 				ResolveRangeOrder();
 			}
@@ -387,7 +369,7 @@ namespace DiceRoller
 				RangeDisplayEntry entry = registeredDisplay[displayType].FirstOrDefault(x => x.holder == holder);
 				if (entry != null)
 				{
-					entry.range.Show(false);
+					entry.rangeDisplay.Show(false);
 					registeredDisplay[displayType].Remove(entry);
 				}
 
@@ -412,7 +394,7 @@ namespace DiceRoller
 				DisplayType displayType = (DisplayType)i;
 				foreach (RangeDisplayEntry entry in registeredDisplay[displayType])
 				{
-					entry.range.SetSpriteOrder(i + 1);
+					entry.rangeDisplay.SetSpriteOrder(i + 1);
 				}
 			}
 		}

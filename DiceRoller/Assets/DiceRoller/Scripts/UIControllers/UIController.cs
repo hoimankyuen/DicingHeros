@@ -38,7 +38,7 @@ namespace DiceRoller
 		[Header("Screen Space Components (Floating)")]
 		public UIInspectedItemWindow inspectedItemWindow;
 		public UICursor cursor;
-		public UIUnitIndicator unitIndicator;
+		public UIUnitIncidatorController unitIndicatorController;
 
 		[Header("World Space Components")]
 		public UIThrowDisplay throwDisplay;

@@ -134,13 +134,16 @@ MonoBehaviour:
   playerId: 0
   effectStyle: {fileID: 11400000, guid: a259e5d099e63654e82a558feaab5487, type: 2}
   maxHealth: 20
-  baseMelee: 3
-  baseDefence: 4
-  baseMagic: 1
+  basePhysicalAttack: 3
+  basePhysicalDefence: 1
+  basePhysicalRange: 1
+  baseMagicalAttack: 1
+  baseMagicalDefence: 1
+  baseMagicalRange: 1
   baseMovement: 4
-  baseRange: 1
   baseKnockbackForce: 0.25
   startingEquipment: 
+  aiTendency: 0
 --- !u!54 &4813253666521103612
 Rigidbody:
   m_ObjectHideFlags: 0

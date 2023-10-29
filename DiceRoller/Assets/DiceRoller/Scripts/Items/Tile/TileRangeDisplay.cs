@@ -6,7 +6,7 @@ using System;
 
 namespace DiceRoller
 {
-    public class TileRange : MonoBehaviour
+    public class TileRangeDisplay : MonoBehaviour
     {
         [Flags]
         public enum Adj

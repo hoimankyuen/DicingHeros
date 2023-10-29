@@ -184,8 +184,24 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 21300000, guid: c2d83d8be05590646832d05888d25f4c, type: 3}
     - target: {fileID: 4813253666521103614, guid: e2a9f81fa3052474b882cfec95c1b548, type: 3}
+      propertyPath: baseMagicalAttack
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4813253666521103614, guid: e2a9f81fa3052474b882cfec95c1b548, type: 3}
       propertyPath: baseKnockbackForce
       value: 0.25
+      objectReference: {fileID: 0}
+    - target: {fileID: 4813253666521103614, guid: e2a9f81fa3052474b882cfec95c1b548, type: 3}
+      propertyPath: baseMagicalDefence
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4813253666521103614, guid: e2a9f81fa3052474b882cfec95c1b548, type: 3}
+      propertyPath: basePhysicalAttack
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4813253666521103614, guid: e2a9f81fa3052474b882cfec95c1b548, type: 3}
+      propertyPath: basePhysicalDefence
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 4813253666521103614, guid: e2a9f81fa3052474b882cfec95c1b548, type: 3}
       propertyPath: startingEquipment.Array.size

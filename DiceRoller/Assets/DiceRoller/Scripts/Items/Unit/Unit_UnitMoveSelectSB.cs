@@ -171,6 +171,7 @@ namespace DiceRoller
 						{
 							board.ShowArea(self, Tile.DisplayType.AttackPossible, self.AttackableArea);
 						}
+						attackableAreaDirty = false;
 					}
 
 					// detect path selection by left mouse pressing

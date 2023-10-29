@@ -381,6 +381,10 @@ namespace DiceRoller
 		/// </summary>
 		private IEnumerator UnitActionSequence(PossibleAction action)
 		{
+			// skip empty action
+			if (action == null)
+				yield break;
+
 			// select unit
 			action.Attacker.OnAIMouseEnter();
 			yield return new WaitForSeconds(0.25f);
@@ -606,6 +610,7 @@ namespace DiceRoller
 			if (task.IsFaulted)
 			{
 				ShowDebugMessage("AIEngine: Get Possible Action async has faulted and aborted.");
+				ShowDebugMessage("AIEngine: Exception Message:\n" + task.Exception.Message + "\n" + task.Exception.StackTrace);
 			}
 			yield return null;
 		}

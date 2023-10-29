@@ -35,16 +35,24 @@ namespace DiceRoller
 		}
 
 		// parameters
-		[Header("Unit Parameters")]
+		[Header("Unit Parameters (General)")]
 		public int maxHealth = 20;
+		public int baseMovement = 4;
+
+		[Header("Unit Parameters (Physical)")]
 		public int basePhysicalAttack = 3;
 		public int basePhysicalDefence = 4;
 		public int basePhysicalRange = 1;
+
+		[Header("Unit Parameters (Magical)")]
 		public int baseMagicalAttack = 1;
 		public int baseMagicalDefence = 4;
 		public int baseMagicalRange = 1;
-		public int baseMovement = 4;
+
+		[HideInInspector]
 		public float baseKnockbackForce = 0.25f;
+
+		[Header("Unit Equipments")]
 		public List<EquipmentDictionary.Name> startingEquipment = new List<EquipmentDictionary.Name>();
 
 		[Header("AI Parameters (Only used if AI Controlled)")]
@@ -747,12 +755,12 @@ namespace DiceRoller
 			}
 		}
 		private List<Tile> _AllOccupiedTilesExceptSelf = new List<Tile>();
-		private static bool _IsAllOccupiedTilesExceptSelfDirty = true;
+		private bool _IsAllOccupiedTilesExceptSelfDirty = true;
 
 		/// <summary>
 		/// Event raised when the list of all tiles occupied by every unit needs updating.
 		/// </summary>
-		public static event Action OnAllOcupiedTilesExceptSelfDirty = () => { };
+		public event Action OnAllOcupiedTilesExceptSelfDirty = () => { };
 
 		/// <summary>
 		/// Register all necessary callbacks needed for AllOccupiedTilesExceptSelf.
@@ -776,7 +784,7 @@ namespace DiceRoller
 		/// <summary>
 		/// Notify AllOccupiedTilesExecptSelf needs updating.
 		/// </summary>
-		private static void SetAllOccupiedTilesExceptSelfDirty()
+		private void SetAllOccupiedTilesExceptSelfDirty()
 		{
 			if (!_IsAllOccupiedTilesExceptSelfDirty)
 			{
