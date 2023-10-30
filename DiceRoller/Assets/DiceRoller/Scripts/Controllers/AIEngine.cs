@@ -117,7 +117,7 @@ namespace DiceRoller
 							}
 							message += "to ";
 						}
-						message += string.Format("| move to tile {0} ", Position.boardPos);
+						message += string.Format("| move to tile {0} ", Position.BoardPos);
 					}
 					if (Target != null)
 					{
@@ -557,8 +557,6 @@ namespace DiceRoller
 				enemyCenter = enemyCenter / enemyUnits.Count();
 			}
 
-			bool completed = false;
-
 			// async execution of cpu bounded search
 			Task task = Task.Run(() =>
 			{
@@ -602,7 +600,6 @@ namespace DiceRoller
 					// add the skip option
 					results.Add(GeneratePossibleAction(selfUnit, new AttackInfo(null, null), enemyCenter, usingEquipments, usingDice));
 				}
-				completed = true;
 			});
 
 			// wait for search to complete
@@ -842,7 +839,7 @@ namespace DiceRoller
 				{
 					foreach (Tile selfOccupliedTile in selfUnit.OccupiedTiles)
 					{				
-						int distance = Int2.GridDistance(enemyOccupliedTile.boardPos, selfOccupliedTile.boardPos);
+						int distance = Int2.GridDistance(enemyOccupliedTile.BoardPos, selfOccupliedTile.BoardPos);
 						if (distance < shortestDistance)
 						{
 							nearestUnit = enemyUnit;
@@ -895,7 +892,7 @@ namespace DiceRoller
 			{
 				possibleAction.SetMovement(
 					position: attackInfo.tile,
-					distanceToEnemyCenter: Vector3.Distance(attackInfo.tile.worldPos, enemyCenter));
+					distanceToEnemyCenter: Vector3.Distance(attackInfo.tile.WorldPos, enemyCenter));
 			}
 
 			// add attack info to possible action

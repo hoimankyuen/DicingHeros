@@ -832,6 +832,8 @@ namespace DiceRoller
 		/// </summary>
 		private void RegisterCallbacksForMovableArea()
 		{
+			if (board != null)
+				board.OnBoardChanged += SetMovableAreaDirty;
 			OnAllOcupiedTilesDirty += SetMovableAreaDirty;
 			OnMovementChanged += SetMovableAreaDirty;
 		}
@@ -841,6 +843,8 @@ namespace DiceRoller
 		/// </summary>
 		private void DeregisterCallbacksForMovableArea()
 		{
+			if (board != null)
+				board.OnBoardChanged -= SetMovableAreaDirty;
 			OnAllOcupiedTilesDirty -= SetMovableAreaDirty;
 			OnMovementChanged -= SetMovableAreaDirty;
 		}
@@ -895,6 +899,8 @@ namespace DiceRoller
 		/// </summary>
 		private void RegisterCallbacksForAttackableArea()
 		{
+			if (board != null)
+				board.OnBoardChanged += SetAttackableAreaDirty;
 			OnAllOcupiedTilesDirty += SetAttackableAreaDirty;
 			OnAttackAreaRuleChanged += SetAttackableAreaDirty;
 			OnCurrentAttackTypeChanged += SetAttackableAreaDirty;
@@ -907,6 +913,8 @@ namespace DiceRoller
 		/// </summary>
 		private void DeregisterCallbacksForAttackableArea()
 		{
+			if (board != null)
+				board.OnBoardChanged -= SetAttackableAreaDirty;
 			OnAllOcupiedTilesDirty -= SetAttackableAreaDirty;
 			OnAttackAreaRuleChanged -= SetAttackableAreaDirty;
 			OnCurrentAttackTypeChanged -= SetAttackableAreaDirty;
@@ -971,6 +979,8 @@ namespace DiceRoller
 		/// </summary>
 		private void RegisterCallbacksForPredictedAttackableArea()
 		{
+			if (board != null)
+				board.OnBoardChanged += SetPredictedAttakableAreaDirty;
 			OnMoveableAreaDirty += SetPredictedAttakableAreaDirty;
 			OnAttackAreaRuleChanged += SetPredictedAttakableAreaDirty;
 			OnPhysicalRangeChanged += SetPredictedAttakableAreaDirty;
@@ -981,6 +991,8 @@ namespace DiceRoller
 		/// </summary>
 		private void DeregisterCallbacksForPredictedAttackableArea()
 		{
+			if (board != null)
+				board.OnBoardChanged -= SetPredictedAttakableAreaDirty;
 			OnMoveableAreaDirty -= SetPredictedAttakableAreaDirty;
 			OnAttackAreaRuleChanged -= SetPredictedAttakableAreaDirty;
 			OnPhysicalRangeChanged -= SetPredictedAttakableAreaDirty;

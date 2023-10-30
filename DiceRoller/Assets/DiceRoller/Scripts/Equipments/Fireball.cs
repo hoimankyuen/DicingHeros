@@ -80,8 +80,8 @@ namespace DiceRoller
 		public override AttackAreaRule AreaRule { get; } = new AttackAreaRule(
 			(target, starting, range) =>
 			{
-				return Mathf.Max(Mathf.Abs(target.boardPos.x - starting.boardPos.x), Mathf.Abs(target.boardPos.z - starting.boardPos.z)) <= range &&
-					Mathf.Max(Mathf.Abs(target.boardPos.x - starting.boardPos.x), Mathf.Abs(target.boardPos.z - starting.boardPos.z)) >= 2;
+				return Mathf.Max(Mathf.Abs(target.BoardPos.x - starting.BoardPos.x), Mathf.Abs(target.BoardPos.z - starting.BoardPos.z)) <= range &&
+					Mathf.Max(Mathf.Abs(target.BoardPos.x - starting.BoardPos.x), Mathf.Abs(target.BoardPos.z - starting.BoardPos.z)) >= 2;
 			});
 	}
 }

@@ -438,6 +438,7 @@ namespace DiceRoller
 		private Vector3 _LastOccupiedPosition = Vector3.zero;
 		private List<Tile> _LastOccupiedTiles = new List<Tile>();
 		private bool _LastIsHidden = false;
+		private float _LastBoardUpdatedTime = 0;
 
 		/// <summary>
 		/// Flag raised when the tiles occupied by this item are changed.
@@ -449,7 +450,7 @@ namespace DiceRoller
 		/// </summary>
 		private void DetectTilesOccupation()
 		{
-			if (!IsMoving && (Vector3.SqrMagnitude(transform.position - _LastOccupiedPosition) > 0.00000001f || _LastIsHidden != IsHidden))
+			if (!IsMoving && (Vector3.SqrMagnitude(transform.position - _LastOccupiedPosition) > 0.00000001f || _LastIsHidden != IsHidden || board.BoardUpdatedTime != _LastBoardUpdatedTime))
 			{
 				// retrieve tile that this item are in.
 				if (IsHidden)
@@ -479,6 +480,7 @@ namespace DiceRoller
 					_LastOccupiedTiles.Clear();
 					_LastOccupiedTiles.AddRange(_OccupiedTiles);
 					_LastIsHidden = IsHidden;
+					_LastBoardUpdatedTime = board.BoardUpdatedTime;
 
 					// raise event
 					OnOccupiedTilesChanged.Invoke();

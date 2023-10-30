@@ -82,17 +82,14 @@ namespace DiceRoller
 
 		// parameters
 		[Header("Tile Properties (Auto Generated)")]
-		public float tileSize = 1f;
-		public List<Tile> connectedTiles = new List<Tile>();
-		public Int2 boardPos = Int2.zero;
-		public Vector3 worldPos = Vector3.zero;
-		public bool active = false;
+		public BoardPiece boardPiece = null;
+		public Int2 localBoardPos = Int2.zero;
 
 		[Header("Resources")]
 		public TileStyle style = null;
 
 		// reference
-		private GameController game { get { return GameController.current; } }
+		private GameController game => GameController.current;
 
 		// component
 		private List<TileRangeDisplay> tileRanges = new List<TileRangeDisplay>();
@@ -100,17 +97,16 @@ namespace DiceRoller
 		private new Collider collider = null;
 
 		// working variables
-		private Dictionary<DisplayType, List<RangeDisplayEntry>> registeredDisplay = new Dictionary<DisplayType, List<RangeDisplayEntry>>();	
+		private Dictionary<DisplayType, List<RangeDisplayEntry>> registeredDisplay = new Dictionary<DisplayType, List<RangeDisplayEntry>>();
 		private bool hovering = false;
 
-		public IReadOnlyCollection<Item> Occupants
-		{
-			get
-			{
-				return occupants.AsReadOnly();
-			}
-		}
-		private List<Item> occupants = new List<Item>();
+		// temp variables for faciliating path finding
+		[NonSerialized]
+		public Tile pathFindingPrev;
+		[NonSerialized]
+		public int pathFindingG;
+		[NonSerialized]
+		public int pathFindingF;
 
 		// ========================================================= Monobehaviour Methods =========================================================
 
@@ -131,8 +127,7 @@ namespace DiceRoller
 
 			tileRanges[0].Show(false);
 
-			worldPos = transform.position;
-			active = true;
+			Active = true;
 		}
 
 		/// <summary>
@@ -206,18 +201,6 @@ namespace DiceRoller
 
 		}
 
-		/// <summary>
-		/// OnDrawGizmos is called when the game object is in editor mode
-		/// </summary>
-		private void OnDrawGizmos()
-		{
-			// draw size and each face of the die
-			if (Application.isEditor)
-			{
-				// draw connections
-			}
-		}
-
 		// ========================================================= IEqautable Methods =========================================================
 
 		/// <summary>
@@ -231,29 +214,131 @@ namespace DiceRoller
 		// ========================================================= Editor =========================================================
 
 		#if UNITY_EDITOR
-		
+
 		/// <summary>
 		/// Regenerate all components related to this tile. Should only be called in editor.
 		/// </summary>
 		public void RegenerateTile()
 		{
 			SpriteRenderer displaySpriteRenderer = transform.Find("Sprites/Tile").GetComponent<SpriteRenderer>();
-			displaySpriteRenderer.transform.localScale = new Vector3(tileSize / 1.28f, tileSize / 1.28f, 1f);
+			displaySpriteRenderer.transform.localScale = new Vector3(Board.tileSize / 1.28f, Board.tileSize / 1.28f, 1f);
 
 			TileRangeDisplay tileRange = transform.Find("Sprites/Ranges/Range").GetComponent<TileRangeDisplay>();
-			tileRange.transform.localScale = new Vector3(tileSize / 1.28f, tileSize / 1.28f, 1f);
+			tileRange.transform.localScale = new Vector3(Board.tileSize / 1.28f, Board.tileSize / 1.28f, 1f);
 
 			SpriteRenderer pathSpriteRenderer = transform.Find("Sprites/Path").GetComponent<SpriteRenderer>();
-			pathSpriteRenderer.transform.localScale = new Vector3(tileSize / 1.28f, tileSize / 1.28f, 1f);
+			pathSpriteRenderer.transform.localScale = new Vector3(Board.tileSize / 1.28f, Board.tileSize / 1.28f, 1f);
 
 			collider = transform.Find("Collider").GetComponent<Collider>();
-			collider.transform.localScale = new Vector3(tileSize, 0.1f, tileSize);
+			collider.transform.localScale = new Vector3(Board.tileSize, 0.1f, Board.tileSize);
 		}
 
 		#endif
 
-		// ========================================================= Occupation =========================================================
+		// ========================================================= Properties (WorldPos) =========================================================
 
+		/// <summary>
+		/// The global world position of the tile.
+		/// </summary>
+		public Vector3 WorldPos { get; private set; } = Vector3.negativeInfinity;
+
+		/// <summary>
+		/// Update WoldPos to current value.
+		/// </summary>
+		public void UpdateWordPos()
+		{
+			WorldPos = transform.position;
+		}
+
+		// ========================================================= Properties (BoardPos) =========================================================
+
+		/// <summary>
+		/// The global board position of the tile.
+		/// </summary>
+		public Int2 BoardPos { get; private set; }
+
+		/// <summary>
+		/// Update BoardPos to current value.
+		/// </summary>
+		public void UpdateBoardPos()
+		{
+			if (boardPiece != null)
+			{
+				BoardPos = boardPiece.ToGlobalBoard(localBoardPos);
+			}
+			else
+			{
+				BoardPos = localBoardPos;
+			}
+		}
+
+		// ========================================================= Properties (Active) =========================================================
+
+		/// <summary>
+		/// Flag for this tile is on the board but not active at the moment.
+		/// </summary>
+		public bool Active { get; private set; } = false;
+
+		// ========================================================= Properties (ConnectedTiles) =========================================================
+
+		/// <summary>
+		/// All connected tiles of this tile in the sequence of directions of Left, Forward, Right, Backward. Null indicated no connection in that direction.
+		/// </summary>
+		public IEnumerable<Tile> ConnectedTiles
+		{ 
+			get
+			{
+				return _ConnectedTiles.AsReadOnly();
+			}
+		}
+		private List<Tile> _ConnectedTiles = new List<Tile>(); // sequence: Left, Forward, Right, Backward
+
+		/// <summary>
+		/// Connect another tile to this tile in a specific direction.
+		/// </summary>
+		public void Connect(Tile other, Int2 direction)
+		{
+			// initialize connected tiles if not done yet
+			if (_ConnectedTiles.Count == 0)
+			{
+				for (int i = 0; i < 4; i++)
+				{
+					_ConnectedTiles.Add(null);
+				}
+			}
+
+			// connect to other tiles
+			if  (direction == Int2.left)
+			{
+				_ConnectedTiles[0] = other;
+			}
+			else if (direction == Int2.forward)
+			{
+				_ConnectedTiles[1] = other;
+			}
+			else if (direction == Int2.right)
+			{
+				_ConnectedTiles[2] = other;
+			}
+			else if (direction == Int2.backward)
+			{
+				_ConnectedTiles[3] = other;
+			}
+		}
+
+		// ========================================================= Properties (Occupants) =========================================================
+
+		/// <summary>
+		/// A list of all item that occupied this tile.
+		/// </summary>
+		public IReadOnlyCollection<Item> Occupants
+		{
+			get
+			{
+				return occupants.AsReadOnly();
+			}
+		}
+		private readonly List<Item> occupants = new List<Item>();
 
 		/// <summary>
 		/// Add an occupant to this tile, all hovering through tile.
@@ -284,56 +369,64 @@ namespace DiceRoller
 		/// <summary>
 		/// Add or remove the range display of this tile based on a single target tile. 
 		/// </summary>
-		public void UpdateDisplayAs(object holder, DisplayType displayType, Tile targetTile)
+		public void UpdateAreaDisplayAs(object holder, DisplayType displayType, Tile targetTile)
 		{
 			if (targetTile == this)
 			{
-				Show(holder, displayType, true, TileRangeDisplay.Adj.None);
+				ShowAreaDisplay(holder, displayType, true, TileRangeDisplay.Adj.None);
 			}
 			else
 			{
-				Show(holder, displayType, false);
+				ShowAreaDisplay(holder, displayType, false);
 			}
 		}
 
 		/// <summary>
 		/// Add or remove the range display of this tile based on a set of target tiles. 
 		/// </summary>
-		public void UpdateDisplayAs(object holder, DisplayType displayType, IEnumerable<Tile> targetTiles)
+		public void UpdateAreaDisplayAs(object holder, DisplayType displayType, IEnumerable<Tile> targetTiles)
 		{
 			if (targetTiles.Contains(this))
 			{
 				// find all adjacencies of this tile
 				TileRangeDisplay.Adj adjacencies = TileRangeDisplay.Adj.None;
-				if (targetTiles.Any(x => x.boardPos == (boardPos + new Int2(-1, 1))))
+				if (targetTiles.Any(x => x.BoardPos == (BoardPos + new Int2(-1, 1))))
 					adjacencies |= TileRangeDisplay.Adj.TopLeft;
-				if (targetTiles.Any(x => x.boardPos == (boardPos + new Int2(0, 1))))
+				if (targetTiles.Any(x => x.BoardPos == (BoardPos + new Int2(0, 1))))
 					adjacencies |= TileRangeDisplay.Adj.Top;
-				if (targetTiles.Any(x => x.boardPos == (boardPos + new Int2(1, 1))))
+				if (targetTiles.Any(x => x.BoardPos == (BoardPos + new Int2(1, 1))))
 					adjacencies |= TileRangeDisplay.Adj.TopRight;
-				if (targetTiles.Any(x => x.boardPos == (boardPos + new Int2(-1, 0))))
+				if (targetTiles.Any(x => x.BoardPos == (BoardPos + new Int2(-1, 0))))
 					adjacencies |= TileRangeDisplay.Adj.Left;
-				if (targetTiles.Any(x => x.boardPos == (boardPos + new Int2(1, 0))))
+				if (targetTiles.Any(x => x.BoardPos == (BoardPos + new Int2(1, 0))))
 					adjacencies |= TileRangeDisplay.Adj.Right;
-				if (targetTiles.Any(x => x.boardPos == (boardPos + new Int2(-1, -1))))
+				if (targetTiles.Any(x => x.BoardPos == (BoardPos + new Int2(-1, -1))))
 					adjacencies |= TileRangeDisplay.Adj.BottomLeft;
-				if (targetTiles.Any(x => x.boardPos == (boardPos + new Int2(0, -1))))
+				if (targetTiles.Any(x => x.BoardPos == (BoardPos + new Int2(0, -1))))
 					adjacencies |= TileRangeDisplay.Adj.Bottom;
-				if (targetTiles.Any(x => x.boardPos == (boardPos + new Int2(1, -1))))
+				if (targetTiles.Any(x => x.BoardPos == (BoardPos + new Int2(1, -1))))
 					adjacencies |= TileRangeDisplay.Adj.BottomRight;
 
-				Show(holder, displayType, true, adjacencies);
+				ShowAreaDisplay(holder, displayType, true, adjacencies);
 			}
 			else
 			{
-				Show(holder, displayType, false);
+				ShowAreaDisplay(holder, displayType, false);
 			}
+		}
+
+		/// <summary>
+		/// Remove the range display of this tile. 
+		/// </summary>
+		public void RemoveAreaDisplay(object holder, DisplayType displayType)
+		{
+			UpdateAreaDisplayAs(holder, displayType, (Tile)null);
 		}
 
 		/// <summary>
 		/// Inner method for add or remove the range display of this tile. 
 		/// </summary>
-		private void Show(object holder, DisplayType displayType, bool show,  TileRangeDisplay.Adj adjacencies = TileRangeDisplay.Adj.None)
+		private void ShowAreaDisplay(object holder, DisplayType displayType, bool show, TileRangeDisplay.Adj adjacencies = TileRangeDisplay.Adj.None)
 		{
 			if (show)
 			{
@@ -361,7 +454,6 @@ namespace DiceRoller
 					entry.rangeDisplay.SetColor(style.frameColors[displayType], style.backgroundColors[displayType]);
 					entry.rangeDisplay.SetAdjancencies(adjacencies, style.dashed[displayType]);
 				}
-				ResolveRangeOrder();
 			}
 			else
 			{
@@ -372,33 +464,18 @@ namespace DiceRoller
 					entry.rangeDisplay.Show(false);
 					registeredDisplay[displayType].Remove(entry);
 				}
-
 			}
-		}
 
-		/// <summary>
-		/// Remove the range display of this tile. 
-		/// </summary>
-		public void RemoveDisplay(object holder, DisplayType displayType)
-		{
-			UpdateDisplayAs(holder, displayType, (Tile)null);
-		}
-
-		/// <summary>
-		/// Change the sprite order of the tile range to make each elements stack ontop of each other in the propper way.
-		/// </summary>
-		private void ResolveRangeOrder()
-		{
+			// resolve area display ordering
 			for (int i = 0; i < DisplayTypeCount; i++)
 			{
-				DisplayType displayType = (DisplayType)i;
-				foreach (RangeDisplayEntry entry in registeredDisplay[displayType])
+				foreach (RangeDisplayEntry entry in registeredDisplay[(DisplayType)i])
 				{
 					entry.rangeDisplay.SetSpriteOrder(i + 1);
 				}
 			}
 		}
-
+	
 		/// <summary>
 		/// Show a display of the path on this tile.
 		/// </summary>
@@ -410,24 +487,24 @@ namespace DiceRoller
 				PathDirections pathDirections = new PathDirections(PathDirection.Start, PathDirection.End);
 				if (pos == 0)
 					pathDirections.from = PathDirection.Start;
-				else if (path[pos - 1].boardPos.x > boardPos.x)
+				else if (path[pos - 1].BoardPos.x > BoardPos.x)
 					pathDirections.from = PathDirection.Right;
-				else if (path[pos - 1].boardPos.z > boardPos.z)
+				else if (path[pos - 1].BoardPos.z > BoardPos.z)
 					pathDirections.from = PathDirection.Top;
-				else if (path[pos - 1].boardPos.x < boardPos.x)
+				else if (path[pos - 1].BoardPos.x < BoardPos.x)
 					pathDirections.from = PathDirection.Left;
-				else if (path[pos - 1].boardPos.z < boardPos.z)
+				else if (path[pos - 1].BoardPos.z < BoardPos.z)
 					pathDirections.from = PathDirection.Bottom;
 
 				if (pos == path.Count - 1)
 					pathDirections.to = PathDirection.End;
-				else if (path[pos + 1].boardPos.x > boardPos.x)
+				else if (path[pos + 1].BoardPos.x > BoardPos.x)
 					pathDirections.to = PathDirection.Right;
-				else if (path[pos + 1].boardPos.z > boardPos.z)
+				else if (path[pos + 1].BoardPos.z > BoardPos.z)
 					pathDirections.to = PathDirection.Top;
-				else if (path[pos + 1].boardPos.x < boardPos.x)
+				else if (path[pos + 1].BoardPos.x < BoardPos.x)
 					pathDirections.to = PathDirection.Left;
-				else if (path[pos + 1].boardPos.z < boardPos.z)
+				else if (path[pos + 1].BoardPos.z < BoardPos.z)
 					pathDirections.to = PathDirection.Bottom;
 
 				pathRenderer.sprite = style.pathDirectionSprites[pathDirections];
@@ -463,16 +540,15 @@ namespace DiceRoller
 		/// </summary>
 		public bool IsInTile(Vector3 position, float radius)
 		{
-			// wrong
 			Vector3 localPosition = transform.InverseTransformPoint(position);
-			if (Mathf.Abs(localPosition.x) > tileSize * (0.5f - tileDetectionPadding) && Mathf.Abs(localPosition.z) > tileSize * (0.5f - tileDetectionPadding))
+			if (Mathf.Abs(localPosition.x) > Board.tileSize * (0.5f - tileDetectionPadding) && Mathf.Abs(localPosition.z) > Board.tileSize * (0.5f - tileDetectionPadding))
 			{
-				return Vector2.SqrMagnitude(new Vector2(Mathf.Abs(localPosition.x), Mathf.Abs(localPosition.z)) - Vector2.one * tileSize * (0.5f - tileDetectionPadding)) <= radius * radius;
+				return Vector2.SqrMagnitude(new Vector2(Mathf.Abs(localPosition.x), Mathf.Abs(localPosition.z)) - Vector2.one * Board.tileSize * (0.5f - tileDetectionPadding)) <= radius * radius;
 			}
 			else
 			{
-				return Mathf.Abs(localPosition.x) - tileSize * (0.5f - tileDetectionPadding) <= radius &&
-				Mathf.Abs(localPosition.z) - tileSize * (0.5f - tileDetectionPadding) <= radius;
+				return Mathf.Abs(localPosition.x) - Board.tileSize * (0.5f - tileDetectionPadding) <= radius &&
+					Mathf.Abs(localPosition.z) - Board.tileSize * (0.5f - tileDetectionPadding) <= radius;
 			}
 		}
 
@@ -481,15 +557,9 @@ namespace DiceRoller
 		/// </summary>
 		public bool IsInTile(Vector3 position, Vector3 size)
 		{
-			/*
-			return !(position.x - size.x * 0.5f < transform.position.x + tileSize * (0.5f - tileDetectionPadding) ||
-				position.x + size.x * 0.5f > transform.position.x - tileSize * (0.5f - tileDetectionPadding) ||
-				position.z - size.z * 0.5f < transform.position.z + tileSize * (0.5f - tileDetectionPadding) ||
-				position.z + size.z * 0.5f > transform.position.z - tileSize * (0.5f - tileDetectionPadding));
-			*/
 			Vector3 localPosition = transform.InverseTransformPoint(position);
-			return Mathf.Abs(localPosition.x) - tileSize * (0.5f - tileDetectionPadding) <= Mathf.Abs(size.x / 2) &&
-				Mathf.Abs(localPosition.z) - tileSize * (0.5f - tileDetectionPadding) <= Mathf.Abs(size.x / 2);	
+			return Mathf.Abs(localPosition.x) - Board.tileSize * (0.5f - tileDetectionPadding) <= Mathf.Abs(size.x / 2) &&
+				Mathf.Abs(localPosition.z) - Board.tileSize * (0.5f - tileDetectionPadding) <= Mathf.Abs(size.x / 2);	
 		}
 	}
 }

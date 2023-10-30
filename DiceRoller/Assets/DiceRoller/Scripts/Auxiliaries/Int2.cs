@@ -16,8 +16,12 @@ public struct Int2 : IEquatable<Int2>
 
     public static Int2 zero { get { return new Int2(0, 0); } }
     public static Int2 one { get { return new Int2(1, 1); } }
+
+    public static Int2 left { get { return new Int2(-1, 0); } }
     public static Int2 right { get { return new Int2(1, 0); } }
+    public static Int2 backward { get { return new Int2(0, -1); } }
     public static Int2 forward { get { return new Int2(0, 1); } }
+
     public static Int2 MinValue { get { return new Int2(int.MinValue, int.MinValue); } }
     public static Int2 MaxValue { get { return new Int2(int.MaxValue, int.MaxValue); } }
 

@@ -5,21 +5,21 @@ using UnityEditor;
 namespace DiceRoller
 {
 
-    [CustomEditor(typeof(Board))]
-    public class BoardEditor : Editor
+    [CustomEditor(typeof(BoardPiece))]
+    public class BoardPieceEditor : Editor
     {
         public override void OnInspectorGUI()
         {
             DrawDefaultInspector();
 
-            Board board = (Board)target;
+            BoardPiece boardPiece = (BoardPiece)target;
 
-            if (board == null || board.gameObject == null)
+            if (boardPiece == null || boardPiece.gameObject == null)
                 return;
 
-            if (GUILayout.Button("Regenerate"))
+            if (GUILayout.Button("Regenerate All Tiles"))
             {
-                board.RegenerateBoard();
+                boardPiece.RegenerateAllTiles();
             }
         }
 

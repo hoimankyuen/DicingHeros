@@ -13,3 +13,13 @@
 - Make unit indicator scale with distance?
 - Split namespaces ?
 - Make blocking obsticle
+- make cursor more useful
+- seperate item effect and item logic 
+- BoardPiece and related code may needed cleanup
+
+== Notes ==
+- Cursor rules
+  - Navigation
+    - 
+
+

@@ -12,26 +12,28 @@ namespace DiceRoller
 		// singleton
 		public static Board current { get; protected set; }
 
+		// shared parameters
+		public static float tileSize = 0.25f;
+		public static int boardPieceSize = 8;
+
+		[Header("Preset Board Pieces")]
+		public List<BoardPiece> presetBoardPieces = new List<BoardPiece>();
+
+		// events
+		public event Action OnBoardChanged = () => { };
+
 		// reference
 		private GameController game => GameController.current;
 
-		[Header("Board Setup")]
-		public float tileSize = 1f;
-		public int boardSizeX = 1;
-		public int boardSizeZ = 1;
-		public GameObject tilePrefab = null;
-
 		// working variables
+		private readonly Dictionary<Int2, BoardPiece> boardPieces = new Dictionary<Int2, BoardPiece>();
 		private readonly Dictionary<Int2, Tile> tiles = new Dictionary<Int2, Tile>();
 
 		// temp working variables
 		private readonly List<Tile> tempTileList = new List<Tile>();
 		private readonly HashSet<Tile> tempTileSet = new HashSet<Tile>();
 		private readonly List<TileRangePair> tempTileRangePairList = new List<TileRangePair>();
-		private readonly List<TilePathRangeHeuristicPair> tempTilePathRangeHeuristicPairList1 = new List<TilePathRangeHeuristicPair>();
-		private readonly List<TilePathRangeHeuristicPair> tempTilePathRangeHeuristicPairList2 = new List<TilePathRangeHeuristicPair>();
-		private readonly HashSet<TilePathRangeHeuristicPair> tempTilePathRangeHeuristicPairSet1 = new HashSet<TilePathRangeHeuristicPair>();
-		private readonly HashSet<TilePathRangeHeuristicPair> tempTilePathRangeHeuristicPairSet2 = new HashSet<TilePathRangeHeuristicPair>();
+
 
 		// ========================================================= Monobehaviour Methods =========================================================
 
@@ -42,7 +44,6 @@ namespace DiceRoller
 		private void Awake()
 		{
 			current = this;
-			RetrieveAllTiles();
 		}
 
 		/// <summary>
@@ -50,7 +51,7 @@ namespace DiceRoller
 		/// </summary>
 		private void Start()
 		{
-
+			SetupPresetBoardPieces();
 		}
 
 		/// <summary>
@@ -69,96 +70,90 @@ namespace DiceRoller
 			current = null;
 		}
 
-		// ========================================================= Editor =========================================================
+		// ========================================================= Board Piece =========================================================
 
-		#if UNITY_EDITOR
+		public float BoardUpdatedTime { get; private set; } = 0;
 
 		/// <summary>
-		/// Regenerate all components related to this board. Should only be called in editor.
+		/// Setup and connect the preset board pieces.
 		/// </summary>
-		public void RegenerateBoard()
+		private void SetupPresetBoardPieces()
 		{
-			for (int i = transform.childCount - 1; i >= 0; i--)
+			foreach (BoardPiece boardPiece in presetBoardPieces)
 			{
-				DestroyImmediate(transform.GetChild(i).gameObject);
-			}
-
-			List<List<Tile>> tileGrid = new List<List<Tile>>();
-			for (int i = 0; i < boardSizeX; i++)
-			{
-				tileGrid.Add(new List<Tile>());
-				for (int j = 0; j < boardSizeZ; j++)
-				{
-					GameObject go = UnityEditor.PrefabUtility.InstantiatePrefab(tilePrefab, transform) as GameObject;
-					go.transform.position = BoardPosToWorldPos(new Int2(i, j));
-					go.transform.rotation = Quaternion.identity;
-					Tile tile = go.GetComponent<Tile>();
-					tile.tileSize = tileSize;
-					tile.boardPos = new Int2(i, j);
-					tile.RegenerateTile();
-					tileGrid[i].Add(tile);
-				}
-			}
-
-			for (int i = 0; i < boardSizeX; i++)
-			{
-				for (int j = 0; j < boardSizeZ; j++)
-				{
-					if (i > 0)
-						tileGrid[i][j].connectedTiles.Add(tileGrid[i - 1][j]);
-					if (i < boardSizeX - 1)
-						tileGrid[i][j].connectedTiles.Add(tileGrid[i + 1][j]);
-					if (j > 0)
-						tileGrid[i][j].connectedTiles.Add(tileGrid[i][j - 1]);
-					if (j < boardSizeZ - 1)
-						tileGrid[i][j].connectedTiles.Add(tileGrid[i][j + 1]);
-				}
+				AddBoardPiece(boardPiece);
 			}
 		}
 
-		#endif
-
-		// ========================================================= Position Conversion =========================================================
-
 		/// <summary>
-		/// Convert any board position to a world position.
+		/// Add a board piece to become part of the board.
 		/// </summary>
-		private Vector3 BoardPosToWorldPos(Int2 boardPos)
+		public void AddBoardPiece(BoardPiece boardPiece)
 		{
-			return new Vector3(
-				(boardPos.x - (float)(boardSizeX - 1) / 2) * tileSize,
-				0.001f,
-				(boardPos.z - (float)(boardSizeZ - 1) / 2) * tileSize);
-		}
+			// finailze the positions, board should not move after here
+			boardPiece.UpateAllTilesPositions();
 
-		/// <summary>
-		/// Convert any world position to the nearest board position.
-		/// </summary>
-		private Int2 WorldPosToBoardPos(Vector3 worldPos)
-		{
-			return new Int2(
-				Convert.ToInt32(worldPos.x / tileSize + (float)(boardSizeX - 1) / 2),
-				Convert.ToInt32(worldPos.z / tileSize + (float)(boardSizeZ - 1) / 2));
-		}
-
-		// ========================================================= Tiles =========================================================
-
-		/// <summary>
-		/// Retrieve all available tiles of this board.
-		/// </summary>
-		private void RetrieveAllTiles()
-		{
-			for (int i = 0; i < transform.childCount; i++)
+			// add board pieces and its tiles
+			boardPieces[boardPiece.boardPiecePos] = boardPiece;
+			foreach (Tile tile in boardPiece.Tiles)
 			{
-				if (transform.GetChild(i).gameObject.activeInHierarchy)
+				tiles[tile.BoardPos] = tile;
+			}
+
+			// connect tiles from existing tiles to new tiles
+			Int2[] directions = new Int2[] { Int2.left, Int2.forward, Int2.right, Int2.backward };
+			Int2[] startingPoints = new Int2[] { new Int2(0, 0), new Int2(0, boardPieceSize - 1), new Int2(boardPieceSize - 1, boardPieceSize - 1), new Int2(boardPieceSize - 1, 0) };
+			Int2 tilePos1, tilePos2;
+			for (int i = 0; i < directions.Length; i++)
+			{
+				for (int j = 0; j < boardPieceSize; j++)
 				{
-					Tile tile = transform.GetChild(i).GetComponent<Tile>();
-					if (tile != null)
+					tilePos1 = boardPiece.ToGlobalBoard(startingPoints[i] + directions[(i + 1) % 4] * j);
+					tilePos2 = tilePos1 + directions[i];
+					if (tiles.ContainsKey(tilePos1) && tiles.ContainsKey(tilePos2))
 					{
-						tiles[tile.boardPos] = tile;
+						tiles[tilePos1].Connect(tiles[tilePos2], directions[i]);
+						tiles[tilePos2].Connect(tiles[tilePos1], directions[i] * -1);
 					}
 				}
 			}
+
+			BoardUpdatedTime = Time.time;
+			OnBoardChanged.Invoke();
+		}
+
+		/// <summary>
+		/// Remove a board piece form the board.
+		/// </summary>
+		public void RemoveBoardPiece(BoardPiece boardPiece)
+		{
+			// disconnect tiles from other tiles to removeing tiles
+			Int2[] directions = new Int2[] { Int2.left, Int2.forward, Int2.right, Int2.backward };
+			Int2[] startingPoints = new Int2[] { new Int2(0, 0), new Int2(0, boardPieceSize - 1), new Int2(boardPieceSize - 1, boardPieceSize - 1), new Int2(boardPieceSize - 1, 0) };
+			Int2 tilePos1, tilePos2;
+			for (int i = 0; i < directions.Length; i++)
+			{
+				for (int j = 0; j < boardPieceSize; j++)
+				{
+					tilePos1 = boardPiece.ToGlobalBoard(startingPoints[i] + directions[(i + 1) % 4] * j);
+					tilePos2 = tilePos1 + directions[i];
+					if (tiles.ContainsKey(tilePos1) && tiles.ContainsKey(tilePos2))
+					{
+						tiles[tilePos1].Connect(null, directions[i]);
+						tiles[tilePos2].Connect(null, directions[i] * -1);
+					}
+				}
+			}
+
+			// remove board pieces and its tiles
+			boardPieces.Remove(boardPiece.boardPiecePos);
+			foreach (Tile tile in boardPiece.Tiles)
+			{
+				tiles.Remove(tile.BoardPos);
+			}
+
+			BoardUpdatedTime = Time.time;
+			OnBoardChanged.Invoke();
 		}
 
 		// ========================================================= Properties (HoveringTile) =========================================================
@@ -240,8 +235,12 @@ namespace DiceRoller
 		{
 			result.Clear();
 
-			Int2 minBoardPos = WorldPosToBoardPos(position) - Int2.one * Mathf.CeilToInt(size / tileSize);
-			Int2 maxBoardPos = WorldPosToBoardPos(position) + Int2.one * Mathf.CeilToInt(size / tileSize);
+			// base board piece (board piece(0, 0)) must exist if board is valid
+			if (!boardPieces.ContainsKey(Int2.zero))
+				return;
+
+			Int2 minBoardPos = boardPieces[Int2.zero].WorldToLocalBoard(position) - Int2.one * Mathf.CeilToInt(size / tileSize);
+			Int2 maxBoardPos = boardPieces[Int2.zero].WorldToLocalBoard(position) + Int2.one * Mathf.CeilToInt(size / tileSize);
 
 			for (int i = minBoardPos.x; i <= maxBoardPos.x; i++)
 			{
@@ -295,10 +294,10 @@ namespace DiceRoller
 			// calculate the bound of starting tiles
 			Int2 min = Int2.MaxValue;
 			Int2 max = Int2.MinValue;
-			min.x = startingTiles.Select(tile => tile.boardPos.x).Min();
-			min.z = startingTiles.Select(tile => tile.boardPos.z).Min();
-			max.x = startingTiles.Select(tile => tile.boardPos.x).Max();
-			max.z = startingTiles.Select(tile => tile.boardPos.z).Max();
+			min.x = startingTiles.Select(tile => tile.BoardPos.x).Min();
+			min.z = startingTiles.Select(tile => tile.BoardPos.z).Min();
+			max.x = startingTiles.Select(tile => tile.BoardPos.x).Max();
+			max.z = startingTiles.Select(tile => tile.BoardPos.z).Max();
 
 			// search for tiles within range on a subset of all tiles
 			for (int x = min.x - range; x <= max.x + range; x++)
@@ -352,11 +351,11 @@ namespace DiceRoller
 				// explore its connections
 				if (current.range > 0)
 				{
-					foreach (Tile connectedTile in current.tile.connectedTiles)
+					foreach (Tile connectedTile in current.tile.ConnectedTiles)
 					{
 						if (connectedTile == null)
 							continue;
-						if (!connectedTile.active)
+						if (!connectedTile.Active)
 							continue;
 						if (excludedTiles != null && excludedTiles.Contains(connectedTile))
 							continue;
@@ -373,23 +372,17 @@ namespace DiceRoller
 
 		// ========================================================= Shortest Path ========================================================
 
-
-		private struct TilePathRangeHeuristicPair
+		private class TileCHeuristicomparer : IComparer<Tile>
 		{
-			public Tile tile;
-			public Tile previous;
-			public int g;
-			public int f;
-		}
-
-		private class TilePathRangeHeuristicPairComparer : IComparer<TilePathRangeHeuristicPair>
-		{
-			public int Compare(TilePathRangeHeuristicPair a, TilePathRangeHeuristicPair b)
+			public int Compare(Tile a, Tile b)
 			{
-				return a.f.CompareTo(b.f);
+				return a.pathFindingF.CompareTo(b.pathFindingF);
 			}
 		}
-		private TilePathRangeHeuristicPairComparer tilePathRangeHeuristicPairComparer = new TilePathRangeHeuristicPairComparer();
+		private TileCHeuristicomparer tileHeuristicComparer = new TileCHeuristicomparer();
+
+		private readonly List<Tile> tempOpen = new List<Tile>();
+		private readonly List<Tile> tempClosed = new List<Tile>();
 
 		/// <summary>
 		/// Find the shortest path between a set of starting tile(s) to a specific target tile.
@@ -423,10 +416,17 @@ namespace DiceRoller
 		/// </summary>
 		public void GetShortestPath(IEnumerable<Tile> startingTiles, IEnumerable<Tile> excludedTiles, Tile targetTile, int range, List<Tile> result)
 		{
+			void ClearTempInfo(Tile tile)
+			{
+				tile.pathFindingPrev = null;
+				tile.pathFindingG = 0;
+				tile.pathFindingF = 0;
+			}
+
 			// prepare containers
 			HashSet<Tile> excludedTileSet = tempTileSet;
-			List<TilePathRangeHeuristicPair> open = tempTilePathRangeHeuristicPairList1;
-			List<TilePathRangeHeuristicPair> closed = tempTilePathRangeHeuristicPairList2;
+			List<Tile> open = tempOpen;
+			List<Tile> closed = tempClosed;
 			excludedTileSet.Clear();
 			open.Clear();
 			closed.Clear();
@@ -441,14 +441,8 @@ namespace DiceRoller
 					return;
 				}
 
-				open.Add(new TilePathRangeHeuristicPair()
-				{ 
-					tile = startingTile,
-					previous = null,
-					g = 0,
-					//f = Vector3.Distance(startingTile.worldPos, targetTile.worldPos) 
-					f = 0
-				});
+				ClearTempInfo(startingTile);
+				open.Add(startingTile);
 			}
 
 			// setup exculded tile set for faster access
@@ -461,57 +455,57 @@ namespace DiceRoller
 			while (open.Count > 0)
 			{
 				// get the tile in the open list with the smallest heuristic, since the list is always sorted, the first elements should suffice
-				TilePathRangeHeuristicPair q = open[0];
+				Tile q = open[0];
 				open.RemoveAt(0);
 
 				// check if solution is already found, return path if so
-				if (q.tile == targetTile)
+				if (q == targetTile)
 				{
-					result.Add(q.tile);
+					result.Add(q);
 					do
 					{
-						if (q.previous != null)
+						if (q.pathFindingPrev != null)
 						{
-							result.Add(q.previous);
-							q = closed.FirstOrDefault(x => x.tile == q.previous);
+							result.Add(q.pathFindingPrev);
+							q = q.pathFindingPrev;
 						}
 					}
-					while (q.previous != null);
+					while (q.pathFindingPrev != null);
 					result.Reverse();
 
+					open.ForEach(ClearTempInfo);
 					open.Clear();
+					closed.ForEach(ClearTempInfo);
 					closed.Clear();
 					return;
 				}
 
 				// explore its connections
-				if (q.g < range)
+				if (q.pathFindingG < range)
 				{
-					foreach (Tile r in q.tile.connectedTiles)
+					foreach (Tile r in q.ConnectedTiles)
 					{
-						if (!r.active)
+						if (r == null)
+							continue;
+						if (!r.Active)
 							continue;
 						if (excludedTileSet.Contains(r))
 							continue;
 
-						int g = q.g + 1;
-						int h = Int2.GridDistance(r.boardPos, targetTile.boardPos);
+						int g = q.pathFindingG + 1;
+						int h = Int2.GridDistance(r.BoardPos, targetTile.BoardPos);
 						int f = g + h;
 
-						if (open.Exists(x => x.tile == r && x.f <= f))
+						if (open.Contains(r))
 							continue;
-						if (closed.Exists(x => x.tile == r && x.f <= f))
+						if (closed.Contains(r))
 							continue;
 
-						TilePathRangeHeuristicPair newPair = new TilePathRangeHeuristicPair()
-						{
-							tile = r,
-							previous = q.tile,
-							g = g,
-							f = f
-						};
-						int index = open.BinarySearch(newPair, tilePathRangeHeuristicPairComparer);
-						open.Insert(index < 0 ? ~index : index, newPair);
+						r.pathFindingPrev = q;
+						r.pathFindingG = g;
+						r.pathFindingF = f;
+						int index = open.BinarySearch(r, tileHeuristicComparer);
+						open.Insert(index < 0 ? ~index : index, r);
 					}
 				}
 
@@ -520,9 +514,12 @@ namespace DiceRoller
 			}
 
 			// completed without a path found
+			open.ForEach(ClearTempInfo);
+			open.Clear();
+			closed.ForEach(ClearTempInfo);
+			closed.Clear();
 			open.Clear();
 			closed.Clear();
-			return;
 		}
 
 		// ========================================================= Display Area =========================================================
@@ -594,11 +591,11 @@ namespace DiceRoller
 				{
 					if (show)
 					{
-						tile.UpdateDisplayAs(Info.holder, Info.displayType, Tiles);
+						tile.UpdateAreaDisplayAs(Info.holder, Info.displayType, Tiles);
 					}
 					else
 					{
-						tile.RemoveDisplay(Info.holder, Info.displayType);
+						tile.RemoveAreaDisplay(Info.holder, Info.displayType);
 					}
 				}
 			}

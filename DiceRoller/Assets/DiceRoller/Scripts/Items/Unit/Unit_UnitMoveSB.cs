@@ -61,7 +61,7 @@ namespace DiceRoller
 				{
 					Vector3 startPosition = self.transform.position;
 					startTime = Time.time;
-					duration = Vector3.Distance(startPosition, path[0].transform.position) / path[0].tileSize * self.moveTimePerTile;
+					duration = Vector3.Distance(startPosition, path[0].transform.position) / Board.tileSize * self.moveTimePerTile;
 					while (Time.time - startTime <= duration)
 					{
 						self.rigidBody.MovePosition(Vector3.Lerp(startPosition, path[0].transform.position, (Time.time - startTime) / duration));
