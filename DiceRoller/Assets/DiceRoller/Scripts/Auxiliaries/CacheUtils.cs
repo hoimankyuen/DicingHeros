@@ -35,8 +35,34 @@ public class CacheUtils
 		}
 	}
 
-	public static void ResetValueCache<T>(ref T cache)
+	public static void ResetValueCache<T>(ref T cache) where T : IEquatable<T>
 	{
+		cache = default;
+	}
+
+	// ========================================================= Cached Enum =========================================================
+
+	public static bool HasEnumChanged<T>(T target, ref T cache) where T : IConvertible
+	{
+		if (!typeof(T).IsEnum)
+			throw new ArgumentException("T must be an enumerated type");
+
+		if (target.ToInt32(null) != cache.ToInt32(null))
+		{
+			cache = target;
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	public static void ResetEnumCache<T>(ref T cache) where T : IConvertible
+	{
+		if (!typeof(T).IsEnum)
+			throw new ArgumentException("T must be an enumerated type");
+
 		cache = default;
 	}
 

@@ -175,6 +175,122 @@ namespace DiceRoller
 			}
 		}
 
+		// ========================================================= Properties (IsBlocking) =========================================================
+
+		/// <summary>
+		/// Flag for if this unit is currently blocking a movement.
+		/// </summary>
+		public bool IsBlocking
+		{
+			get
+			{
+				return _BlockingUnits.Contains(this);
+			}
+			private set
+			{
+				if (!_BlockingUnits.Contains(this) && value)
+				{
+					_BlockingUnits.Add(this);
+					OnBlockingChanged.Invoke();
+					OnAnyBlockingChanged.Invoke();
+				}
+				else if (_BlockingUnits.Contains(this) && !value)
+				{
+					_BlockingUnits.Remove(this);
+					OnBlockingChanged.Invoke();
+					OnAnyBlockingChanged.Invoke();
+				}
+			}
+		}
+		private readonly static UniqueList<Unit> _BlockingUnits = new UniqueList<Unit>();
+
+		/// <summary>
+		/// Event raised when the blocking status of this unit is changed.
+		/// </summary>
+		public event Action OnBlockingChanged = () => { };
+
+		/// <summary>
+		/// Event raised when the list of units blocking a movement is changed.
+		/// </summary>
+		public static event Action OnAnyBlockingChanged = () => { };
+
+		/// <summary>
+		/// Retrieve all units currently blocking a movement.
+		/// </summary>
+		public static IReadOnlyCollection<Unit> GetAllBlocking()
+		{
+			return _BlockingUnits.AsReadOnly();
+		}
+
+		/// <summary>
+		/// Clear the list of unit currently blocking a movement. 
+		/// /// </summary>
+		public static void ClearBlockingUnits()
+		{
+			for (int i = _BlockingUnits.Count - 1; i >= 0; i--)
+			{
+				_BlockingUnits[i].IsBlocking = false;
+			}
+		}
+
+		// ========================================================= Properties (IsTargetable) =========================================================
+
+		/// <summary>
+		/// Flag for if this unit is currently targetable.
+		/// </summary>
+		public bool IsTargetable
+		{
+			get
+			{
+				return _TargetableUnits.Contains(this);
+			}
+			private set
+			{
+				if (!_TargetableUnits.Contains(this) && value)
+				{
+					_TargetableUnits.Add(this);
+					OnTargetableChanged.Invoke();
+					OnAnyTargetableChanged.Invoke();
+				}
+				else if (_TargetableUnits.Contains(this) && !value)
+				{
+					_TargetableUnits.Remove(this);
+					OnTargetableChanged.Invoke();
+					OnAnyTargetableChanged.Invoke();
+				}
+			}
+		}
+		private readonly static UniqueList<Unit> _TargetableUnits = new UniqueList<Unit>();
+
+		/// <summary>
+		/// Event raised when the targetable status of this unit is changed.
+		/// </summary>
+		public event Action OnTargetableChanged = () => { };
+
+		/// <summary>
+		/// Event raised when the list of units targetable is changed.
+		/// </summary>
+		public static event Action OnAnyTargetableChanged = () => { };
+
+		/// <summary>
+		/// Retrieve all currently targetable unit.
+		/// </summary>
+		public static IReadOnlyCollection<Unit> GetAllTargetable()
+		{
+			return _TargetableUnits.AsReadOnly();
+		}
+
+		/// <summary>
+		/// Clear the list of selected unit. 
+		/// /// </summary>
+		public static void ClearTargetableUnits()
+		{
+			for (int i = _TargetableUnits.Count - 1; i >= 0; i--)
+			{
+				_TargetableUnits[i].IsTargetable = false;
+			}
+		}
+
 		// ========================================================= Properties (IsBeingInspected) =========================================================
 
 		/// <summary>
@@ -192,17 +308,17 @@ namespace DiceRoller
 				{
 					_InspectingUnits.Add(this);
 					OnInspectionChanged.Invoke();
-					OnItemBeingInspectedChanged.Invoke();
+					OnAnyBeingInspectedChanged.Invoke();
 				}
 				else if (_InspectingUnits.Contains(this) && !value)
 				{
 					_InspectingUnits.Remove(this);
 					OnInspectionChanged.Invoke();
-					OnItemBeingInspectedChanged.Invoke();
+					OnAnyBeingInspectedChanged.Invoke();
 				}
 			}
 		}
-		private static UniqueList<Unit> _InspectingUnits = new UniqueList<Unit>();
+		private readonly static UniqueList<Unit> _InspectingUnits = new UniqueList<Unit>();
 
 		/// <summary>
 		/// Event raised when the inspection status of this unit is changed.
@@ -212,7 +328,7 @@ namespace DiceRoller
 		/// <summary>
 		/// Event raised when the the list of units being inspected is changed.
 		/// </summary>
-		public static event Action OnItemBeingInspectedChanged = () => { };
+		public static event Action OnAnyBeingInspectedChanged = () => { };
 
 		/// <summary>
 		/// Retrieve the first unit being currently inspected, return null if none is being inspected.
@@ -247,27 +363,27 @@ namespace DiceRoller
 				{
 					_SelectedUnits.Add(this);
 					OnSelectionChanged.Invoke();
-					OnItemSelectedChanged.Invoke();
+					OnAnySelectedChanged.Invoke();
 				}
 				else if (_SelectedUnits.Contains(this) && !value)
 				{
 					_SelectedUnits.Remove(this);
 					OnSelectionChanged.Invoke();
-					OnItemSelectedChanged.Invoke();
+					OnAnySelectedChanged.Invoke();
 				}
 			}
 		}
-		private static UniqueList<Unit> _SelectedUnits = new UniqueList<Unit>();
+		private readonly static UniqueList<Unit> _SelectedUnits = new UniqueList<Unit>();
 
 		/// <summary>
-		/// Event raised when the selection status of this die is changed.
+		/// Event raised when the selection status of this unit is changed.
 		/// </summary>
 		public event Action OnSelectionChanged = () => { };
 
 		/// <summary>
 		/// Event raised when the list of units selected is changed.
 		/// </summary>
-		public static event Action OnItemSelectedChanged = () => { };
+		public static event Action OnAnySelectedChanged = () => { };
 
 		/// <summary>
 		/// Retrieve the first currently selected unit, return null if none is selected.
@@ -298,6 +414,7 @@ namespace DiceRoller
 
 		// ========================================================= Properties (IsBeingDragged) =========================================================
 
+		/*
 		/// <summary>
 		/// Flag for if this unit is currently begin dragged.
 		/// </summary>
@@ -342,6 +459,7 @@ namespace DiceRoller
 		{
 			return _DraggingUnits.Count > 0 ? _DraggingUnits[0] : null;
 		}
+		*/
 
 		// ========================================================= Properties (Health) =========================================================
 
@@ -455,9 +573,6 @@ namespace DiceRoller
 		/// Event raised when the physical attack stat of this unit is changed.
 		/// </summary>
 		public event Action OnPhysicalAttackChanged = () => { };
-
-		/// <summary>
-		
 
 		/// <summary>
 		/// The current magical defence value of this unit.
@@ -983,7 +1098,9 @@ namespace DiceRoller
 				board.OnBoardChanged += SetPredictedAttakableAreaDirty;
 			OnMoveableAreaDirty += SetPredictedAttakableAreaDirty;
 			OnAttackAreaRuleChanged += SetPredictedAttakableAreaDirty;
+			OnCurrentAttackTypeChanged += SetPredictedAttakableAreaDirty;
 			OnPhysicalRangeChanged += SetPredictedAttakableAreaDirty;
+			OnMagicalRangeChanged += SetPredictedAttakableAreaDirty;
 		}
 
 		/// <summary>
@@ -995,7 +1112,9 @@ namespace DiceRoller
 				board.OnBoardChanged -= SetPredictedAttakableAreaDirty;
 			OnMoveableAreaDirty -= SetPredictedAttakableAreaDirty;
 			OnAttackAreaRuleChanged -= SetPredictedAttakableAreaDirty;
+			OnCurrentAttackTypeChanged -= SetPredictedAttakableAreaDirty;
 			OnPhysicalRangeChanged -= SetPredictedAttakableAreaDirty;
+			OnMagicalRangeChanged -= SetPredictedAttakableAreaDirty;
 		}
 
 		/// <summary>
@@ -1015,7 +1134,14 @@ namespace DiceRoller
 		/// </summary>
 		private void RefreshPredictedAttackableArea()
 		{
-			board.GetTilesByRule(MovableArea, AttackAreaRule, PhysicalRange, _PredictedAttackableArea);
+			if (CurrentAttackType == AttackType.Physical)
+			{
+				board.GetTilesByRule(MovableArea, AttackAreaRule, PhysicalRange, _PredictedAttackableArea);
+			}
+			else
+			{
+				board.GetTilesByRule(MovableArea, AttackAreaRule, MagicalRange, _PredictedAttackableArea);
+			}
 			_IsPredictedAttackableAreaDirty = false;
 		}
 
@@ -1155,25 +1281,7 @@ namespace DiceRoller
 			{
 				if (_CurrentUnitState != value)
 				{
-					switch (value)
-					{
-						case UnitState.Standby:
-							ShowEffect(EffectType.Depleted, false);
-							IsHidden = false;
-							break;
-						case UnitState.Moved:
-							ShowEffect(EffectType.Depleted, false);
-							IsHidden = false;
-							break;
-						case UnitState.Depleted:				
-							ShowEffect(EffectType.Depleted, true);
-							IsHidden = false;
-							break;
-						case UnitState.Defeated:
-							ShowEffect(EffectType.Depleted, false);
-							IsHidden = true;
-							break;
-					}
+					IsHidden = value == UnitState.Defeated;
 
 					_CurrentUnitState = value;
 					OnUnitStateChange.Invoke();

@@ -455,11 +455,11 @@ namespace DiceRoller
 
 				if (isUserSelectedAtEnter)
 				{
-					if (stateMachine.State == SMState.UnitMoveSelect && self.Type == EquipmentType.MovementBuff)
+					if (stateMachine.CurrentState == SMState.UnitMoveSelect && self.Type == EquipmentType.MovementBuff)
 					{
 
 					}
-					else if (stateMachine.State == SMState.UnitMoveSelect &&  (self.Type == EquipmentType.MeleeAttack || self.Type == EquipmentType.MagicAttack))
+					else if (stateMachine.CurrentState == SMState.UnitMoveSelect &&  (self.Type == EquipmentType.MeleeAttack || self.Type == EquipmentType.MagicAttack))
 					{
 
 					}

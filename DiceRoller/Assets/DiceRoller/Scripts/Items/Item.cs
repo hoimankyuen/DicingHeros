@@ -450,9 +450,9 @@ namespace DiceRoller
 		/// </summary>
 		private void DetectTilesOccupation()
 		{
-			if (!IsMoving && (Vector3.SqrMagnitude(transform.position - _LastOccupiedPosition) > 0.00000001f || _LastIsHidden != IsHidden || board.BoardUpdatedTime != _LastBoardUpdatedTime))
+			if (!IsMoving && (Vector3.SqrMagnitude(transform.position - _LastOccupiedPosition) > 0.00000001f || IsHidden != _LastIsHidden || board.BoardUpdatedTime != _LastBoardUpdatedTime))
 			{
-				// retrieve tile that this item are in.
+				// retrieve tile that this item are in
 				if (IsHidden)
 				{
 					_OccupiedTiles.Clear();
@@ -479,8 +479,6 @@ namespace DiceRoller
 					// update cache
 					_LastOccupiedTiles.Clear();
 					_LastOccupiedTiles.AddRange(_OccupiedTiles);
-					_LastIsHidden = IsHidden;
-					_LastBoardUpdatedTime = board.BoardUpdatedTime;
 
 					// raise event
 					OnOccupiedTilesChanged.Invoke();
@@ -488,6 +486,8 @@ namespace DiceRoller
 
 				// update cache
 				_LastOccupiedPosition = transform.position;
+				_LastIsHidden = IsHidden;
+				_LastBoardUpdatedTime = board.BoardUpdatedTime;
 			}
 		}
 
@@ -537,6 +537,7 @@ namespace DiceRoller
 
 		// ========================================================= Effects =========================================================
 
+		/*
 		private HashSet<EffectType> effectSet = new HashSet<EffectType>();
 
 		/// <summary>
@@ -580,5 +581,6 @@ namespace DiceRoller
 		{
 			ShowEffect(effectType, false);
 		}
+		*/
 	}
 }

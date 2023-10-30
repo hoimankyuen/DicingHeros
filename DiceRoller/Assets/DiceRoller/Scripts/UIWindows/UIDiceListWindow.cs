@@ -105,7 +105,7 @@ namespace DiceRoller
 
 		protected void RefreshButton()
 		{
-			allButton.interactable = stateMachine.State == SMState.Navigation || stateMachine.State == SMState.DiceActionSelect;
+			allButton.interactable = stateMachine.CurrentState == SMState.Navigation || stateMachine.CurrentState == SMState.DiceActionSelect;
 		}
 
 		public void SelectAll()

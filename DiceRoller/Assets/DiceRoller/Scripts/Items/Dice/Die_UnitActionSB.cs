@@ -14,6 +14,8 @@ namespace DiceRoller
 			// caches
 			private bool lastIsHovering = false;
 
+			// ========================================================= Constructor =========================================================
+
 			/// <summary>
 			/// Constructor.
 			/// </summary>
@@ -22,12 +24,16 @@ namespace DiceRoller
 				this.self = self;
 			}
 
+			// ========================================================= State Enter Methods =========================================================
+
 			/// <summary>
 			/// OnStateEnter is called when the centralized state machine is entering the current state.
 			/// </summary>
 			public override void OnStateEnter()
 			{
 			}
+
+			// ========================================================= State Update Methods =========================================================
 
 			/// <summary>
 			/// OnStateUpdate is called each frame when the centralized state machine is in the current state.
@@ -38,11 +44,10 @@ namespace DiceRoller
 				{
 					if (self.CurrentDieState == DieState.Casted || self.CurrentDieState == DieState.Assigned)
 					{
-						// show dice info on ui
+						// inspect the die being hovering on
 						if (CacheUtils.HasValueChanged(self.IsHovering, ref lastIsHovering))
 						{
 							self.IsBeingInspected = self.IsHovering;
-							self.ShowEffect(EffectType.InspectingSelf, self.IsHovering);
 						}
 
 						// drag dice
@@ -71,9 +76,10 @@ namespace DiceRoller
 							}
 						}
 					}
-					
 				}
 			}
+
+			// ========================================================= State Exit Methods =========================================================
 
 			/// <summary>
 			/// OnStateExit is called when the centralized state machine is leaving the current state.
@@ -84,11 +90,10 @@ namespace DiceRoller
 				{
 					if (self.CurrentDieState == DieState.Casted || self.CurrentDieState == DieState.Assigned)
 					{
-						// hide dice info on ui
+						// stop inspection due to hovering
 						if (self.IsBeingInspected)
 						{
 							self.IsBeingInspected = false;
-							self.ShowEffect(EffectType.InspectingSelf, false);
 						}
 
 						// stop drag

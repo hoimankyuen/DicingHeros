@@ -38,7 +38,7 @@ namespace DiceRoller
 		/// </summary>
 		private void Start()
 		{
-			SetTarget(null);
+			SetTarget(Target);
 
 			if (Target != null)
 			{

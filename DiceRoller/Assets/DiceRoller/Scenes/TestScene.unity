@@ -671,7 +671,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1753761356127274987, guid: 82a15bcb9e77a18479ed345bfecfb552, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0.625
+      value: -0.471
       objectReference: {fileID: 0}
     - target: {fileID: 1753761356127274987, guid: 82a15bcb9e77a18479ed345bfecfb552, type: 3}
       propertyPath: m_LocalPosition.y
@@ -679,7 +679,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1753761356127274987, guid: 82a15bcb9e77a18479ed345bfecfb552, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -0.125
+      value: 0.02
       objectReference: {fileID: 0}
     - target: {fileID: 1753761356127274987, guid: 82a15bcb9e77a18479ed345bfecfb552, type: 3}
       propertyPath: m_LocalRotation.w
@@ -716,6 +716,10 @@ PrefabInstance:
     - target: {fileID: 1753761356127274988, guid: 82a15bcb9e77a18479ed345bfecfb552, type: 3}
       propertyPath: m_IsActive
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1753761356127274989, guid: 82a15bcb9e77a18479ed345bfecfb552, type: 3}
+      propertyPath: name
+      value: Pawn B3
       objectReference: {fileID: 0}
     - target: {fileID: 1753761356127274989, guid: 82a15bcb9e77a18479ed345bfecfb552, type: 3}
       propertyPath: playerId
@@ -10087,6 +10091,10 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 2171602984651743408, guid: 8be2a16213d6f9747920c45e0b718489, type: 3}
+      propertyPath: name
+      value: Bishop B
+      objectReference: {fileID: 0}
+    - target: {fileID: 2171602984651743408, guid: 8be2a16213d6f9747920c45e0b718489, type: 3}
       propertyPath: playerId
       value: 1
       objectReference: {fileID: 0}
@@ -13459,6 +13467,10 @@ PrefabInstance:
     - target: {fileID: 1753761356127274988, guid: 82a15bcb9e77a18479ed345bfecfb552, type: 3}
       propertyPath: m_IsActive
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1753761356127274989, guid: 82a15bcb9e77a18479ed345bfecfb552, type: 3}
+      propertyPath: name
+      value: Pawn B4
       objectReference: {fileID: 0}
     - target: {fileID: 1753761356127274989, guid: 82a15bcb9e77a18479ed345bfecfb552, type: 3}
       propertyPath: playerId
@@ -18628,6 +18640,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 1753761356127274989, guid: 82a15bcb9e77a18479ed345bfecfb552, type: 3}
+      propertyPath: name
+      value: Pawn A1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 82a15bcb9e77a18479ed345bfecfb552, type: 3}
 --- !u!1001 &1069479034
@@ -18754,6 +18770,10 @@ PrefabInstance:
     - target: {fileID: 2973144738470813538, guid: 607c6a810c0502c46ab956c023f1929c, type: 3}
       propertyPath: m_IsActive
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2973144738470813539, guid: 607c6a810c0502c46ab956c023f1929c, type: 3}
+      propertyPath: name
+      value: Castle B
       objectReference: {fileID: 0}
     - target: {fileID: 2973144738470813539, guid: 607c6a810c0502c46ab956c023f1929c, type: 3}
       propertyPath: playerId
@@ -21864,6 +21884,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 1753761356127274989, guid: 82a15bcb9e77a18479ed345bfecfb552, type: 3}
+      propertyPath: name
+      value: Pawn A4
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 82a15bcb9e77a18479ed345bfecfb552, type: 3}
 --- !u!1001 &1199366450
@@ -22497,6 +22521,10 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1753761356127274989, guid: 82a15bcb9e77a18479ed345bfecfb552, type: 3}
+      propertyPath: name
+      value: Pawn B1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1753761356127274989, guid: 82a15bcb9e77a18479ed345bfecfb552, type: 3}
       propertyPath: playerId
       value: 1
       objectReference: {fileID: 0}
@@ -22796,6 +22824,10 @@ PrefabInstance:
     - target: {fileID: 1753761356127274988, guid: 82a15bcb9e77a18479ed345bfecfb552, type: 3}
       propertyPath: m_IsActive
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1753761356127274989, guid: 82a15bcb9e77a18479ed345bfecfb552, type: 3}
+      propertyPath: name
+      value: Pawn B2
       objectReference: {fileID: 0}
     - target: {fileID: 1753761356127274989, guid: 82a15bcb9e77a18479ed345bfecfb552, type: 3}
       propertyPath: playerId
@@ -30854,6 +30886,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 1753761356127274989, guid: 82a15bcb9e77a18479ed345bfecfb552, type: 3}
+      propertyPath: name
+      value: Pawn A3
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 82a15bcb9e77a18479ed345bfecfb552, type: 3}
 --- !u!1 &1709438463
@@ -37237,7 +37273,7 @@ GameObject:
   - component: {fileID: 2074973957}
   - component: {fileID: 2074973956}
   m_Layer: 0
-  m_Name: BaseBoard
+  m_Name: BaseScene
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -39225,6 +39261,10 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 2171602984651743408, guid: 8be2a16213d6f9747920c45e0b718489, type: 3}
+      propertyPath: name
+      value: Bishop A
+      objectReference: {fileID: 0}
     - target: {fileID: 2171602984651743409, guid: 8be2a16213d6f9747920c45e0b718489, type: 3}
       propertyPath: m_Name
       value: UnitBishop
@@ -39293,6 +39333,10 @@ PrefabInstance:
     - target: {fileID: 2973144738470813538, guid: 607c6a810c0502c46ab956c023f1929c, type: 3}
       propertyPath: m_IsActive
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2973144738470813539, guid: 607c6a810c0502c46ab956c023f1929c, type: 3}
+      propertyPath: name
+      value: Castle A
       objectReference: {fileID: 0}
     - target: {fileID: 2973144738470813541, guid: 607c6a810c0502c46ab956c023f1929c, type: 3}
       propertyPath: m_RootOrder
@@ -39604,6 +39648,10 @@ PrefabInstance:
     - target: {fileID: 1753761356127274988, guid: 82a15bcb9e77a18479ed345bfecfb552, type: 3}
       propertyPath: m_IsActive
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1753761356127274989, guid: 82a15bcb9e77a18479ed345bfecfb552, type: 3}
+      propertyPath: name
+      value: Pawn A2
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 82a15bcb9e77a18479ed345bfecfb552, type: 3}

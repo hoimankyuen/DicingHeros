@@ -39,11 +39,6 @@ namespace DiceRoller
 				// actions for the selected unit
 				if (isSelectedAtEnter)
 				{
-					isSelectedAtEnter = true;
-
-					// show selection effect
-					self.ShowEffect(EffectType.SelectedSelf, true);
-
 					// show occupied tiles on board, assume unit wont move during movement selection state
 					board.ShowArea(self, Tile.DisplayType.SelfPosition, self.OccupiedTiles);
 				}
@@ -79,9 +74,6 @@ namespace DiceRoller
 				// actions for the selected unit
 				if (isSelectedAtEnter)
 				{
-					// hide selection effect
-					self.ShowEffect(EffectType.SelectedSelf, false);
-
 					// hide occupied tiles on board
 					board.HideArea(self, Tile.DisplayType.SelfPosition);
 					
@@ -95,7 +87,7 @@ namespace DiceRoller
 
 		public void CancelDepletedSelect()
 		{
-			if (stateMachine.State == SMState.UnitDepletedSelect)
+			if (stateMachine.CurrentState == SMState.UnitDepletedSelect)
 			{
 				IsSelected = false;
 				stateMachine.ChangeState(SMState.Navigation);

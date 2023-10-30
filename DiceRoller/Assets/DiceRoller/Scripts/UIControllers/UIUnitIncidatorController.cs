@@ -20,7 +20,7 @@ namespace DiceRoller
 		private void Awake()
 		{
 			indicators.Add(transform.GetChild(0).GetComponent<UIUnitIndicator>());
-			Unit.OnItemBeingInspectedChanged += UpdateAllIndicators;
+			Unit.OnAnyBeingInspectedChanged += UpdateAllIndicators;
 		}
 
 		/// <summary>
@@ -44,7 +44,7 @@ namespace DiceRoller
 		/// </summary>
 		private void OnDestroy()
 		{
-			Unit.OnItemBeingInspectedChanged -= UpdateAllIndicators;
+			Unit.OnAnyBeingInspectedChanged -= UpdateAllIndicators;
 		}
 
 		public void UpdateAllIndicators()

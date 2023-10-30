@@ -231,7 +231,7 @@ namespace DiceRoller
 		/// </summary>
 		public void StartAIThrow(Vector3 throwXZPosition)
 		{
-			if (stateMachine.State != SMState.DiceActionSelect)
+			if (stateMachine.CurrentState != SMState.DiceActionSelect)
 				return;
 			if (game.PersonInControl != GameController.Person.AI)
 				return;
@@ -254,7 +254,7 @@ namespace DiceRoller
 		/// </summary>
 		public void MidAIThrow(Vector3 throwDirection, float throwPower)
 		{
-			if (stateMachine.State != SMState.DiceActionSelect)
+			if (stateMachine.CurrentState != SMState.DiceActionSelect)
 				return;
 			if (game.PersonInControl != GameController.Person.AI)
 				return;
@@ -271,7 +271,7 @@ namespace DiceRoller
 		/// </summary>
 		public void CompleteAIThrow(IEnumerable<Die> dice)
 		{
-			if (stateMachine.State != SMState.DiceActionSelect)
+			if (stateMachine.CurrentState != SMState.DiceActionSelect)
 				return;
 			if (game.PersonInControl != GameController.Person.AI)
 				return;

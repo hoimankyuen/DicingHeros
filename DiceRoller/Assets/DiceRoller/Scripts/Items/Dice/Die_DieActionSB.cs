@@ -13,8 +13,9 @@ namespace DiceRoller
 			private readonly Die self = null;
 
 			// caches
-			private bool isSelectedAtStateEnter = false;
 			private bool lastIsHovering = false;
+
+			// ========================================================= Constructor =========================================================
 
 			/// <summary>
 			/// Constructor.
@@ -24,18 +25,16 @@ namespace DiceRoller
 				this.self = self;
 			}
 
+			// ========================================================= State Enter Methods =========================================================
+
 			/// <summary>
 			/// OnStateEnter is called when the centralized state machine is entering the current state.
 			/// </summary>
 			public override void OnStateEnter()
 			{
-				// display as selected
-				if (self.IsSelected)
-				{
-					isSelectedAtStateEnter = true;
-					self.ShowEffect(EffectType.SelectedSelf, true);
-				}
 			}
+
+			// ========================================================= State Update Methods =========================================================
 
 			/// <summary>
 			/// OnStateUpdate is called each frame when the centralized state machine is in the current state.
@@ -45,11 +44,10 @@ namespace DiceRoller
 				// execute only if the selected unit is this unit
 				if (game.CurrentPlayer == self.Player)
 				{
-					// show dice info on ui
+					// inspect the die being hovering on
 					if (CacheUtils.HasValueChanged(self.IsHovering, ref lastIsHovering))
 					{
 						self.IsBeingInspected = self.IsHovering;
-						self.ShowEffect(EffectType.InspectingSelf, self.IsHovering);
 					}
 
 					// toggle selection, and go to dice action selection state or navigation state when this dice is pressed
@@ -69,23 +67,17 @@ namespace DiceRoller
 				}
 			}
 
+			// ========================================================= State Exit Methods =========================================================
+
 			/// <summary>
 			/// OnStateExit is called when the centralized state machine is leaving the current state.
 			/// </summary>
 			public override void OnStateExit()
 			{
-				// revert display as selected
-				if (isSelectedAtStateEnter)
-				{
-					isSelectedAtStateEnter = false;
-					self.ShowEffect(EffectType.SelectedSelf, false);
-				}
-
-				// revert display as inspecting
+				// stop inspection due to hovering
 				if (self.IsBeingInspected)
 				{
 					self.IsBeingInspected = false;
-					self.ShowEffect(EffectType.InspectingSelf, false);
 				}
 
 				// reset caches
@@ -93,33 +85,38 @@ namespace DiceRoller
 			}
 		}
 
+		// ========================================================= Other Related Methods =========================================================
+
+		/// <summary>
+		/// Select all dice. Called only on diceActionSelect state.
+		/// </summary>
 		public static void SelectAll_DieActionSelect()
 		{
-			if (StateMachine.current.State == SMState.DiceActionSelect)
+			if (StateMachine.current.CurrentState != SMState.DiceActionSelect)
+				return;
+
+			IEnumerable<Die> dice = GameController.current.CurrentPlayer.Dice.Where(x => x.CurrentDieState != DieState.Expended);
+			if (dice.All(x => x.IsSelected))
 			{
-				IEnumerable<Die> dice = GameController.current.CurrentPlayer.Dice.Where(x => x.CurrentDieState != DieState.Expended);
-				if (dice.All(x => x.IsSelected))
+				foreach (Die die in GameController.current.CurrentPlayer.Dice)
 				{
-					foreach (Die die in GameController.current.CurrentPlayer.Dice)
+					if (die.CurrentDieState != DieState.Expended)
 					{
-						if (die.CurrentDieState != DieState.Expended)
-						{
-							die.IsSelected = false;
-						}
+						die.IsSelected = false;
 					}
-					StateMachine.current.ChangeState(SMState.Navigation);
 				}
-				else
+				StateMachine.current.ChangeState(SMState.Navigation);
+			}
+			else
+			{
+				foreach (Die die in GameController.current.CurrentPlayer.Dice)
 				{
-					foreach (Die die in GameController.current.CurrentPlayer.Dice)
+					if (die.CurrentDieState != DieState.Expended)
 					{
-						if (die.CurrentDieState != DieState.Expended)
-						{
-							die.IsSelected = true;
-						}
+						die.IsSelected = true;
 					}
-					StateMachine.current.ChangeState(SMState.DiceActionSelect);
 				}
+				StateMachine.current.ChangeState(SMState.DiceActionSelect);
 			}
 		}
 	}

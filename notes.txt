@@ -3,7 +3,7 @@
 -
 
 == Big Todo ==
-- Theme
+- Theme => Boardgamey ? 
 - Model
 - UI
 - Level
@@ -14,8 +14,10 @@
 - Split namespaces ?
 - Make blocking obsticle
 - make cursor more useful
-- seperate item effect and item logic 
 - BoardPiece and related code may needed cleanup
+- Handle fallen dice and unit
+- Add "?" information button to unit, dice and equipment
+- Fix outline is behind tile area
 
 == Notes ==
 - Cursor rules

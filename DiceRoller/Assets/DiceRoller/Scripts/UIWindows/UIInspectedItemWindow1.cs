@@ -38,8 +38,8 @@ namespace DiceRoller
 		{
 			//canvasGroup.alpha = 0;
 
-			Unit.OnItemBeingInspectedChanged += Populate;
-			Die.OnItemBeingInspectedChanged += Populate;
+			Unit.OnAnyBeingInspectedChanged += Populate;
+			Die.OnAnyBeingInspectedChanged += Populate;
 			Populate();
 		}
 
@@ -56,8 +56,8 @@ namespace DiceRoller
 		/// </summary>
 		protected void OnDestroy()
 		{
-			Unit.OnItemBeingInspectedChanged -= Populate;
-			Die.OnItemBeingInspectedChanged -= Populate;
+			Unit.OnAnyBeingInspectedChanged -= Populate;
+			Die.OnAnyBeingInspectedChanged -= Populate;
 		}
 
 		/// <summary>

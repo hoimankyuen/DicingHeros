@@ -40,11 +40,6 @@ namespace DiceRoller
 				// actions for the selected unit
 				if (isSelectedAtEnter)
 				{
-					isSelectedAtEnter = true;
-
-					// show selection effect
-					self.ShowEffect(EffectType.SelectedEnemy, true);
-
 					// show occupied tiles on board, assume unit wont move during movement selection state
 					board.ShowArea(self, Tile.DisplayType.EnemyPosition, self.OccupiedTiles);
 
@@ -83,9 +78,6 @@ namespace DiceRoller
 				// actions for the selected unit
 				if (isSelectedAtEnter)
 				{
-					// hide selection effect
-					self.ShowEffect(EffectType.SelectedEnemy, false);
-
 					// hide occupied tiles on board
 					board.HideArea(self, Tile.DisplayType.EnemyPosition);
 
@@ -102,7 +94,7 @@ namespace DiceRoller
 
 		public void CancelInspection()
 		{
-			if (stateMachine.State == SMState.UnitInspection)
+			if (stateMachine.CurrentState == SMState.UnitInspection)
 			{
 				IsSelected = false;
 				stateMachine.ChangeState(SMState.Navigation);

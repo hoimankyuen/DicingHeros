@@ -17,7 +17,6 @@ namespace DiceRoller
 			private bool isSelectedAtEnter = false;
 
 			private List<Tile> lastAttackableArea = new List<Tile>();
-			private List<Unit> targetableUnits = new List<Unit>();
 			private Unit targetedUnit = null;
 
 			private Vector2 pressedPosition0 = Vector2.negativeInfinity;
@@ -45,11 +44,6 @@ namespace DiceRoller
 				// actions for the selected unit
 				if (isSelectedAtEnter)
 				{
-					isSelectedAtEnter = true;
-
-					// show selection effect
-					self.ShowEffect(EffectType.SelectedSelf, true);
-
 					// show occupied tiles on board, assume unit wont move during movement selection state
 					board.ShowArea(self, Tile.DisplayType.SelfPosition, self.OccupiedTiles);
 				}
@@ -71,25 +65,21 @@ namespace DiceRoller
 						board.ShowArea(self, Tile.DisplayType.Attack, self.AttackableArea);
 
 						// find all targetable units
-						targetableUnits.Clear();
-						foreach (Player player in game.GetAllPlayers())
+						ClearTargetableUnits();
+						foreach (Player player in game.GetAllPlayers().Where(x => x != self.Player))
 						{
-							if (player != self.Player)
+							foreach (Unit unit in player.Units)
 							{
-								foreach (Unit unit in player.Units)
+								if (lastAttackableArea.Intersect(unit.OccupiedTiles).Count() > 0)
 								{
-									if (lastAttackableArea.Intersect(unit.OccupiedTiles).Count() > 0)
-									{
-										targetableUnits.Add(unit);
-										unit.ShowEffect(EffectType.PossibleEnemy, true);
-									}
+									unit.IsTargetable = true; 
 								}
 							}
 						}
 					}
 
 					// detect hovering on enemy units
-					Unit target = targetableUnits.FirstOrDefault(x => x.IsHovering);
+					Unit target = GetAllTargetable().FirstOrDefault(x => x.IsHovering);
 					if (CacheUtils.HasValueChanged(target, ref targetedUnit, out Unit previous))
 					{
 						if (previous != null)
@@ -101,7 +91,6 @@ namespace DiceRoller
 							// hide tiles and effect
 							board.HideArea(previous, Tile.DisplayType.EnemyPosition);
 							previous.IsBeingInspected = false;
-							previous.ShowEffect(EffectType.InspectingEnemy, false);
 						}
 						
 						if (target != null)
@@ -124,7 +113,6 @@ namespace DiceRoller
 							// show tiles and effect
 							board.ShowArea(target, Tile.DisplayType.EnemyPosition, target.OccupiedTiles);
 							target.IsBeingInspected = true;
-							target.ShowEffect(EffectType.InspectingEnemy, true);
 						}
 					}
 
@@ -196,9 +184,6 @@ namespace DiceRoller
 				// actions for the selected unit
 				if (isSelectedAtEnter)
 				{
-					// hide selection effect
-					self.HideEffect(EffectType.SelectedSelf);
-
 					// hide occupied tiles on board
 					board.HideArea(self, Tile.DisplayType.SelfPosition);
 
@@ -207,11 +192,7 @@ namespace DiceRoller
 					CacheUtils.ResetCollectionCache(lastAttackableArea);
 
 					// clear targetable units
-					foreach (Unit unit in targetableUnits)
-					{
-						unit.ShowEffect(EffectType.PossibleEnemy, false);
-					}
-					targetableUnits.Clear();
+					ClearTargetableUnits();
 
 					// remove effect on targeted unit
 					if (targetedUnit != null)
@@ -221,7 +202,6 @@ namespace DiceRoller
 
 						board.HideArea(targetedUnit, Tile.DisplayType.EnemyPosition);
 						targetedUnit.IsBeingInspected = false;
-						targetedUnit.ShowEffect(EffectType.InspectingEnemy, false);
 					}
 					CacheUtils.ResetValueCache(ref targetedUnit);
 
@@ -236,7 +216,7 @@ namespace DiceRoller
 
 		public void SkipAttackSelect()
 		{
-			if (stateMachine.State == SMState.UnitAttackSelect)
+			if (stateMachine.CurrentState == SMState.UnitAttackSelect)
 			{
 				CurrentUnitState = UnitState.Depleted;
 				IsSelected = false;
@@ -247,7 +227,7 @@ namespace DiceRoller
 
 		public void ChangeToMoveSelect()
 		{
-			if (stateMachine.State == SMState.UnitAttackSelect && CurrentUnitState == UnitState.Standby)
+			if (stateMachine.CurrentState == SMState.UnitAttackSelect && CurrentUnitState == UnitState.Standby)
 			{
 				stateMachine.ChangeState(SMState.UnitMoveSelect);
 			}
@@ -255,7 +235,7 @@ namespace DiceRoller
 
 		public void CancelAttackSelect()
 		{
-			if (stateMachine.State == SMState.UnitAttackSelect)
+			if (stateMachine.CurrentState == SMState.UnitAttackSelect)
 			{
 				IsSelected = false;
 				stateMachine.ChangeState(SMState.Navigation);

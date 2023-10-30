@@ -22,8 +22,11 @@ namespace DiceRoller
 
 			private Tile lastTargetTile = null;
 
-			private bool attackableAreaDirty = true;
-			private int lastAttackRange = 0;
+			private bool attackAreaDirty = true;
+			private bool allAttackableAreaDirty = true;
+			private AttackType lastAttackType = AttackType.None;
+			private int lastPhysicalRange = 0;
+			private int lastMagicalRange = 0;
 			private AttackAreaRule lastAttackAreaRule = null;
 			private List<Tile> nextAttackableArea = new List<Tile>();
 
@@ -54,9 +57,6 @@ namespace DiceRoller
 				// actions for the selected unit
 				if (isSelectedAtEnter)
 				{
-					// show selection effect
-					self.ShowEffect(EffectType.SelectedSelf, true);
-
 					// show occupied tiles on board, assume unit wont move during movement selection state
 					board.ShowArea(self, Tile.DisplayType.SelfPosition, self.OccupiedTiles);
 				}
@@ -75,12 +75,15 @@ namespace DiceRoller
 					// update movement area if needed
 					if (CacheUtils.HasCollectionChanged(self.MovableArea, lastMovableArea))
 					{
+						allAttackableAreaDirty = true;
 						board.ShowArea(self, Tile.DisplayType.Move, self.MovableArea);
 					}
 
 					// find the target tile that the mouse is pointing to
 					Tile targetTile = board.HoveringTile;
 					bool reachable = self.MovableArea.Contains(targetTile);
+
+					// find a path to the target tile if possible
 					if (CacheUtils.HasValueChanged(targetTile, ref lastTargetTile))
 					{
 						// calculate path
@@ -148,30 +151,65 @@ namespace DiceRoller
 						board.ShowArea(self, Tile.DisplayType.MoveTarget, (targetTile != null && reachable) ? targetTile : null);
 
 						// force attaack area recalculation
-						attackableAreaDirty = true;
+						attackAreaDirty = true;
 					}
 
 					// show attackable area on the board
-					if (CacheUtils.HasValueChanged(self.PhysicalRange, ref lastAttackRange))
+					if (CacheUtils.HasEnumChanged(self.CurrentAttackType, ref lastAttackType))
 					{
-						attackableAreaDirty = true;
+						attackAreaDirty = true;
+						allAttackableAreaDirty = true;
+					}
+					if (CacheUtils.HasValueChanged(self.PhysicalRange, ref lastPhysicalRange))
+					{
+						attackAreaDirty = true;
+						allAttackableAreaDirty = true;
+					}
+					if (CacheUtils.HasValueChanged(self.MagicalRange, ref lastMagicalRange))
+					{
+						attackAreaDirty = true;
+						allAttackableAreaDirty = true;
 					}
 					if (CacheUtils.HasValueChanged(self.AttackAreaRule, ref lastAttackAreaRule))
 					{
-						attackableAreaDirty = true;
+						attackAreaDirty = true;
+						allAttackableAreaDirty = true;
 					}
-					if (attackableAreaDirty)
+
+					// show attack area on the board
+					if (attackAreaDirty)
 					{		
 						if (targetTile != null && reachable)
 						{
-							board.GetTilesByRule(targetTile, self.AttackAreaRule, self.PhysicalRange, nextAttackableArea);
-							board.ShowArea(self, Tile.DisplayType.AttackPossible, nextAttackableArea);
+							board.GetTilesByRule(targetTile, self.AttackAreaRule, self.CurrentAttackType == AttackType.Magical ? self.MagicalRange : self.PhysicalRange, nextAttackableArea);
+							board.ShowArea(self, Tile.DisplayType.Attack, nextAttackableArea);
 						}
 						else
 						{
-							board.ShowArea(self, Tile.DisplayType.AttackPossible, self.AttackableArea);
+							board.HideArea(self, Tile.DisplayType.Attack);
 						}
-						attackableAreaDirty = false;
+						attackAreaDirty = false;
+					}
+
+					// show all attackable area on the board
+					if (allAttackableAreaDirty)
+					{
+						board.ShowArea(self, Tile.DisplayType.AttackPossible, self.PredictedAttackableArea);
+
+						// find all targetable units
+						ClearTargetableUnits();
+						foreach (Player player in game.GetAllPlayers().Where(x => x != self.Player))
+						{
+							foreach (Unit unit in player.Units)
+							{
+								if (self.PredictedAttackableArea.Intersect(unit.OccupiedTiles).Count() > 0)
+								{
+									unit.IsTargetable = true;
+								}
+							}
+						}
+
+						allAttackableAreaDirty = false;
 					}
 
 					// detect path selection by left mouse pressing
@@ -209,7 +247,7 @@ namespace DiceRoller
 					}
 					if (CacheUtils.HasValueChanged(isHoveringOnTiles, ref lastIsHoveringFromTiles))
 					{
-						self.ShowEffect(self.Player == game.CurrentPlayer ? EffectType.InspectingFriend : EffectType.InspectingEnemy, isHoveringOnTiles);
+						self.IsBlocking = isHoveringOnTiles;
 						board.ShowArea(self, self.Player == game.CurrentPlayer ? Tile.DisplayType.FriendPosition : Tile.DisplayType.EnemyPosition, isHoveringOnTiles ? self.OccupiedTiles : Tile.EmptyTiles);
 					}
 				}
@@ -225,9 +263,6 @@ namespace DiceRoller
 				// action for the selected unit
 				if (isSelectedAtEnter)
 				{
-					// hide selection effect
-					self.HideEffect(EffectType.SelectedSelf);
-
 					// hide occupied tiles on board
 					board.HideArea(self, Tile.DisplayType.SelfPosition);
 
@@ -242,11 +277,18 @@ namespace DiceRoller
 					// hdie target tile on board
 					board.HideArea(self, Tile.DisplayType.MoveTarget);
 					CacheUtils.ResetValueCache(ref lastTargetTile);
+					
+					// clear targetable units
+					ClearTargetableUnits();
 
 					// hide attackable area on board
+					board.HideArea(self, Tile.DisplayType.Attack);
 					board.HideArea(self, Tile.DisplayType.AttackPossible);
-					attackableAreaDirty = true;
-					CacheUtils.ResetValueCache(ref lastAttackRange);
+					attackAreaDirty = true;
+					allAttackableAreaDirty = true;
+					CacheUtils.ResetEnumCache(ref lastAttackType);
+					CacheUtils.ResetValueCache(ref lastPhysicalRange);
+					CacheUtils.ResetValueCache(ref lastMagicalRange);
 					CacheUtils.ResetValueCache(ref lastAttackAreaRule);
 					nextAttackableArea.Clear();
 
@@ -259,8 +301,8 @@ namespace DiceRoller
 				if (!isSelectedAtEnter)
 				{
 					// hide hovering by tile
-					self.HideEffect(self.Player == game.CurrentPlayer ? EffectType.InspectingFriend : EffectType.InspectingEnemy);
-					board.HideArea(self, self.Player == game.CurrentPlayer ? Tile.DisplayType.FriendPosition : Tile.DisplayType.EnemyPosition);
+					self.IsBlocking = false;
+					board.HideArea(self, self.Player == game.CurrentPlayer ? Tile.DisplayType.SelfPosition : Tile.DisplayType.EnemyPosition);
 					CacheUtils.ResetValueCache(ref lastIsHoveringFromTiles);
 
 				}
@@ -271,7 +313,7 @@ namespace DiceRoller
 
 		public void SkipMoveSelect()
 		{
-			if (stateMachine.State == SMState.UnitMoveSelect)
+			if (stateMachine.CurrentState == SMState.UnitMoveSelect)
 			{
 				CurrentUnitState = UnitState.Depleted;
 				IsSelected = false;
@@ -282,7 +324,7 @@ namespace DiceRoller
 
 		public void ChangeToAttackSelect()
 		{
-			if (stateMachine.State == SMState.UnitMoveSelect)
+			if (stateMachine.CurrentState == SMState.UnitMoveSelect)
 			{
 				stateMachine.ChangeState(SMState.UnitAttackSelect);
 			}
@@ -290,7 +332,7 @@ namespace DiceRoller
 
 		public void CancelMoveSelect()
 		{
-			if (stateMachine.State == SMState.UnitMoveSelect)
+			if (stateMachine.CurrentState == SMState.UnitMoveSelect)
 			{
 				IsSelected = false;
 				stateMachine.ChangeState(SMState.Navigation);

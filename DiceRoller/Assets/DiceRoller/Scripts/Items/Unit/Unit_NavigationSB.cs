@@ -25,7 +25,7 @@ namespace DiceRoller
 				this.self = self;
 			}
 
-			// ========================================================= State Machine Methods =========================================================
+			// ========================================================= State Enter Methods =========================================================
 
 			/// <summary>
 			/// OnStateEnter is called when the centralized state machine is entering the current state.
@@ -35,6 +35,8 @@ namespace DiceRoller
 
 			}
 
+			// ========================================================= State Update Methods =========================================================
+
 			/// <summary>
 			/// OnStateUpdate is called each frame when the centralized state machine is in the current state.
 			/// </summary>
@@ -43,12 +45,11 @@ namespace DiceRoller
 				// only work on still alive units
 				if (self.CurrentUnitState != UnitState.Defeated)
 				{
-					// hovering effects
+					// show relative information the unit being hovering on
 					if (CacheUtils.HasValueChanged(self.IsHovering, ref lastIsHovering))
 					{
-						// allow inspection
+						// inspect
 						self.IsBeingInspected = self.IsHovering;
-						self.ShowEffect(self.Player == game.CurrentPlayer ? EffectType.InspectingSelf : EffectType.InspectingEnemy, self.IsHovering);
 
 						// show occupied tiles on the board
 						board.ShowArea(self, self.Player == game.CurrentPlayer ? Tile.DisplayType.SelfPosition : Tile.DisplayType.EnemyPosition, self.IsHovering ? self.OccupiedTiles : Tile.EmptyTiles);
@@ -60,6 +61,7 @@ namespace DiceRoller
 							if (self.CurrentUnitState == UnitState.Standby)
 							{
 								board.ShowArea(self, Tile.DisplayType.MovePossible, self.IsHovering ? self.MovableArea : Tile.EmptyTiles);
+								board.ShowArea(self, Tile.DisplayType.AttackPossible, self.IsHovering ? self.PredictedAttackableArea : Tile.EmptyTiles);
 							}
 							else if (self.CurrentUnitState == UnitState.Moved)
 							{
@@ -102,11 +104,14 @@ namespace DiceRoller
 				}
 			}
 
+			// ========================================================= State Exit Methods =========================================================
+
 			/// <summary>
 			/// OnStateExit is called when the centralized state machine is leaving the current state.
 			/// </summary>
 			public override void OnStateExit()
 			{
+				// hide relative information the unit being hovering on
 				if (self.IsHovering)
 				{
 					// hide occupied tiles on board
@@ -119,6 +124,7 @@ namespace DiceRoller
 						if (self.CurrentUnitState == UnitState.Standby)
 						{
 							board.HideArea(self, Tile.DisplayType.MovePossible);
+							board.HideArea(self, Tile.DisplayType.AttackPossible);
 						}
 						else if (self.CurrentUnitState == UnitState.Moved)
 						{
@@ -133,7 +139,6 @@ namespace DiceRoller
 
 					// hide unit info on ui
 					self.IsBeingInspected = false;
-					self.HideEffect(self.Player == game.CurrentPlayer ? EffectType.InspectingSelf : EffectType.InspectingEnemy);
 				}
 
 				// reset cache

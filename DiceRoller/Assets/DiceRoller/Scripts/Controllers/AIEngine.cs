@@ -264,7 +264,7 @@ namespace DiceRoller
 			// take control from the player
 			InputUtils.EnablePressSimulation(true);
 
-			yield return new WaitUntil(() => stateMachine.State == SMState.Navigation);
+			yield return new WaitUntil(() => stateMachine.CurrentState == SMState.Navigation);
 			yield return new WaitForSeconds(1);
 
 			// throw dice first no matter what
@@ -352,7 +352,7 @@ namespace DiceRoller
 				yield return new WaitForSeconds(0.25f);
 			}
 			yield return new WaitForSeconds(0.25f);
-			yield return new WaitUntil(() => stateMachine.State == SMState.DiceActionSelect);
+			yield return new WaitUntil(() => stateMachine.CurrentState == SMState.DiceActionSelect);
 			yield return null;
 
 			// perform throw action
@@ -370,9 +370,9 @@ namespace DiceRoller
 			diceThrower.CompleteAIThrow(dice);
 
 			// wait for throw to finish
-			yield return new WaitUntil(() => stateMachine.State == SMState.DiceThrow);
+			yield return new WaitUntil(() => stateMachine.CurrentState == SMState.DiceThrow);
 			yield return null;
-			yield return new WaitUntil(() => stateMachine.State == SMState.Navigation);
+			yield return new WaitUntil(() => stateMachine.CurrentState == SMState.Navigation);
 			yield return null;
 		}
 
@@ -392,7 +392,7 @@ namespace DiceRoller
 			yield return new WaitForSeconds(0.25f);
 			action.Attacker.OnAIMouseExit();
 			yield return null;
-			yield return new WaitUntil(() => stateMachine.State == SMState.UnitMoveSelect);
+			yield return new WaitUntil(() => stateMachine.CurrentState == SMState.UnitMoveSelect);
 
 			// check fulfillment again
 			bool useMovementEquipmentFailed = false;
@@ -417,7 +417,7 @@ namespace DiceRoller
 					ShowDebugMessage("AIEngine: Movement Failed! Reason: Equipment failed to activate.");
 
 				action.Attacker.SkipMoveSelect();
-				yield return new WaitUntil(() => stateMachine.State == SMState.Navigation);
+				yield return new WaitUntil(() => stateMachine.CurrentState == SMState.Navigation);
 				yield return null;
 				yield break;
 			}
@@ -454,9 +454,9 @@ namespace DiceRoller
 			InputUtils.SimulatePress(0, false);
 
 			// wait for move to finish
-			yield return new WaitUntil(() => stateMachine.State == SMState.UnitMove);
+			yield return new WaitUntil(() => stateMachine.CurrentState == SMState.UnitMove);
 			yield return null;
-			yield return new WaitUntil(() => stateMachine.State == SMState.UnitAttackSelect);
+			yield return new WaitUntil(() => stateMachine.CurrentState == SMState.UnitAttackSelect);
 			yield return null;
 
 			// check the fulfillment again
@@ -496,7 +496,7 @@ namespace DiceRoller
 					ShowDebugMessage("AIEngine: Attack Failed! Reason: Target unit cannot be reached by attack.");
 
 				action.Attacker.SkipAttackSelect();
-				yield return new WaitUntil(() => stateMachine.State == SMState.Navigation);
+				yield return new WaitUntil(() => stateMachine.CurrentState == SMState.Navigation);
 				yield return null;
 				yield break;
 			}
@@ -534,9 +534,9 @@ namespace DiceRoller
 			yield return null;
 
 			// wait for attack to finish
-			yield return new WaitUntil(() => stateMachine.State == SMState.UnitAttack);
+			yield return new WaitUntil(() => stateMachine.CurrentState == SMState.UnitAttack);
 			yield return null;
-			yield return new WaitUntil(() => stateMachine.State == SMState.Navigation);
+			yield return new WaitUntil(() => stateMachine.CurrentState == SMState.Navigation);
 			yield return null;
 		}
 

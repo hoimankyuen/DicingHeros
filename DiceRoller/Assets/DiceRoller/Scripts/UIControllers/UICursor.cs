@@ -59,8 +59,8 @@ namespace DiceRoller
 			SetIcon(IconType.None);
 			SetDraggingItem(null);
 
-			Unit.OnItemBeingDraggedChanged += UpdateDraggingItem;
-			Die.OnItemBeingDraggedChanged += UpdateDraggingItem;
+			//Unit.OnItemBeingDraggedChanged += UpdateDraggingItem;
+			Die.OnAnyBeingDraggedChanged += UpdateDraggingItem;
 		}
 
 		/// <summary>
@@ -77,8 +77,8 @@ namespace DiceRoller
 		/// </summary>
 		private void OnDestroy()
 		{
-			Unit.OnItemBeingDraggedChanged -= UpdateDraggingItem;
-			Die.OnItemBeingDraggedChanged -= UpdateDraggingItem;
+			//Unit.OnItemBeingDraggedChanged -= UpdateDraggingItem;
+			Die.OnAnyBeingDraggedChanged -= UpdateDraggingItem;
 		}
 
 		// ========================================================= Icons =========================================================
@@ -108,11 +108,13 @@ namespace DiceRoller
 		/// </summary>
 		private void UpdateDraggingItem()
 		{
+			/*
 			if (Unit.GetFirstBeingDragged() != null)
 			{
 				SetDraggingItem(Unit.GetFirstBeingDragged());
 			}
-			else if (Die.GetFirstBeingDragged() != null)
+			*/
+			if (Die.GetFirstBeingDragged() != null)
 			{
 				SetDraggingItem(Die.GetFirstBeingDragged());
 			}

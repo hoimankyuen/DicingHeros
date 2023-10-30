@@ -211,13 +211,13 @@ namespace DiceRoller
 				{
 					_InspectingDice.Add(this);
 					OnInspectionChanged.Invoke();
-					OnItemBeingInspectedChanged.Invoke();
+					OnAnyBeingInspectedChanged.Invoke();
 				}
 				else if (_InspectingDice.Contains(this) && !value)
 				{
 					_InspectingDice.Remove(this);
 					OnInspectionChanged.Invoke();
-					OnItemBeingInspectedChanged.Invoke();
+					OnAnyBeingInspectedChanged.Invoke();
 				}
 			}
 		}
@@ -231,7 +231,7 @@ namespace DiceRoller
 		/// <summary>
 		/// Event raised when the the list of dice being inspected is changed.
 		/// </summary>
-		public static event Action OnItemBeingInspectedChanged = () => { };
+		public static event Action OnAnyBeingInspectedChanged = () => { };
 
 		/// <summary>
 		/// Retrieve the first die being currently inspected, return null if none is being inspected.
@@ -266,13 +266,13 @@ namespace DiceRoller
 				{
 					_SelectedDice.Add(this);
 					OnSelectionChanged.Invoke();
-					OnItemSelectedChanged.Invoke();
+					OnAnySelectedChanged.Invoke();
 				}
 				else if(_SelectedDice.Contains(this) && !value)
 				{
 					_SelectedDice.Remove(this);
 					OnSelectionChanged.Invoke();
-					OnItemSelectedChanged.Invoke();
+					OnAnySelectedChanged.Invoke();
 				}
 			}
 		}
@@ -286,7 +286,7 @@ namespace DiceRoller
 		/// <summary>
 		/// Event raised when the list of dice selected is changed.
 		/// </summary>
-		public static event Action OnItemSelectedChanged = () => { };
+		public static event Action OnAnySelectedChanged = () => { };
 
 		/// <summary>
 		/// Retrieve the first currently selected die, return null if none is selected.
@@ -332,13 +332,13 @@ namespace DiceRoller
 				{
 					_DraggingDice.Add(this);
 					OnDragChanged.Invoke();
-					OnItemBeingDraggedChanged.Invoke();
+					OnAnyBeingDraggedChanged.Invoke();
 				}
 				else if(_DraggingDice.Contains(this) && !value)
 				{
 					_DraggingDice.Remove(this);
 					OnDragChanged.Invoke();
-					OnItemBeingDraggedChanged.Invoke();
+					OnAnyBeingDraggedChanged.Invoke();
 				}
 			}
 		}
@@ -352,7 +352,7 @@ namespace DiceRoller
 		/// <summary>
 		/// Event raised when the list of dice being dragged is changed.
 		/// </summary>
-		public static event Action OnItemBeingDraggedChanged = () => { };
+		public static event Action OnAnyBeingDraggedChanged = () => { };
 
 		/// <summary>
 		/// Retrieve the first die being currently dragged, return null if none is selected.
@@ -457,21 +457,8 @@ namespace DiceRoller
 			{
 				if (_CurrentDieState != value)
 				{
-					switch (value)
-					{	
-						case DieState.Holding:
-							IsHidden = true;
-							break;
-						case DieState.Casted:
-							IsHidden = false;
-							break;
-						case DieState.Assigned:
-							IsHidden = false;
-							break;
-						case DieState.Expended:
-							IsHidden = true;
-							break;
-					}
+					IsHidden = value == DieState.Holding || value == DieState.Expended;
+
 					_CurrentDieState = value;
 					onDieStateChanged.Invoke();
 				}

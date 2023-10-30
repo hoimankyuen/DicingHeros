@@ -60,21 +60,21 @@ namespace DiceRoller
 			Unit unit = Unit.GetFirstSelected();
 			if (unit != null)
 			{
-				if (stateMachine.State == SMState.UnitMoveSelect)
+				if (stateMachine.CurrentState == SMState.UnitMoveSelect)
 				{
 					skipButton.interactable = true;
 					movementButton.interactable = false;
 					attackButton.interactable = true;
 				}
 
-				if (stateMachine.State == SMState.UnitAttackSelect)
+				if (stateMachine.CurrentState == SMState.UnitAttackSelect)
 				{
 					skipButton.interactable = true;
 					movementButton.interactable = true;
 					attackButton.interactable = false;
 				}
 
-				if (stateMachine.State == SMState.UnitDepletedSelect)
+				if (stateMachine.CurrentState == SMState.UnitDepletedSelect)
 				{
 					skipButton.interactable = false;
 					movementButton.interactable = false;

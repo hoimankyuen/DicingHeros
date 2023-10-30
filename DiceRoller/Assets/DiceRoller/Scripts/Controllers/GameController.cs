@@ -306,7 +306,7 @@ namespace DiceRoller
 		/// </summary>
 		public void ProgressTurn()
 		{
-			if (stateMachine.State == SMState.Navigation)
+			if (stateMachine.CurrentState == SMState.Navigation)
 			{
 				stateMachine.ChangeState(SMState.EndTurn);
 			}
