@@ -111,7 +111,7 @@ namespace DiceRoller
 
 			target.OnInspectionChanged += RefreshDisplay;
 			target.OnFulfillmentChanged += RefreshDisplay;
-			target.onActivationChanged += RefreshDisplay;
+			target.OnIsActivatedChanged += RefreshDisplay;
 		}
 
 		/// <summary>
@@ -124,7 +124,7 @@ namespace DiceRoller
 
 			this.target.OnInspectionChanged -= RefreshDisplay;
 			this.target.OnFulfillmentChanged -= RefreshDisplay;
-			this.target.onActivationChanged -= RefreshDisplay;
+			this.target.OnIsActivatedChanged -= RefreshDisplay;
 		}
 
 		/// <summary>

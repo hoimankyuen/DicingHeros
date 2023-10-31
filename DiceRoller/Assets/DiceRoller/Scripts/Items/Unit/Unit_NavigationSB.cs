@@ -71,7 +71,7 @@ namespace DiceRoller
 						else
 						{
 							// show possible attack area for units of the other players
-							board.ShowArea(self, Tile.DisplayType.AttackPossible, self.IsHovering ? self.MovableArea : Tile.EmptyTiles);
+							board.ShowArea(self, Tile.DisplayType.AttackPossible, self.IsHovering ? self.PredictedAttackableArea : Tile.EmptyTiles);
 						}
 					}
 

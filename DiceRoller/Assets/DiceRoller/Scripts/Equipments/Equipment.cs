@@ -23,7 +23,7 @@ namespace DiceRoller
 		// ========================================================= Constructor =========================================================
 
 		/// <summary>
-		/// Constructor.+
+		/// Constructor.
 		/// </summary>
 		public Equipment(Unit unit)
 		{
@@ -75,11 +75,11 @@ namespace DiceRoller
 		/// </summary>
 		public bool IsBeingInspected
 		{
-			get 
+			get
 			{
 				return _InspectingEquipment.Contains(this);
 			}
-			private set 
+			private set
 			{
 				if (!_InspectingEquipment.Contains(this) && value)
 				{
@@ -230,8 +230,8 @@ namespace DiceRoller
 		/// <summary>
 		/// Flag for if this equipment has all its requirements fulfilled.
 		/// </summary>
-		public bool IsRequirementFulfilled 
-		{ 
+		public bool IsRequirementFulfilled
+		{
 			get
 			{
 				return _IsRequirementFulfilled;
@@ -244,13 +244,13 @@ namespace DiceRoller
 					OnFulfillmentChanged.Invoke();
 				}
 			}
-		} 
+		}
 		private bool _IsRequirementFulfilled = false;
 
 		/// <summary>
 		/// Fmag for if this equipment has its all slots requirement fulfulled.
 		/// </summary>
-		public event Action OnFulfillmentChanged = () => {};
+		public event Action OnFulfillmentChanged = () => { };
 
 		/// <summary>
 		/// Notify that a die slot has its die changed.
@@ -275,7 +275,7 @@ namespace DiceRoller
 			}
 		}
 
-		// ========================================================= Properties (Activated) =========================================================
+		// ========================================================= Properties (IsActivated) =========================================================
 
 		/// <summary>
 		/// Flag for if this equipment is activated.
@@ -289,10 +289,10 @@ namespace DiceRoller
 			private set
 			{
 				if (_IsActivated != value)
-				{		
+				{
 					if (value)
 					{
-						// deactivate all other incompatible equipments first before activating self
+						// only one movement buff is allowed to be activated at the same time.
 						if (Type == EquipmentType.MovementBuff)
 						{
 							foreach (Equipment equipment in Unit.Equipments)
@@ -303,7 +303,8 @@ namespace DiceRoller
 								}
 							}
 						}
-						else if (Type == EquipmentType.MeleeAttack || Type == EquipmentType.MagicAttack)
+						// only one attack is allowed to be activated at the same time.
+						if (Type == EquipmentType.MeleeAttack || Type == EquipmentType.MagicAttack)
 						{
 							foreach (Equipment equipment in Unit.Equipments)
 							{
@@ -315,17 +316,7 @@ namespace DiceRoller
 						}
 					}
 					_IsActivated = value;
-
-					// effects
-					if (value)
-					{
-						AddEffects();
-					}
-					else
-					{
-						RemoveEffects();
-					}
-					onActivationChanged.Invoke();
+					OnIsActivatedChanged.Invoke();
 				}
 			}
 		}
@@ -334,7 +325,7 @@ namespace DiceRoller
 		/// <summary>
 		/// Event raised when activated on this equipment is changed.
 		/// </summary>
-		public event Action onActivationChanged = () => { };
+		public event Action OnIsActivatedChanged = () => { };
 
 		/// <summary>
 		/// Apply the effect of this equipment and expend all dice assigned.
@@ -352,58 +343,6 @@ namespace DiceRoller
 			}
 		}
 
-		// ========================================================= Effect activation =========================================================
-
-		/// <summary>
-		/// Apply all effects of this equipment.
-		/// </summary>
-		private void AddEffects()
-		{
-			Unit.ChangeStat(
-				physicalAttackDelta: PhysicalAttackDelta,
-				physicalDefenceDelta: PhysicalDefenceDelta,
-				physicalRangeDelta: PhysicalRangeDelta,
-				magicalAttackDelta: MagicalAttackDelta, 
-				magicalDefenceDelta: MagicalDefenceDelta,
-				magicalRangeDelta: MagicalRangeDelta,
-				knockbackForceDelta: KnockbackForceDelta,
-				movementDelta: MovementDelta);
-			if (AreaRule != AttackAreaRule.Adjacent)
-			{
-				Unit.ChangeAttackAreaRule(AreaRule);
-			}
-			if (Type == EquipmentType.MagicAttack)
-			{
-				Unit.ChangeAttackType(Unit.AttackType.Magical);
-			}
-			AddOtherEffects();
-		}
-
-		/// <summary>
-		/// Remove all effects of this equipment.
-		/// </summary>
-		private void RemoveEffects()
-		{
-			Unit.ChangeStat(
-				physicalAttackDelta: -PhysicalAttackDelta,
-				physicalDefenceDelta: -PhysicalDefenceDelta,
-				physicalRangeDelta: -PhysicalRangeDelta,
-				magicalAttackDelta: -MagicalAttackDelta,
-				magicalDefenceDelta: -MagicalDefenceDelta,
-				magicalRangeDelta: -MagicalRangeDelta,
-				knockbackForceDelta: -KnockbackForceDelta,
-				movementDelta: -MovementDelta);
-			if (AreaRule != AttackAreaRule.Adjacent)
-			{
-				Unit.ResetAttackAreaRule();
-			}
-			if (Type == EquipmentType.MagicAttack)
-			{
-				Unit.ChangeAttackType(Unit.AttackType.Physical);
-			}
-			RemoveOtherEffects();
-		}
-
 		// ========================================================= State Machine Behaviour =========================================================
 
 		/// <summary>
@@ -413,7 +352,7 @@ namespace DiceRoller
 		{
 			stateMachine.Register(Unit.gameObject, this, SMState.UnitMoveSelect, new UnitActionSelectSB(this));
 			stateMachine.Register(Unit.gameObject, this, SMState.UnitAttackSelect, new UnitActionSelectSB(this));
-			stateMachine.Register(Unit.gameObject, this, SMState.UnitDepletedSelect, new UnitActionSelectSB(this));
+			stateMachine.Register(Unit.gameObject, this, SMState.UnitInspection, new UnitInspectionSB(this));
 		}
 
 		/// <summary>
@@ -452,18 +391,6 @@ namespace DiceRoller
 			public override void OnStateEnter()
 			{
 				isUserSelectedAtEnter = self.Unit.IsSelected;
-
-				if (isUserSelectedAtEnter)
-				{
-					if (stateMachine.CurrentState == SMState.UnitMoveSelect && self.Type == EquipmentType.MovementBuff)
-					{
-
-					}
-					else if (stateMachine.CurrentState == SMState.UnitMoveSelect &&  (self.Type == EquipmentType.MeleeAttack || self.Type == EquipmentType.MagicAttack))
-					{
-
-					}
-				}
 			}
 
 			/// <summary>
@@ -510,6 +437,59 @@ namespace DiceRoller
 					// reset cache
 					CacheUtils.ResetValueCache(ref lastIsHovering);
 				}
+			}
+		}
+
+		// ========================================================= UnitActionSelectSB State =========================================================
+
+		protected class UnitInspectionSB : StateBehaviour
+		{
+			// host reference
+			private readonly Equipment self = null;
+
+			// cache
+			private bool lastIsHovering = false;
+
+			/// <summary>
+			/// Constructor.
+			/// </summary>
+			public UnitInspectionSB(Equipment self)
+			{
+				this.self = self;
+			}
+
+			/// <summary>
+			/// OnStateEnter is called when the centralized state machine is entering the current state.
+			/// </summary>
+			public override void OnStateEnter()
+			{
+			}
+
+			/// <summary>
+			/// OnStateUpdate is called each frame when the centralized state machine is in the current state.
+			/// </summary>
+			public override void OnStateUpdate()
+			{
+				// inspection
+				if (CacheUtils.HasValueChanged(self.IsHovering, ref lastIsHovering))
+				{
+					self.IsBeingInspected = self.IsHovering;
+				}
+			}
+
+			/// <summary>
+			/// OnStateExit is called when the centralized state machine is leaving the current state.
+			/// </summary>
+			public override void OnStateExit()
+			{
+				// inspection
+				if (lastIsHovering)
+				{
+					self.IsBeingInspected = false;
+				}
+
+				// reset cache
+				CacheUtils.ResetValueCache(ref lastIsHovering);
 			}
 		}
 	}

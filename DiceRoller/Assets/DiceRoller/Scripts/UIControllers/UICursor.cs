@@ -11,9 +11,14 @@ namespace DiceRoller
 		public enum IconType
 		{
 			None,
-			SimpleMovement,
-			SimpleMelee,
-			SimpleRanged,
+			Action,
+			Inspect,
+			Pick,
+			Throw,
+			Movement,
+			PhysicalAttack,
+			RangedAttack,
+			MagicalAttack,
 			Custom,
 		}
 
@@ -28,6 +33,12 @@ namespace DiceRoller
 
 		[Header("Settings")]
 		public bool hideCursorAtStart = false;
+
+		// reference
+		private GameController game => GameController.current;
+		private StateMachine stateMachine => StateMachine.current;
+		private Board board => Board.current;
+		private DiceThrower diceThrower => DiceThrower.current;
 
 		// working variables
 		private IconType iconType = IconType.None;
@@ -55,8 +66,8 @@ namespace DiceRoller
 			{
 				Cursor.visible = false;
 			}
-			
-			SetIcon(IconType.None);
+
+			ShowCursor(true, null);
 			SetDraggingItem(null);
 
 			//Unit.OnItemBeingDraggedChanged += UpdateDraggingItem;
@@ -83,6 +94,7 @@ namespace DiceRoller
 
 		// ========================================================= Icons =========================================================
 
+		/*
 		/// <summary>
 		/// Set the icon shown with the cursor.
 		/// </summary>
@@ -100,6 +112,7 @@ namespace DiceRoller
 			iconType = IconType.Custom;
 			iconSprite = sprite;
 		}
+		*/
 
 		// ========================================================= Dragging =========================================================
 
@@ -176,27 +189,142 @@ namespace DiceRoller
 				// player is in control
 				if (EventSystem.current.IsPointerOverGameObject())
 				{
-					// show standard cursor when pointing on UI
-					pointerImage.enabled = true;
-					pointerImage.sprite = icons.normalCursor;
-					actionImage.enabled = false;
+					// always show standard cursor when pointing on UI
+					ShowCursor(true, null);
 				}
 				else
 				{
+					Die inspectingDie = Die.GetFirstBeingInspected();
+					Unit inspectingUnit = Unit.GetFirstBeingInspected();
+					Unit selectedUnit = Unit.GetFirstSelected();
+
 					// show selected icon otherwise
-					pointerImage.enabled = true;
-					pointerImage.sprite = iconType == IconType.None ? icons.normalCursor : icons.iconCursor;
-					actionImage.enabled = iconType != IconType.None;
-					actionImage.sprite = iconType == IconType.Custom ? iconSprite : icons.icons[iconType];
+					switch (stateMachine.CurrentState)
+					{
+						case SMState.Navigation:
+							if (inspectingDie != null)
+							{
+								ShowCursor(true, icons.pick);
+							}
+							else if (inspectingUnit != null)
+							{
+								if (inspectingUnit.Player == game.CurrentPlayer)
+								{
+									if (inspectingUnit.CurrentUnitState == Unit.UnitState.Standby || inspectingUnit.CurrentUnitState == Unit.UnitState.Moved)
+									{
+										ShowCursor(true, icons.action);
+									}
+									else
+									{
+										ShowCursor(true, icons.inspect);
+									}
+								}
+								else
+								{
+									ShowCursor(true, icons.inspect);
+								}
+							}
+							else
+							{
+								ShowCursor(true, null);
+							}
+							break;
+
+						case SMState.UnitMoveSelect:
+							if (board.HoveringTile != null)
+							{
+								ShowCursor(true, icons.movement);
+							}
+							else
+							{
+								ShowCursor(true, null);
+							}
+							break;
+
+						case SMState.UnitAttackSelect:
+							if (inspectingUnit != null)
+							{
+								if (selectedUnit.CurrentAttackType == Unit.AttackType.Physical)
+								{
+									if (selectedUnit.PhysicalRange <= 1)
+									{
+										ShowCursor(true, icons.physicalAttack);
+									}
+									else
+									{
+										ShowCursor(true, icons.rangedAttack);
+									}
+								}
+								else if (selectedUnit.CurrentAttackType == Unit.AttackType.Magical)
+								{
+									ShowCursor(true, icons.magicalAttack);
+								}
+							}
+							else
+							{
+								ShowCursor(true, null);
+							}
+							break;
+
+						case SMState.DiceActionSelect:
+							if (inspectingUnit != null && !diceThrower.ThrowDragging)
+							{
+								ShowCursor(true, icons.pick);
+							}
+							else if (diceThrower.AtThrowableSurface && !diceThrower.ThrowDragging)
+							{
+								ShowCursor(true, icons.throws);
+							}
+							else
+							{
+								ShowCursor(true, null);
+							}
+							break;
+
+						default:
+							ShowCursor(true, null);
+							break;
+					}
 				}
 			}
 			else
 			{
 				// ai is in control
-				pointerImage.enabled = false;
-				actionImage.enabled = false;
+				ShowCursor(false);
 			}
 		}
 
+		/// <summary>
+		/// Show or hide a cursor with a information icon.
+		/// </summary>
+		private void ShowCursor(bool show, Sprite icon = null)
+		{
+			if (show == pointerImage.enabled && icon == pointerImage.sprite)
+				return;
+
+			if (show)
+			{
+				if (icon != null)
+				{
+					pointerImage.enabled = true;
+					pointerImage.sprite = icons.iconCursor;
+					actionImage.enabled = true;
+					actionImage.sprite = icon;
+				}
+				else
+				{
+					pointerImage.enabled = true;
+					pointerImage.sprite = icons.normalCursor;
+					actionImage.enabled = false;
+					actionImage.sprite = null;
+				}
+			}
+			else
+			{
+				pointerImage.enabled = false;
+				actionImage.enabled = false;
+				actionImage.sprite = null;
+			}
+		}
 	}
 }

@@ -220,8 +220,7 @@ namespace DiceRoller
 		{
 			stateMachine.Register(Equipment.Unit.gameObject, this, SMState.UnitMoveSelect, new UnitActionSelectSB(this));
 			stateMachine.Register(Equipment.Unit.gameObject, this, SMState.UnitAttackSelect, new UnitActionSelectSB(this));
-			stateMachine.Register(Equipment.Unit.gameObject, this, SMState.UnitDepletedSelect, new UnitActionSelectSB(this));
-
+			//stateMachine.Register(Equipment.Unit.gameObject, this, SMState.UnitDepletedSelect, new UnitActionSelectSB(this));
 		}
 
 		/// <summary>

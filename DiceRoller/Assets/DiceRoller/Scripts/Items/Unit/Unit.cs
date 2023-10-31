@@ -461,6 +461,139 @@ namespace DiceRoller
 		}
 		*/
 
+		// ========================================================= Properties (AllOccupiedTiles) =========================================================
+
+		/// <summary>
+		/// All tiles that are occupied by every unit.
+		/// </summary>
+		public static IReadOnlyList<Tile> AllOccupiedTiles
+		{
+			get
+			{
+				if (_IsAllOccupiedTilesDirty)
+				{
+					RefreshAllOccupiedTiles();
+				}
+				return _AllOccupiedTiles.AsReadOnly();
+			}
+		}
+		private static List<Tile> _AllOccupiedTiles = new List<Tile>();
+		private static bool _IsAllOccupiedTilesDirty = true;
+
+		/// <summary>
+		/// Event raised when the list of all tiles occupied by every unit needs updating.
+		/// </summary>
+		public static event Action OnAllOcupiedTilesDirty = () => { };
+
+		/// <summary>
+		/// Register all necessary callbacks needed for AllOccupiedTiles.
+		/// </summary>
+		private void RegisterCallbacksForAllOccupiedTiles()
+		{
+			OnOccupiedTilesChanged += SetAllOccupiedTilesDirty;
+		}
+
+		/// <summary>
+		/// Deregister all necessary callbacks needed for AllOccupiedTiles.
+		/// </summary>
+		private void DeregisterCallbacksForAllOccupiedTiles()
+		{
+			OnOccupiedTilesChanged -= SetAllOccupiedTilesDirty;
+		}
+
+		/// <summary>
+		/// Notify AllOccupiedTiles needs updating.
+		/// </summary>
+		private static void SetAllOccupiedTilesDirty()
+		{
+			if (!_IsAllOccupiedTilesDirty)
+			{
+				_IsAllOccupiedTilesDirty = true;
+				OnAllOcupiedTilesDirty.Invoke();
+			}
+		}
+
+		/// <summary>
+		/// Retrieve again the list of all tiles that are occupied by any unit.
+		/// </summary>
+		private static void RefreshAllOccupiedTiles()
+		{
+			_AllOccupiedTiles.Clear();
+			foreach (Player player in GameController.current.GetAllPlayers())
+			{
+				foreach (Unit unit in player.Units.Where(x => x.CurrentUnitState != UnitState.Defeated))
+				{
+					_AllOccupiedTiles.AddRange(unit.OccupiedTiles.Except(_AllOccupiedTiles));
+				}
+			}
+			_IsAllOccupiedTilesDirty = false;
+		}
+
+		// ========================================================= Properties (AllOccupiedTilesExceptSelf) =========================================================
+
+		/// <summary>
+		/// A list of all occupied tiles except the ones that this unit occupied. Useful for movement calculation.
+		/// </summary>
+		public IReadOnlyCollection<Tile> AllOccupiedTilesExceptSelf
+		{
+			get
+			{
+				if (_IsAllOccupiedTilesExceptSelfDirty)
+				{
+					RefreshAllOccupiedTilesExceptSelf();
+				}
+				return _AllOccupiedTilesExceptSelf.AsReadOnly();
+			}
+		}
+		private List<Tile> _AllOccupiedTilesExceptSelf = new List<Tile>();
+		private bool _IsAllOccupiedTilesExceptSelfDirty = true;
+
+		/// <summary>
+		/// Event raised when the list of all tiles occupied by every unit needs updating.
+		/// </summary>
+		public event Action OnAllOcupiedTilesExceptSelfDirty = () => { };
+
+		/// <summary>
+		/// Register all necessary callbacks needed for AllOccupiedTilesExceptSelf.
+		/// </summary>
+		private void RegisterCallbacksForAllOccupiedTilesExceptSelf()
+		{
+			OnAllOcupiedTilesDirty += SetAllOccupiedTilesExceptSelfDirty;
+			OnOccupiedTilesChanged += SetAllOccupiedTilesExceptSelfDirty;
+		}
+
+		/// <summary>
+		/// Deregister all necessary callbacks needed for AllOccupiedTilesExceptSelf.
+		/// </summary>
+		private void DeregisterCallbacksForAllOccupiedTilesExceptSelf()
+		{
+			OnAllOcupiedTilesDirty -= SetAllOccupiedTilesExceptSelfDirty;
+			OnOccupiedTilesChanged -= SetAllOccupiedTilesExceptSelfDirty;
+		}
+
+
+		/// <summary>
+		/// Notify AllOccupiedTilesExecptSelf needs updating.
+		/// </summary>
+		private void SetAllOccupiedTilesExceptSelfDirty()
+		{
+			if (!_IsAllOccupiedTilesExceptSelfDirty)
+			{
+				_IsAllOccupiedTilesExceptSelfDirty = true;
+				OnAllOcupiedTilesExceptSelfDirty.Invoke();
+			}
+		}
+
+		/// <summary>
+		/// Retrieve again the list of all tiles that are occupied by any unit except the one this unit occupied.
+		/// </summary>
+		private void RefreshAllOccupiedTilesExceptSelf()
+		{
+			_AllOccupiedTilesExceptSelf.Clear();
+			_AllOccupiedTilesExceptSelf.AddRange(AllOccupiedTiles.Except(OccupiedTiles));
+			_IsAllOccupiedTilesExceptSelfDirty = false;
+		}
+
 		// ========================================================= Properties (Health) =========================================================
 
 		/// <summary>
@@ -600,6 +733,32 @@ namespace DiceRoller
 		/// </summary>
 		public event Action OnPhysicalDefenceChanged = () => { };
 
+		/// <summary>
+		/// The current physical range value of this unit.
+		/// </summary>
+		public int PhysicalRange
+		{
+			get
+			{
+				return _PhysicalRange;
+			}
+			private set
+			{
+				int clampedValue = value < 0 ? 0 : value;
+				if (_PhysicalRange != clampedValue)
+				{
+					_PhysicalRange = clampedValue;
+					OnPhysicalRangeChanged.Invoke();
+				}
+			}
+		}
+		private int _PhysicalRange = 0;
+
+		/// <summary>
+		/// Event raised when the physical range stat of this unit is changed.
+		/// </summary>
+		public event Action OnPhysicalRangeChanged = () => { };
+
 		/// The current magical attack value of this unit.
 		/// </summary>
 		public int MagicalAttack
@@ -645,32 +804,6 @@ namespace DiceRoller
 			}
 		}
 		private int _MagicalDefence = 0;
-
-		/// <summary>
-		/// The current physical range value of this unit.
-		/// </summary>
-		public int PhysicalRange
-		{
-			get
-			{
-				return _PhysicalRange;
-			}
-			private set
-			{
-				int clampedValue = value < 0 ? 0 : value;
-				if (_PhysicalRange != clampedValue)
-				{
-					_PhysicalRange = clampedValue;
-					OnPhysicalRangeChanged.Invoke();
-				}
-			}
-		}
-		private int _PhysicalRange = 0;
-
-		/// <summary>
-		/// Event raised when the physical range stat of this unit is changed.
-		/// </summary>
-		public event Action OnPhysicalRangeChanged = () => { };
 
 		/// <summary>
 		/// Event raised when the magical defence stat of this unit is changed.
@@ -785,137 +918,90 @@ namespace DiceRoller
 			Movement += movementDelta;
 		}
 
-		// ========================================================= Properties (AllOccupiedTiles) =========================================================
+		// ========================================================= Properties (AttackRangeRule) =========================================================
 
 		/// <summary>
-		/// All tiles that are occupied by every unit.
+		/// The Rule that dictates the attack area of this unit.
 		/// </summary>
-		public static IReadOnlyList<Tile> AllOccupiedTiles
+		public AttackAreaRule AttackAreaRule
 		{
 			get
 			{
-				if (_IsAllOccupiedTilesDirty)
-				{
-					RefreshAllOccupiedTiles();		
-				}
-				return _AllOccupiedTiles.AsReadOnly();
+				return _AttackAreaRule;
 			}
-		}
-		private static List<Tile> _AllOccupiedTiles = new List<Tile>();
-		private static bool _IsAllOccupiedTilesDirty = true;
-
-		/// <summary>
-		/// Event raised when the list of all tiles occupied by every unit needs updating.
-		/// </summary>
-		public static event Action OnAllOcupiedTilesDirty = () => { };
-
-		/// <summary>
-		/// Register all necessary callbacks needed for AllOccupiedTiles.
-		/// </summary>
-		private void RegisterCallbacksForAllOccupiedTiles()
-		{
-			OnOccupiedTilesChanged += SetAllOccupiedTilesDirty;
-		}
-
-		/// <summary>
-		/// Deregister all necessary callbacks needed for AllOccupiedTiles.
-		/// </summary>
-		private void DeregisterCallbacksForAllOccupiedTiles()
-		{
-			OnOccupiedTilesChanged -= SetAllOccupiedTilesDirty;
-		}
-
-		/// <summary>
-		/// Notify AllOccupiedTiles needs updating.
-		/// </summary>
-		private static void SetAllOccupiedTilesDirty()
-		{
-			if (!_IsAllOccupiedTilesDirty)
+			private set
 			{
-				_IsAllOccupiedTilesDirty = true;
-				OnAllOcupiedTilesDirty.Invoke();
-			}
-		}
-
-		/// <summary>
-		/// Retrieve again the list of all tiles that are occupied by any unit.
-		/// </summary>
-		private static void RefreshAllOccupiedTiles()
-		{
-			_AllOccupiedTiles.Clear();
-			foreach (Player player in GameController.current.GetAllPlayers())
-			{
-				foreach (Unit unit in player.Units.Where(x => x.CurrentUnitState != UnitState.Defeated))
+				if (_AttackAreaRule != value)
 				{
-					_AllOccupiedTiles.AddRange(unit.OccupiedTiles.Except(_AllOccupiedTiles));
+					_AttackAreaRule = value;
+					OnAttackAreaRuleChanged.Invoke();
 				}
 			}
-			_IsAllOccupiedTilesDirty = false;
 		}
-
-		// ========================================================= Properties (AllOccupiedTilesExceptSelf) =========================================================
+		private AttackAreaRule _AttackAreaRule = null;
 
 		/// <summary>
-		/// A list of all occupied tiles except the ones that this unit occupied. Useful for movement calculation.
+		/// Event raised when the rule that dictates the attack area of this unit is changed. 
 		/// </summary>
-		public IReadOnlyCollection<Tile> AllOccupiedTilesExceptSelf
+		public event Action OnAttackAreaRuleChanged = () => { };
+
+		/// <summary>
+		/// Reset the rule to determine which tiles are attackable to the basic melee form.
+		/// </summary>
+		public void ResetAttackAreaRule()
+		{
+			_AttackAreaRule = AttackAreaRule.Adjacent;
+		}
+
+		/// <summary>
+		/// Apply a different attack area rule tooo this unit.
+		/// </summary>
+		public void ChangeAttackAreaRule(AttackAreaRule rule)
+		{
+			AttackAreaRule = rule;
+		}
+
+		// ========================================================= Properties (AttackType) =========================================================
+
+		/// <summary>
+		/// The current attack type to be performed by this unit.
+		/// </summary>
+		public AttackType CurrentAttackType
 		{
 			get
 			{
-				if (_IsAllOccupiedTilesExceptSelfDirty)
-				{
-					RefreshAllOccupiedTilesExceptSelf();
-				}
-				return _AllOccupiedTilesExceptSelf.AsReadOnly();
+				return _CurrentAttackType;
 			}
-		}
-		private List<Tile> _AllOccupiedTilesExceptSelf = new List<Tile>();
-		private bool _IsAllOccupiedTilesExceptSelfDirty = true;
-
-		/// <summary>
-		/// Event raised when the list of all tiles occupied by every unit needs updating.
-		/// </summary>
-		public event Action OnAllOcupiedTilesExceptSelfDirty = () => { };
-
-		/// <summary>
-		/// Register all necessary callbacks needed for AllOccupiedTilesExceptSelf.
-		/// </summary>
-		private void RegisterCallbacksForAllOccupiedTilesExceptSelf()
-		{
-			OnAllOcupiedTilesDirty += SetAllOccupiedTilesExceptSelfDirty;
-			OnOccupiedTilesChanged += SetAllOccupiedTilesExceptSelfDirty;
-		}
-
-		/// <summary>
-		/// Deregister all necessary callbacks needed for AllOccupiedTilesExceptSelf.
-		/// </summary>
-		private void DeregisterCallbacksForAllOccupiedTilesExceptSelf()
-		{
-			OnAllOcupiedTilesDirty -= SetAllOccupiedTilesExceptSelfDirty;
-			OnOccupiedTilesChanged -= SetAllOccupiedTilesExceptSelfDirty;
-		}
-
-
-		/// <summary>
-		/// Notify AllOccupiedTilesExecptSelf needs updating.
-		/// </summary>
-		private void SetAllOccupiedTilesExceptSelfDirty()
-		{
-			if (!_IsAllOccupiedTilesExceptSelfDirty)
+			private set
 			{
-				_IsAllOccupiedTilesExceptSelfDirty = true;
-				OnAllOcupiedTilesExceptSelfDirty.Invoke();
+				if (_CurrentAttackType != value)
+				{
+					_CurrentAttackType = value;
+					OnCurrentAttackTypeChanged.Invoke();
+				}
 			}
+		}
+		private AttackType _CurrentAttackType = AttackType.None;
+
+		/// <summary>
+		/// Event raised when the current attack type to be performed by this unit is changed.
+		/// </summary>
+		public event Action OnCurrentAttackTypeChanged = () => { };
+
+		/// <summary>
+		/// Set the attack type to the inital value.
+		/// </summary>
+		public void SetupInitalAttackType()
+		{
+			CurrentAttackType = AttackType.Physical;
 		}
 
 		/// <summary>
-		/// Retrieve again the list of all tiles that are occupied by any unit except the one this unit occupied.
+		/// Change the attack type to something else.
 		/// </summary>
-		private void RefreshAllOccupiedTilesExceptSelf()
+		public void ChangeAttackType(AttackType type)
 		{
-			_AllOccupiedTilesExceptSelf.Clear();
-			_AllOccupiedTilesExceptSelf.AddRange(AllOccupiedTiles.Except(OccupiedTiles));
-			_IsAllOccupiedTilesExceptSelfDirty = false;
+			CurrentAttackType = type;
 		}
 
 		// ========================================================= Properties (MoveableArea) =========================================================
@@ -1150,7 +1236,14 @@ namespace DiceRoller
 		/// <summary>
 		/// All equpiments this unit pocesses.
 		/// </summary>
-		public List<Equipment> Equipments { get; private set; } = new List<Equipment>();
+		public IReadOnlyList<Equipment> Equipments
+		{
+			get
+			{
+				return _Equipments.AsReadOnly();
+			}
+		}
+		private List<Equipment> _Equipments = new List<Equipment>();
 
 		/// <summary>
 		/// Event raised when the equipments of this unit is changed.
@@ -1164,8 +1257,29 @@ namespace DiceRoller
 		{
 			foreach (EquipmentDictionary.Name name in startingEquipment)
 			{
-				Equipments.Add(EquipmentDictionary.NewEquipment(name, this));
-			}
+				AddEquipment(EquipmentDictionary.NewEquipment(name, this));
+			}		
+		}
+
+		/// <summary>
+		/// Add an equipment to this unit.
+		/// </summary>
+		public void AddEquipment(Equipment equipment)
+		{
+			_Equipments.Add(equipment);
+			equipment.OnIsActivatedChanged += RefreshEquipmentEffects;
+			equipment.OnInspectionChanged += RefreshEquipmentEffects;
+			OnEquipmentChanged.Invoke();
+		}
+
+		/// <summary>
+		/// Remove an equipment from this unit.
+		/// </summary>
+		public void RemoveEquipment(Equipment equipment)
+		{
+			_Equipments.Remove(equipment);
+			equipment.OnIsActivatedChanged -= RefreshEquipmentEffects;
+			equipment.OnInspectionChanged -= RefreshEquipmentEffects;
 			OnEquipmentChanged.Invoke();
 		}
 
@@ -1180,90 +1294,113 @@ namespace DiceRoller
 			}
 		}
 
-		// ========================================================= Properties (AttackType) =========================================================
-
 		/// <summary>
-		/// The current attack type to be performed by this unit.
+		/// Refresh the effect caused by all equipments that this unit has.
 		/// </summary>
-		public AttackType CurrentAttackType
+		private void RefreshEquipmentEffects()
 		{
-			get
+			int physicalAttack = basePhysicalAttack;
+			int physicalDefence = basePhysicalDefence;
+			int physicalRange = basePhysicalRange;
+			int magicalAttack = baseMagicalAttack;
+			int magicalDefence = baseMagicalDefence;
+			int magicalRange = baseMagicalRange;
+			float knockbackForce = baseKnockbackForce;
+			int movement = baseMovement;
+			AttackAreaRule attackAreaRule = AttackAreaRule.Adjacent;
+			AttackType attackType = AttackType.Physical;
+
+			void AddSimpleStats(Equipment equipment)
 			{
-				return _CurrentAttackType;
+				physicalAttack += equipment.PhysicalAttackDelta;
+				physicalDefence += equipment.PhysicalDefenceDelta;
+				physicalRange += equipment.PhysicalRangeDelta;
+				magicalAttack += equipment.MagicalAttackDelta;
+				magicalDefence += equipment.MagicalDefenceDelta;
+				magicalRange += equipment.MagicalRangeDelta;
+				knockbackForce += equipment.KnockbackForceDelta;
+				movement += equipment.MovementDelta;
 			}
-			private set
+
+			void RemoveSimpleStats(Equipment equipment)
 			{
-				if (_CurrentAttackType != value)
+				physicalAttack -= equipment.PhysicalAttackDelta;
+				physicalDefence -= equipment.PhysicalDefenceDelta;
+				physicalRange -= equipment.PhysicalRangeDelta;
+				magicalAttack -= equipment.MagicalAttackDelta;
+				magicalDefence -= equipment.MagicalDefenceDelta;
+				magicalRange -= equipment.MagicalRangeDelta;
+				knockbackForce -= equipment.KnockbackForceDelta;
+				movement -= equipment.MovementDelta;
+			}
+
+			Equipment movementEquipment = null;
+			Equipment attackEquipment = null;
+
+			// calculate effect for all activated equipments
+			foreach (Equipment equipment in Equipments.Where(x => x.IsActivated))
+			{
+				AddSimpleStats(equipment);
+				if (equipment.Type == Equipment.EquipmentType.MovementBuff)
 				{
-					_CurrentAttackType = value;
-					OnCurrentAttackTypeChanged.Invoke();
+					movementEquipment = equipment;
+				}
+				else if (equipment.Type == Equipment.EquipmentType.MeleeAttack)
+				{
+					attackEquipment = equipment;
+					attackAreaRule = equipment.AreaRule;
+					attackType = AttackType.Physical;	
+				}
+				else if (equipment.Type == Equipment.EquipmentType.MagicAttack)
+				{
+					attackEquipment = equipment;
+					attackAreaRule = equipment.AreaRule;
+					attackType = AttackType.Magical;
 				}
 			}
-		}
-		private AttackType _CurrentAttackType = AttackType.None;
 
-		/// <summary>
-		/// Event raised when the current attack type to be performed by this unit is changed.
-		/// </summary>
-		public event Action OnCurrentAttackTypeChanged = () => { };
-
-		/// <summary>
-		/// Set the attack type to the inital value.
-		/// </summary>
-		public void SetupInitalAttackType()
-		{
-			CurrentAttackType = AttackType.Physical;
-		}
-
-		/// <summary>
-		/// Change the attack type to something else.
-		/// </summary>
-		public void ChangeAttackType(AttackType type)
-		{
-			CurrentAttackType = type;
-		}
-
-		// ========================================================= Properties (AttackRangeRule) =========================================================
-
-		/// <summary>
-		/// The Rule that dictates the attack area of this unit.
-		/// </summary>
-		public AttackAreaRule AttackAreaRule
-		{
-			get
+			// calculate effect for all previewing equipments
+			foreach (Equipment equipment in Equipments.Where(x => x.IsBeingInspected && !x.IsActivated))
 			{
-				return _AttackAreaRule;
-			}
-			private set
-			{
-				if (_AttackAreaRule != value)
+				AddSimpleStats(equipment);
+				if (equipment.Type == Equipment.EquipmentType.MovementBuff)
 				{
-					_AttackAreaRule = value;
-					OnAttackAreaRuleChanged.Invoke();
+					if (movementEquipment != null)
+					{
+						RemoveSimpleStats(movementEquipment);
+					}
+				}
+				else if (equipment.Type == Equipment.EquipmentType.MeleeAttack)
+				{
+					if (attackEquipment != null)
+					{
+						RemoveSimpleStats(attackEquipment);
+					}
+					attackAreaRule = equipment.AreaRule;
+					attackType = AttackType.Physical;
+				}
+				else if (equipment.Type == Equipment.EquipmentType.MagicAttack)
+				{
+					if (attackEquipment != null)
+					{
+						RemoveSimpleStats(attackEquipment);
+					}
+					attackAreaRule = equipment.AreaRule;
+					attackType = AttackType.Magical;
 				}
 			}
-		}
-		private AttackAreaRule _AttackAreaRule = null;
 
-		/// <summary>
-		/// Event raised when the rule that dictates the attack area of this unit is changed. 
-		/// </summary>
-		public event Action OnAttackAreaRuleChanged = () => { };
-
-		/// <summary>
-		/// Reset the rule to determine which tiles are attackable to the basic melee form.
-		/// </summary>
-		public void ResetAttackAreaRule()
-		{
-			_AttackAreaRule = AttackAreaRule.Adjacent;
-		}
-
-		/// <summary>
-		/// Apply a different attack area rule tooo this unit.
-		/// </summary>
-		public void ChangeAttackAreaRule(AttackAreaRule rule)
-		{
-			AttackAreaRule = rule;
+			// apply effects to stats
+			PhysicalAttack = physicalAttack;
+			PhysicalDefence = physicalDefence;
+			PhysicalRange = physicalRange;
+			MagicalAttack = magicalAttack;
+			MagicalDefence = magicalDefence;
+			MagicalRange = magicalRange;
+			KnockbackForce = knockbackForce;
+			Movement = movement;
+			AttackAreaRule = attackAreaRule;
+			CurrentAttackType = attackType;
 		}
 
 		// ========================================================= Properties (CurrentUnitState) =========================================================

@@ -115,6 +115,9 @@ public class InputUtils
 		}
 		else
 		{
+			if (EventSystem.current.IsPointerOverGameObject())
+				return false;
+
 			// read input from mouse
 			if (Input.GetMouseButtonDown(button) && !IsDragging)
 			{

@@ -14,6 +14,7 @@ namespace DiceRoller
 
 			// caches
 			private bool lastIsHovering = false;
+			private bool lastThrowDragging = false;
 
 			// ========================================================= Constructor =========================================================
 
@@ -45,9 +46,9 @@ namespace DiceRoller
 				if (game.CurrentPlayer == self.Player)
 				{
 					// inspect the die being hovering on
-					if (CacheUtils.HasValueChanged(self.IsHovering, ref lastIsHovering))
+					if (CacheUtils.HasValueChanged(self.IsHovering, ref lastIsHovering) | CacheUtils.HasValueChanged(DiceThrower.current.ThrowDragging, ref lastThrowDragging))
 					{
-						self.IsBeingInspected = self.IsHovering;
+						self.IsBeingInspected = self.IsHovering && !DiceThrower.current.ThrowDragging;
 					}
 
 					// toggle selection, and go to dice action selection state or navigation state when this dice is pressed
@@ -82,6 +83,7 @@ namespace DiceRoller
 
 				// reset caches
 				CacheUtils.ResetValueCache(ref lastIsHovering);
+				CacheUtils.ResetValueCache(ref lastThrowDragging);
 			}
 		}
 

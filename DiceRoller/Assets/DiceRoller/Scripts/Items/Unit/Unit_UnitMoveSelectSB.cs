@@ -215,16 +215,20 @@ namespace DiceRoller
 					// detect path selection by left mouse pressing
 					if (InputUtils.GetMousePress(0, ref pressedPosition0) && reachable)
 					{
-						// pressed on a valid tile, initiate movement
-						self.NextMovement = new UnitMovement(self.OccupiedTiles, targetPath);
-
-						// use any activated equipment that are used at move state
-						foreach (Equipment equipment in self.Equipments.Where(x => x.Type == Equipment.EquipmentType.MovementBuff && x.IsActivated))
+						// preventing action when some equipment is in preview
+						if (!self.Equipments.Any(x => x.IsBeingInspected && !x.IsActivated))
 						{
-							equipment.ConsumeDie();
-						}
+							// pressed on a valid tile, initiate movement
+							self.NextMovement = new UnitMovement(self.OccupiedTiles, targetPath);
 
-						stateMachine.ChangeState(SMState.UnitMove);
+							// use any activated equipment that are used at move state
+							foreach (Equipment equipment in self.Equipments.Where(x => x.Type == Equipment.EquipmentType.MovementBuff && x.IsActivated))
+							{
+								equipment.ConsumeDie();
+							}
+
+							stateMachine.ChangeState(SMState.UnitMove);
+						}
 					}
 
 					// detect return to navitation by right mouse pressing
@@ -302,7 +306,7 @@ namespace DiceRoller
 				{
 					// hide hovering by tile
 					self.IsBlocking = false;
-					board.HideArea(self, self.Player == game.CurrentPlayer ? Tile.DisplayType.SelfPosition : Tile.DisplayType.EnemyPosition);
+					board.HideArea(self, self.Player == game.CurrentPlayer ? Tile.DisplayType.FriendPosition : Tile.DisplayType.EnemyPosition);
 					CacheUtils.ResetValueCache(ref lastIsHoveringFromTiles);
 
 				}

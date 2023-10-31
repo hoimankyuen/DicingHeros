@@ -67,8 +67,6 @@ namespace DiceRoller
 		 * Registered :
 		 *		UIController
 		 *		Unit
-		 *		Equipment
-		 *		EquipmentDieSlot
 		 *		Die
 		 * Transitions :
 		 *		Unit -> State.Navigation
@@ -78,6 +76,7 @@ namespace DiceRoller
 		 * Registered :
 		 *		UIController
 		 *		Unit
+		 *		Equipment
 		 * Transitions :
 		 *		Unit -> State.Navigation
 		 */

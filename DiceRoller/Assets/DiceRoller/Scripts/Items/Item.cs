@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace DiceRoller
 {
@@ -77,6 +78,7 @@ namespace DiceRoller
 		/// </summary>
 		protected virtual void Update()
 		{
+			DetectEnteringUI();
 			DetectTilesOccupation();
 			DetectMovement();
 			DetectFallen();
@@ -105,15 +107,18 @@ namespace DiceRoller
 		/// <summary>
 		/// OnMouseEnter is called when the mouse is start pointing to the game object.
 		/// </summary>
-		protected void OnMouseEnter()
+		private void OnMouseEnter()
 		{
+			if (EventSystem.current.IsPointerOverGameObject())
+				return;
+
 			_IsSelfHovering = true;
 		}
 
 		/// <summary>
 		/// OnMouseExit is called when the mouse is stop pointing to the game object.
 		/// </summary>
-		protected void OnMouseExit()
+		private void OnMouseExit()
 		{
 			_IsSelfHovering = false;
 		}
@@ -121,8 +126,11 @@ namespace DiceRoller
 		/// <summary>
 		/// OnMouseDown is called when a mouse button is pressed when pointing to the game object.
 		/// </summary>
-		protected void OnMouseDown()
+		private void OnMouseDown()
 		{
+			if (EventSystem.current.IsPointerOverGameObject())
+				return;
+
 			for (int i = 0; i < 3; i++)
 			{
 				_StartedSelfPress[i] = true;
@@ -134,7 +142,7 @@ namespace DiceRoller
 		/// <summary>
 		/// OnMouseUp is called when a mouse button is released when pointing to the game object.
 		/// </summary>
-		protected void OnMouseUp()
+		private void OnMouseUp()
 		{
 			for (int i = 0; i < 3; i++)
 			{
@@ -145,6 +153,33 @@ namespace DiceRoller
 					_CompletedSelfPress[i] = true;
 					_LastMousePosition[i] = Vector2.negativeInfinity;
 				}
+			}
+		}
+
+		/// <summary>
+		/// Force stop input when the mouse enter UI.
+		/// </summary>
+		private void DetectEnteringUI()
+		{
+			if (EventSystem.current.IsPointerOverGameObject())
+			{
+				// stop hovering
+				if (_IsSelfHovering)
+				{
+					_IsSelfHovering = false;
+				}
+
+				// stop press
+				for (int i = 0; i < 3; i++)
+				{
+					if (_StartedSelfPress[i])
+					{
+						_StartedSelfPress[i] = false;
+						_LastMousePosition[i] = Vector2.negativeInfinity;
+					}
+				}
+
+				// note: Drag is not stopped since dragging may passes through UI
 			}
 		}
 

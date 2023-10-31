@@ -15,6 +15,9 @@ namespace DiceRoller
 			// caches
 			private bool isSelectedAtEnter = false;
 
+			private List<Tile> lastMoveableArea = new List<Tile>();
+			private List<Tile> lastPredictedAttackableArea = new List<Tile>();
+
 			private Vector2 pressedPosition1 = Vector2.negativeInfinity;
 
 			// ========================================================= Constructor =========================================================
@@ -42,9 +45,6 @@ namespace DiceRoller
 				{
 					// show occupied tiles on board, assume unit wont move during movement selection state
 					board.ShowArea(self, Tile.DisplayType.EnemyPosition, self.OccupiedTiles);
-
-					// show attack range
-					board.ShowArea(self, Tile.DisplayType.AttackPossible, self.PredictedAttackableArea);
 				}
 			}
 
@@ -58,6 +58,18 @@ namespace DiceRoller
 				// actions for the selected unit
 				if (isSelectedAtEnter)
 				{
+					// show movement
+					if (CacheUtils.HasCollectionChanged(self.MovableArea, lastMoveableArea))
+					{
+						board.ShowArea(self, Tile.DisplayType.MovePossible, self.MovableArea);
+					}
+
+					// show attack range
+					if (CacheUtils.HasCollectionChanged(self.PredictedAttackableArea, lastPredictedAttackableArea))
+					{
+						board.ShowArea(self, Tile.DisplayType.AttackPossible, self.PredictedAttackableArea);
+					}
+
 					// detect return to navitation by right mouse pressing
 					if (InputUtils.GetMousePress(1, ref pressedPosition1))
 					{
@@ -81,10 +93,15 @@ namespace DiceRoller
 					// hide occupied tiles on board
 					board.HideArea(self, Tile.DisplayType.EnemyPosition);
 
-					// show attack range
+					// hide movement
+					board.HideArea(self, Tile.DisplayType.MovePossible);
+
+					// hide attack range
 					board.HideArea(self, Tile.DisplayType.AttackPossible);
 
 					// reset cache
+					CacheUtils.ResetCollectionCache(lastMoveableArea);
+					CacheUtils.ResetCollectionCache(lastPredictedAttackableArea);
 					InputUtils.ResetPressCache(ref pressedPosition1);
 				}
 			}

@@ -119,49 +119,53 @@ namespace DiceRoller
 					// detect press on enemy unit
 					if (target != null && target.IsPressed[0])
 					{
-						// calculate damage
-						int damage = 0;
-						if (self.CurrentAttackType == AttackType.Physical)
+						// preventing action when some equipment is in preview
+						if (!self.Equipments.Any(x => x.IsBeingInspected && !x.IsActivated))
 						{
-							damage = Mathf.Max(self.PhysicalAttack - target.PhysicalDefence, 0);
-						}
-						else if (self.CurrentAttackType == AttackType.Magical)
-						{
-							damage = Mathf.Max(self.MagicalAttack - target.MagicalDefence, 0);
-						}
-						// fill in attack parameters
-						self.NextAttack = new UnitAttack(target, damage, self.KnockbackForce);
-
-						// use any activated equipment that are used at attack state
-						AttackType attackType = self.CurrentAttackType;
-						foreach (Equipment equipment in self.Equipments)
-						{			
-							if (attackType == AttackType.Physical)
+							// calculate damage
+							int damage = 0;
+							if (self.CurrentAttackType == AttackType.Physical)
 							{
-								if (equipment.IsActivated && (equipment.Type == Equipment.EquipmentType.MeleeAttack || equipment.Type == Equipment.EquipmentType.MeleeSelfBuff))
+								damage = Mathf.Max(self.PhysicalAttack - target.PhysicalDefence, 0);
+							}
+							else if (self.CurrentAttackType == AttackType.Magical)
+							{
+								damage = Mathf.Max(self.MagicalAttack - target.MagicalDefence, 0);
+							}
+							// fill in attack parameters
+							self.NextAttack = new UnitAttack(target, damage, self.KnockbackForce);
+
+							// use any activated equipment that are used at attack state
+							AttackType attackType = self.CurrentAttackType;
+							foreach (Equipment equipment in self.Equipments)
+							{
+								if (attackType == AttackType.Physical)
+								{
+									if (equipment.IsActivated && (equipment.Type == Equipment.EquipmentType.MeleeAttack || equipment.Type == Equipment.EquipmentType.MeleeSelfBuff))
+									{
+										equipment.ConsumeDie();
+									}
+								}
+								else if (attackType == AttackType.Magical)
+								{
+									if (equipment.IsActivated && (equipment.Type == Equipment.EquipmentType.MagicAttack || equipment.Type == Equipment.EquipmentType.MagicSelfBuff))
+									{
+										equipment.ConsumeDie();
+									}
+								}
+							}
+
+							// use any activated equipment on the target that are used as defence
+							foreach (Equipment equipment in target.Equipments)
+							{
+								if (equipment.IsActivated && equipment.Type == Equipment.EquipmentType.DefenceSelfBuff)
 								{
 									equipment.ConsumeDie();
 								}
 							}
-							else if (attackType == AttackType.Magical)
-							{
-								if (equipment.IsActivated && (equipment.Type == Equipment.EquipmentType.MagicAttack || equipment.Type == Equipment.EquipmentType.MagicSelfBuff))
-								{
-									equipment.ConsumeDie();
-								}
-							}
-						}
 
-						// use any activated equipment on the target that are used as defence
-						foreach (Equipment equipment in target.Equipments)
-						{
-							if (equipment.IsActivated && equipment.Type == Equipment.EquipmentType.DefenceSelfBuff)
-							{
-								equipment.ConsumeDie();
-							}
+							stateMachine.ChangeState(SMState.UnitAttack);
 						}
-
-						stateMachine.ChangeState(SMState.UnitAttack);
 					}
 
 					// detect return to navitation by right mouse pressing

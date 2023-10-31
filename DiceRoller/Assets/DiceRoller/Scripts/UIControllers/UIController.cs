@@ -229,7 +229,6 @@ namespace DiceRoller
 				self.diceListWindow.Show = true;
 				self.unitControlWindow.Show = true;
 
-				self.cursor.SetIcon(UICursor.IconType.SimpleMovement);
 				//self.targetIndicator.Setup(UITargetIndicator.Mode.Mouse, UICursor.IconType.SimpleMovement);
 			}
 
@@ -251,7 +250,6 @@ namespace DiceRoller
 				self.diceListWindow.Show = false;
 				self.unitControlWindow.Show = false;
 
-				self.cursor.SetIcon(UICursor.IconType.None);
 				//self.targetIndicator.Setup(UITargetIndicator.Mode.None, UICursor.IconType.None);
 			}
 		}
@@ -281,7 +279,6 @@ namespace DiceRoller
 				self.diceListWindow.Show = true;
 				self.unitControlWindow.Show = true;
 
-				self.cursor.SetIcon(UICursor.IconType.SimpleMelee);
 				//self.targetIndicator.Setup(UITargetIndicator.Mode.Mouse, UICursor.IconType.SimpleMelee);
 			}
 
@@ -303,7 +300,6 @@ namespace DiceRoller
 				self.diceListWindow.Show = false;
 				self.unitControlWindow.Show = false;
 
-				self.cursor.SetIcon(UICursor.IconType.None);
 				//self.targetIndicator.Setup(UITargetIndicator.Mode.None, UICursor.IconType.None);
 			}
 		}

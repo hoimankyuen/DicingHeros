@@ -30,6 +30,7 @@ namespace DiceRoller
 		public Vector3 ThrowDragPosition { get; protected set; } = Vector3.zero;
 		public Vector3 ThrowDirection { get; protected set; } = Vector3.zero;
 		public float ThrowPower { get; protected set; } = 0;
+		public bool AtThrowableSurface { get; private set; } = false;
 
 		// events
 		public Action onRemainingThrowChanged = () => { };
@@ -96,6 +97,14 @@ namespace DiceRoller
 		// ========================================================= Throw Dice Behaviours =========================================================
 
 		/// <summary>
+		/// Detect if the mouse is pointing at a throwable surface.
+		/// </summary>
+		private void DetectThrowableSurface()
+		{
+			AtThrowableSurface = Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, Camera.main.farClipPlane, LayerMask.GetMask("Floor", "Dice", "Unit")) && hit.collider.gameObject.layer == LayerMask.NameToLayer("Floor");
+		}
+
+		/// <summary>
 		/// Detect and perform a throw action by the player. Return true if thrown.
 		/// </summary>
 		private void DetectThrow()
@@ -135,6 +144,14 @@ namespace DiceRoller
 					ResolveThrow(Die.GetAllSelected());
 				}
 			}
+		}
+
+		/// <summary>
+		/// Abort a throw in the middle of dragging.
+		/// </summary>
+		private void AbortThrow()
+		{
+			ThrowDragging = false;
 		}
 
 		/// <summary>
@@ -342,6 +359,7 @@ namespace DiceRoller
 					}
 
 					// detect a dice throw
+					self.DetectThrowableSurface();
 					self.DetectThrow();
 				}
 
@@ -357,7 +375,11 @@ namespace DiceRoller
 			/// </summary>
 			public override void OnStateExit()
 			{
+				self.AtThrowableSurface = false;
 				self.throwInitiated = false;
+
+				self.AbortThrow();
+
 				InputUtils.ResetPressCache(ref pressedPosition1);
 			}
 		}
