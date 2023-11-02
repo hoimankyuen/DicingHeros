@@ -25,7 +25,9 @@ namespace DiceRoller
 			private bool attackAreaDirty = true;
 			private bool allAttackableAreaDirty = true;
 			private AttackType lastAttackType = AttackType.None;
+			private int lastPhysicalAttack = 0;
 			private int lastPhysicalRange = 0;
+			private int lastMagicalAttack = 0;
 			private int lastMagicalRange = 0;
 			private AttackAreaRule lastAttackAreaRule = null;
 			private List<Tile> nextAttackableArea = new List<Tile>();
@@ -148,7 +150,8 @@ namespace DiceRoller
 						}
 
 						// show target tile on the board
-						board.ShowArea(self, Tile.DisplayType.MoveTarget, (targetTile != null && reachable) ? targetTile : null);
+						//board.ShowArea(self, Tile.DisplayType.MoveTarget, (targetTile != null && reachable) ? targetTile : null);
+						board.ShowTargetTile(targetTile);
 
 						// force attaack area recalculation
 						attackAreaDirty = true;
@@ -160,9 +163,17 @@ namespace DiceRoller
 						attackAreaDirty = true;
 						allAttackableAreaDirty = true;
 					}
+					if (CacheUtils.HasValueChanged(self.PhysicalAttack, ref lastPhysicalAttack))
+					{
+						allAttackableAreaDirty = true;
+					}
 					if (CacheUtils.HasValueChanged(self.PhysicalRange, ref lastPhysicalRange))
 					{
 						attackAreaDirty = true;
+						allAttackableAreaDirty = true;
+					}
+					if (CacheUtils.HasValueChanged(self.MagicalAttack, ref lastMagicalAttack))
+					{
 						allAttackableAreaDirty = true;
 					}
 					if (CacheUtils.HasValueChanged(self.MagicalRange, ref lastMagicalRange))
@@ -178,15 +189,28 @@ namespace DiceRoller
 
 					// show attack area on the board
 					if (attackAreaDirty)
-					{		
+					{
 						if (targetTile != null && reachable)
 						{
 							board.GetTilesByRule(targetTile, self.AttackAreaRule, self.CurrentAttackType == AttackType.Magical ? self.MagicalRange : self.PhysicalRange, nextAttackableArea);
 							board.ShowArea(self, Tile.DisplayType.Attack, nextAttackableArea);
+
+							ClearTargetableUnits();
+							foreach (Player player in game.GetAllPlayers().Where(x => x != self.Player))
+							{
+								foreach (Unit unit in player.Units)
+								{
+									if (nextAttackableArea.Intersect(unit.OccupiedTiles).Count() > 0)
+									{
+										unit.IsTargetable = true;
+									}
+								}
+							}
 						}
 						else
 						{
 							board.HideArea(self, Tile.DisplayType.Attack);
+							ClearTargetableUnits();
 						}
 						attackAreaDirty = false;
 					}
@@ -196,15 +220,31 @@ namespace DiceRoller
 					{
 						board.ShowArea(self, Tile.DisplayType.AttackPossible, self.PredictedAttackableArea);
 
-						// find all targetable units
-						ClearTargetableUnits();
+						// show all enemy units in range
+						foreach (Unit unit in GetAllInRange())
+						{
+							unit.PendingHealthDelta = 0;
+							unit.IsRecievingDamage = false;
+						}
+						ClearInRangeUnits();
 						foreach (Player player in game.GetAllPlayers().Where(x => x != self.Player))
 						{
 							foreach (Unit unit in player.Units)
 							{
 								if (self.PredictedAttackableArea.Intersect(unit.OccupiedTiles).Count() > 0)
 								{
-									unit.IsTargetable = true;
+									int damage = 0;
+									if (self.CurrentAttackType == AttackType.Physical)
+									{
+										damage = Mathf.Max(self.PhysicalAttack - unit.PhysicalDefence, 0);
+									}
+									else if (self.CurrentAttackType == AttackType.Magical)
+									{
+										damage = Mathf.Max(self.MagicalAttack - unit.PhysicalDefence, 0);
+									}
+									unit.PendingHealthDelta = damage * -1;
+									unit.IsRecievingDamage = true;
+									unit.IsInRange = true;
 								}
 							}
 						}
@@ -279,9 +319,18 @@ namespace DiceRoller
 					targetPath.Clear();
 
 					// hdie target tile on board
-					board.HideArea(self, Tile.DisplayType.MoveTarget);
+					//board.HideArea(self, Tile.DisplayType.MoveTarget);
+					board.ShowTargetTile(null);
 					CacheUtils.ResetValueCache(ref lastTargetTile);
 					
+					// clear units in range
+					foreach (Unit unit in GetAllInRange())
+					{
+						unit.PendingHealthDelta = 0;
+						unit.IsRecievingDamage = false;
+					}
+					ClearInRangeUnits();
+
 					// clear targetable units
 					ClearTargetableUnits();
 
@@ -291,7 +340,9 @@ namespace DiceRoller
 					attackAreaDirty = true;
 					allAttackableAreaDirty = true;
 					CacheUtils.ResetEnumCache(ref lastAttackType);
+					CacheUtils.ResetValueCache(ref lastPhysicalAttack);
 					CacheUtils.ResetValueCache(ref lastPhysicalRange);
+					CacheUtils.ResetValueCache(ref lastMagicalAttack);
 					CacheUtils.ResetValueCache(ref lastMagicalRange);
 					CacheUtils.ResetValueCache(ref lastAttackAreaRule);
 					nextAttackableArea.Clear();

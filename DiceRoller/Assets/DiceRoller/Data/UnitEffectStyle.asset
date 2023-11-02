@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: UnitEffectStyle
   m_EditorClassIdentifier: 
   depletedColor: {r: 0, g: 0, b: 0, a: 0.5019608}
-  blockingFriendColor: {r: 1, g: 0.5, b: 0, a: 0.5019608}
-  blockingOtherColor: {r: 0, g: 1, b: 0, a: 0.5019608}
-  targetableSelfColor: {r: 1, g: 0.5, b: 0, a: 0.5019608}
-  targetableOtherColor: {r: 1, g: 0, b: 0, a: 0.5019608}
+  blockingFriendColor: {r: 0, g: 1, b: 0, a: 0.5019608}
+  blockingOtherColor: {r: 1, g: 0, b: 0, a: 0.5019608}
+  targetableSelfColor: {r: 0, g: 1, b: 0, a: 0.7490196}
+  targetableOtherColor: {r: 1, g: 0, b: 0, a: 0.7490196}
   inspectedSelfColor: {r: 0, g: 1, b: 0, a: 0.5019608}
-  inspectedFriendColor: {r: 1, g: 0.5, b: 0, a: 0.5019608}
+  inspectedFriendColor: {r: 0, g: 1, b: 0, a: 0.5019608}
   inspectedOtherColor: {r: 1, g: 0, b: 0, a: 0.5019608}
   selectedSelfColor: {r: 0, g: 1, b: 0, a: 1}
   selectedOtherColor: {r: 1, g: 0, b: 0, a: 1}

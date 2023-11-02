@@ -103,6 +103,7 @@ namespace DiceRoller
 			base.Update();
 
 			UpdateEquipments();
+			DetectFallen();
 		}
 
 		/// <summary>
@@ -233,10 +234,68 @@ namespace DiceRoller
 			}
 		}
 
+		// ========================================================= Properties (IsInRange) =========================================================
+
+		/// <summary>
+		/// Flag for if this unit is currently is in range of the current unit's attack.
+		/// </summary>
+		public bool IsInRange
+		{
+			get
+			{
+				return _InRangeUnits.Contains(this);
+			}
+			private set
+			{
+				if (!_InRangeUnits.Contains(this) && value)
+				{
+					_InRangeUnits.Add(this);
+					OnInRangeChanged.Invoke();
+					OnAnyInRangeChanged.Invoke();
+				}
+				else if (_InRangeUnits.Contains(this) && !value)
+				{
+					_InRangeUnits.Remove(this);
+					OnInRangeChanged.Invoke();
+					OnAnyInRangeChanged.Invoke();
+				}
+			}
+		}
+		private readonly static UniqueList<Unit> _InRangeUnits = new UniqueList<Unit>();
+
+		/// <summary>
+		/// Event raised when the in range status of this unit is changed.
+		/// </summary>
+		public event Action OnInRangeChanged = () => { };
+
+		/// <summary>
+		/// Event raised when the list of units in range is changed.
+		/// </summary>
+		public static event Action OnAnyInRangeChanged = () => { };
+
+		/// <summary>
+		/// Retrieve all currently unit in range of current unit's attack.
+		/// </summary>
+		public static IReadOnlyCollection<Unit> GetAllInRange()
+		{
+			return _InRangeUnits.AsReadOnly();
+		}
+
+		/// <summary>
+		/// Clear the list of units currently in range of current unit's attack. 
+		/// /// </summary>
+		public static void ClearInRangeUnits()
+		{
+			for (int i = _InRangeUnits.Count - 1; i >= 0; i--)
+			{
+				_InRangeUnits[i].IsInRange = false;
+			}
+		}
+
 		// ========================================================= Properties (IsTargetable) =========================================================
 
 		/// <summary>
-		/// Flag for if this unit is currently targetable.
+		/// Flag for if this unit is currently targetable by the current unit's attack.
 		/// </summary>
 		public bool IsTargetable
 		{
@@ -661,6 +720,7 @@ namespace DiceRoller
 				if (_IsRecievingDamage != value)
 				{
 					_IsRecievingDamage = value;
+					OnPendingHealthDeltaChanged.Invoke();
 				}
 			}
 		}
@@ -1015,7 +1075,7 @@ namespace DiceRoller
 			{
 				if (_IsMoveableAreaDirty)
 				{
-					RefreshMoveableArea();			
+					RefreshMoveableArea();
 				}
 				return _MoveableArea.AsReadOnly();
 			}
@@ -1146,7 +1206,7 @@ namespace DiceRoller
 			}
 			else
 			{
-				board.GetTilesByRule(OccupiedTiles, AttackAreaRule,  MagicalRange, _AttackableArea);
+				board.GetTilesByRule(OccupiedTiles, AttackAreaRule, MagicalRange, _AttackableArea);
 			}
 			_IsAttackableAreaDirty = false;
 		}
@@ -1162,7 +1222,7 @@ namespace DiceRoller
 			{
 				if (_IsPredictedAttackableAreaDirty)
 				{
-					RefreshPredictedAttackableArea();	
+					RefreshPredictedAttackableArea();
 				}
 				return _PredictedAttackableArea.AsReadOnly();
 			}
@@ -1258,7 +1318,7 @@ namespace DiceRoller
 			foreach (EquipmentDictionary.Name name in startingEquipment)
 			{
 				AddEquipment(EquipmentDictionary.NewEquipment(name, this));
-			}		
+			}
 		}
 
 		/// <summary>
@@ -1349,7 +1409,7 @@ namespace DiceRoller
 				{
 					attackEquipment = equipment;
 					attackAreaRule = equipment.AreaRule;
-					attackType = AttackType.Physical;	
+					attackType = AttackType.Physical;
 				}
 				else if (equipment.Type == Equipment.EquipmentType.MagicAttack)
 				{
@@ -1409,7 +1469,7 @@ namespace DiceRoller
 		/// The state of action of this unit.
 		/// </summary>
 		public UnitState CurrentUnitState
-		{ 
+		{
 			get
 			{
 				return _CurrentUnitState;
@@ -1424,7 +1484,7 @@ namespace DiceRoller
 					OnUnitStateChange.Invoke();
 				}
 			}
-		} 
+		}
 		private UnitState _CurrentUnitState = UnitState.Standby;
 
 		/// <summary>
@@ -1443,6 +1503,10 @@ namespace DiceRoller
 		/// The next acttack action chosen by the player.
 		/// </summary>
 		public UnitAttack NextAttack { get; private set; } = null;
+
+		// ========================================================= Other Signals =========================================================
+
+		public event Action OnTakingDamage = () => {};
 
 		// ========================================================= State Machine Behaviour =========================================================
 
@@ -1471,6 +1535,19 @@ namespace DiceRoller
 			if (stateMachine != null)
 			{
 				stateMachine.DeregisterAll(this);
+			}
+		}
+
+		// ========================================================= Other Signals =========================================================
+
+		/// <summary>
+		/// Detect and perform necessary action for fallen die.
+		/// </summary>
+		private void DetectFallen()
+		{
+			if (IsFallen)
+			{
+				CurrentUnitState = UnitState.Defeated;
 			}
 		}
 

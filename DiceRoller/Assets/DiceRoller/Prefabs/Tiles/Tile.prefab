@@ -120,9 +120,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e816f13f098066b4cb76bee5b3e3b1ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileSize: 1
-  connectedTiles: []
-  boardPos:
+  boardPiece: {fileID: 0}
+  localBoardPos:
     x: 0
     z: 0
   style: {fileID: 11400000, guid: e2c61dbc275bab54e9228a88c3c67fed, type: 2}
@@ -227,8 +226,8 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: 1345916223
+  m_SortingLayer: 3
   m_SortingOrder: 20
   m_Sprite: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -309,8 +308,8 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: 992789363
+  m_SortingLayer: 2
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: 25cd186178dae6441996b63e4a013785, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}

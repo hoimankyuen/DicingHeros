@@ -387,7 +387,11 @@ namespace DiceRoller
 		// ========================================================= Dice Action State =========================================================
 		private class DiceThrowSB : StateBehaviour
 		{
-			protected readonly DiceThrower self = null;
+			// host reference
+			private readonly DiceThrower self = null;
+
+			// working variables
+			private float startTime = 0;
 
 			/// <summary>
 			/// Constructor.
@@ -402,6 +406,7 @@ namespace DiceRoller
 			/// </summary>
 			public override void OnStateEnter()
 			{
+				startTime = Time.time;
 			}
 
 			/// <summary>
@@ -409,11 +414,15 @@ namespace DiceRoller
 			/// </summary>
 			public override void OnStateUpdate()
 			{
-				// change to navigation state if dice throw is completed
-				if (Die.GetAllSelected().All(x => !x.IsMoving || x.IsFallen))
+				// wait for a while before detecting throw complete
+				if (Time.time - startTime > 0.5f)
 				{
-					Die.ClearSelected();
-					stateMachine.ChangeState(SMState.Navigation);
+					// change to navigation state if dice throw is completed
+					if (Die.GetAllSelected().All(x => !x.IsMoving || x.IsFallen))
+					{
+						Die.ClearSelected();
+						stateMachine.ChangeState(SMState.Navigation);
+					}
 				}
 			}
 

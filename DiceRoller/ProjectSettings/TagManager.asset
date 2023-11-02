@@ -44,3 +44,15 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
+  - name: BelowTiles
+    uniqueID: 287744977
+    locked: 0
+  - name: Tiles
+    uniqueID: 992789363
+    locked: 0
+  - name: TileAreas
+    uniqueID: 1345916223
+    locked: 0
+  - name: AboveTiles
+    uniqueID: 3267923391
+    locked: 0

@@ -8,20 +8,36 @@ namespace DiceRoller
 {
 	public class UIUnitIndicator : MonoBehaviour
 	{
-		[Header("Components")]
-		public Image blinkingImage;
-		public Image solidImage;
-		public RectTransform blinkingRectTransform;
-		public RectTransform solidRectTransform;
-		public Image iconImage;
-		public TextMeshProUGUI valueText;
-		public TextMeshProUGUI damageText;
+		[System.Serializable]
+		public struct BigHealth
+		{
+			public GameObject gameObject;
+			public Image blinkingImage;
+			public Image solidImage;
+			public RectTransform blinkingRectTransform;
+			public RectTransform solidRectTransform;
+			public TextMeshProUGUI valueText;
+			public TextMeshProUGUI damageText;
+		}
 
-		public RectTransform healthRectTransform;
+		[System.Serializable]
+		public struct SmallHealth
+		{
+			public GameObject gameObject;
+			public Image blinkingImage;
+			public Image solidImage;
+			public RectTransform blinkingRectTransform;
+			public RectTransform solidRectTransform;
+		}
+
+		[Header("Component")]
+		public BigHealth bigHealth;
+		public SmallHealth smallHealth;
 		public Image pointerImage;
 
-		// references
-		public Unit Target { get; private set; }
+		// properties
+		public bool Showing { get; private set; } = true;
+		public Unit Target { get; private set; } = null;
 
 		// ========================================================= Monobehaviour Methods =========================================================
 
@@ -39,12 +55,6 @@ namespace DiceRoller
 		private void Start()
 		{
 			SetTarget(Target);
-
-			if (Target != null)
-			{
-				Target.OnHealthChanged += RefreshDisplay;
-				Target.OnPendingHealthDeltaChanged += RefreshDisplay;
-			}
 		}
 
 		/// <summary>
@@ -72,13 +82,34 @@ namespace DiceRoller
 		/// </summary>
 		public void SetTarget(Unit target)
 		{
-			// register and deregister callbacks
-			DeregisterCallbacks(this.Target);
-			RegisterCallbacks(target);
+			if (Target != target)
+			{
+				// register and deregister callbacks
+				if (Target != null)
+				{
+					DeregisterCallbacks(this.Target);
+				}
+				if (target != null)
+				{
+					RegisterCallbacks(target);
+				}
 
-			// set values
-			this.Target = target;
-			RefreshDisplay();
+				// set values
+				Target = target;
+				RefreshDisplay();
+			}
+		}
+
+		/// <summary>
+		/// Show or hide this unit indicator.
+		/// </summary>
+		public void Show(bool show)
+		{
+			if (Showing != show)
+			{
+				Showing = show;
+				RefreshDisplay();
+			}
 		}
 
 		/// <summary>
@@ -92,6 +123,8 @@ namespace DiceRoller
 			target.OnHealthChanged += RefreshDisplay;
 			target.OnPendingHealthDeltaChanged += RefreshDisplay;
 			target.OnIsRecievingDamageChanged += RefreshDisplay;
+			target.OnInspectionChanged += RefreshDisplay;
+			target.OnUnitStateChange += RefreshDisplay;
 		}
 
 		/// <summary>
@@ -105,45 +138,57 @@ namespace DiceRoller
 			target.OnHealthChanged -= RefreshDisplay;
 			target.OnPendingHealthDeltaChanged -= RefreshDisplay;
 			target.OnIsRecievingDamageChanged -= RefreshDisplay;
+			target.OnInspectionChanged -= RefreshDisplay;
+			target.OnUnitStateChange -= RefreshDisplay;
 		}
-
 
 		/// <summary>
 		/// Change the current display of this ui element to either match the information of the inspecting object.
 		/// </summary>
 		private void RefreshDisplay()
 		{
-			if (Target != null)
-			{
-				damageText.gameObject.SetActive(Target.IsRecievingDamage);
-				healthRectTransform.gameObject.SetActive(true);
-				pointerImage.gameObject.SetActive(true);
+			// prevent refresh if this indicator is destroying, checking one component should be enough
+			if (pointerImage == null)
+				return;
 
-				damageText.text = Target.PendingHealthDelta == 0 ? "-0" : Target.PendingHealthDelta.ToString();
-				valueText.text = string.Format("{0}/{1}", Mathf.Clamp(Target.Health, 0, Target.maxHealth), Target.maxHealth);
+			if (Target != null && Target.CurrentUnitState != Unit.UnitState.Defeated && Showing)
+			{
+				if (Target.IsBeingInspected)
+				{
+					bigHealth.damageText.gameObject.SetActive(Target.IsRecievingDamage);
+					bigHealth.gameObject.SetActive(true);
+					smallHealth.gameObject.SetActive(false);
+					pointerImage.gameObject.SetActive(true);
+				}
+				else
+				{
+					bigHealth.damageText.gameObject.SetActive(false);
+					bigHealth.gameObject.SetActive(false);
+
+					smallHealth.gameObject.SetActive(Target.IsRecievingDamage || Target.Health + Target.PendingHealthDelta < Target.maxHealth);
+					pointerImage.gameObject.SetActive(Target.IsRecievingDamage || Target.Health + Target.PendingHealthDelta < Target.maxHealth);
+				}
+				
+				bigHealth.damageText.text = Target.PendingHealthDelta == 0 ? "-0" : Target.PendingHealthDelta.ToString();
+				bigHealth.valueText.text = string.Format("{0}/{1}", Mathf.Clamp(Target.Health, 0, Target.maxHealth), Target.maxHealth);
 
 				float solidPercentage = Mathf.Clamp(1f * (Target.PendingHealthDelta < 0 ? (Target.Health + Target.PendingHealthDelta) : Target.Health) / Target.maxHealth, 0f, 1f);
-				solidRectTransform.anchorMax = new Vector2(solidPercentage, 1f);
-				solidImage.color = Color.HSVToRGB(Mathf.Lerp(0f, 0.33333f, solidPercentage), 1f, 1f);
+				bigHealth.solidRectTransform.anchorMax = new Vector2(solidPercentage, 1f);
+				bigHealth.solidImage.color = Color.HSVToRGB(Mathf.Lerp(0f, 0.33333f, solidPercentage), 1f, 1f);
+				smallHealth.solidRectTransform.anchorMax = new Vector2(solidPercentage, 1f);
+				smallHealth.solidImage.color = Color.HSVToRGB(Mathf.Lerp(0f, 0.33333f, solidPercentage), 1f, 1f);
 
 				float blinkingPercentage = Mathf.Clamp(1f * (Target.PendingHealthDelta < 0 ? Target.Health : (Target.Health + Target.PendingHealthDelta)) / Target.maxHealth, 0f, 1f);
-				blinkingRectTransform.anchorMax = new Vector2(blinkingPercentage, 1f);
-				blinkingImage.color = Color.HSVToRGB(Mathf.Lerp(0f, 0.33333f, blinkingPercentage), 1f, Mathf.Lerp(0.25f, 0.5f, Mathf.InverseLerp(-1f, 1f, Mathf.Sin(Time.time * 10f))));
+				bigHealth.blinkingRectTransform.anchorMax = new Vector2(blinkingPercentage, 1f);
+				bigHealth.blinkingImage.color = Color.HSVToRGB(Mathf.Lerp(0f, 0.33333f, blinkingPercentage), 1f, Mathf.Lerp(0.25f, 0.5f, Mathf.InverseLerp(-1f, 1f, Mathf.Sin(Time.time * 10f))));
+				smallHealth.blinkingRectTransform.anchorMax = new Vector2(blinkingPercentage, 1f);
+				smallHealth.blinkingImage.color = Color.HSVToRGB(Mathf.Lerp(0f, 0.33333f, blinkingPercentage), 1f, Mathf.Lerp(0.25f, 0.5f, Mathf.InverseLerp(-1f, 1f, Mathf.Sin(Time.time * 10f))));
 			}
 			else
 			{
-				damageText.gameObject.SetActive(false);
-				healthRectTransform.gameObject.SetActive(false);
+				bigHealth.gameObject.SetActive(false);
+				smallHealth.gameObject.SetActive(false);
 				pointerImage.gameObject.SetActive(false);
-
-				damageText.text = "-0";
-				valueText.text = ("==/==");
-
-				solidRectTransform.anchorMax = new Vector2(1f, 1f);
-				solidImage.color = Color.HSVToRGB(0.33333f, 1f, 1f);
-
-				blinkingRectTransform.anchorMax = new Vector2(1f, 1f);
-				blinkingImage.color = Color.HSVToRGB(0.33333f, 1f, Mathf.Lerp(0.25f, 0.5f, Mathf.InverseLerp(-1f, 1f, Mathf.Sin(Time.time * 10f))));
 			}
 		}
 
@@ -154,8 +199,9 @@ namespace DiceRoller
 		{
 			if (Target != null && Target.PendingHealthDelta != 0)
 			{
-				Color.RGBToHSV(blinkingImage.color, out float h, out float s, out _);
-				blinkingImage.color = Color.HSVToRGB(h, s, Mathf.Lerp(0.25f, 0.5f, Mathf.InverseLerp(-1f, 1f, Mathf.Sin(Time.time * 10f))));
+				Color.RGBToHSV(bigHealth.blinkingImage.color, out float h, out float s, out _);
+				bigHealth.blinkingImage.color = Color.HSVToRGB(h, s, Mathf.Lerp(0.25f, 0.5f, Mathf.InverseLerp(-1f, 1f, Mathf.Sin(Time.time * 10f))));
+				smallHealth.blinkingImage.color = Color.HSVToRGB(h, s, Mathf.Lerp(0.25f, 0.5f, Mathf.InverseLerp(-1f, 1f, Mathf.Sin(Time.time * 10f))));
 			}
 		}
 

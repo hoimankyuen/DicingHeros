@@ -299,7 +299,7 @@ namespace DiceRoller
 				valueText.text = target.Value == -1 ? "?" : target.Value.ToString();
 
 				// start or stop rolling value animation if die value is invalid
-				if (target.Value == -1)
+				if (target.Value == -1 && (target.CurrentDieState == Die.DieState.Casted || target.CurrentDieState == Die.DieState.Assigned))
 				{
 					if (!rolling)
 					{

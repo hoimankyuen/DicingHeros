@@ -14,12 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   normalCursor: {fileID: 21300000, guid: c3112089d24239e4da77d78a7f19ca49, type: 3}
   iconCursor: {fileID: 21300000, guid: 43557a6937c2f2f4e84e3943af88032e, type: 3}
-  entries:
-  - type: 0
-    icon: {fileID: 0}
-  - type: 1
-    icon: {fileID: 21300000, guid: 499ad5f0a1fbb5b41adb5a3d9011770c, type: 3}
-  - type: 2
-    icon: {fileID: 21300000, guid: 86b00853512530c41ae461e53ff6c146, type: 3}
-  - type: 3
-    icon: {fileID: 21300000, guid: 6c6ac358d2857794ba406af5f7d570a5, type: 3}
+  action: {fileID: 21300000, guid: ca8cfd67d7c039e4e9b22b1f5763b836, type: 3}
+  inspect: {fileID: 21300000, guid: 554e59ae361faab4382ffdc684a69a6e, type: 3}
+  pick: {fileID: 21300000, guid: ff6e28e512da3d8488fb453d8d255aeb, type: 3}
+  throws: {fileID: 21300000, guid: de19d6e21ce5e6b478196266025ef4ac, type: 3}
+  movement: {fileID: 21300000, guid: 499ad5f0a1fbb5b41adb5a3d9011770c, type: 3}
+  physicalAttack: {fileID: 21300000, guid: 86b00853512530c41ae461e53ff6c146, type: 3}
+  rangedAttack: {fileID: 21300000, guid: 6c6ac358d2857794ba406af5f7d570a5, type: 3}
+  magicalAttack: {fileID: 21300000, guid: cea0a9979e680314f9f131f6d630ddac, type: 3}

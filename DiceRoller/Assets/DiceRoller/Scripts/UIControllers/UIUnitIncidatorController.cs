@@ -7,6 +7,9 @@ namespace DiceRoller
 {
     public class UIUnitIncidatorController : MonoBehaviour
     {
+		// reference
+		public GameController game => GameController.current;
+
 		// working variables
 		public GameObject indicatorPrefab = null;
         private List<UIUnitIndicator> indicators = new List<UIUnitIndicator>();
@@ -20,7 +23,6 @@ namespace DiceRoller
 		private void Awake()
 		{
 			indicators.Add(transform.GetChild(0).GetComponent<UIUnitIndicator>());
-			Unit.OnAnyBeingInspectedChanged += UpdateAllIndicators;
 		}
 
 		/// <summary>
@@ -28,7 +30,12 @@ namespace DiceRoller
 		/// </summary>
 		private void Start()
 		{
-
+			foreach (Player player in game.GetAllPlayers())
+			{
+				player.OnUnitsChanged += UpdateAllIndicators;
+			}
+			Unit.OnAnyBeingInspectedChanged += UpdateAllIndicators;
+			UpdateAllIndicators();
 		}
 
 		/// <summary>
@@ -44,11 +51,67 @@ namespace DiceRoller
 		/// </summary>
 		private void OnDestroy()
 		{
+			if (game != null)
+			{ 
+				foreach (Player player in game.GetAllPlayers())
+				{
+					if (player != null)
+					{
+						player.OnUnitsChanged += UpdateAllIndicators;
+					}
+				}
+			}
 			Unit.OnAnyBeingInspectedChanged -= UpdateAllIndicators;
 		}
 
 		public void UpdateAllIndicators()
 		{
+			// remove all not in used indicators
+			foreach (UIUnitIndicator indicator in indicators)
+			{
+				bool notFound = true;
+				foreach (Player player in game.GetAllPlayers())
+				{
+					if (indicator.Target != null && player.Units.Contains(indicator.Target))
+					{
+						notFound = false;
+					}
+				}
+				if (notFound)
+				{
+					indicator.SetTarget(null);
+				}
+			}
+
+			// all new indicators
+			foreach (Player player in game.GetAllPlayers())
+			{
+				foreach (Unit unit in player.Units)
+				{
+					if (!indicators.Any(x => x.Target == unit))
+					{
+						UIUnitIndicator firstReadyIndicator = indicators.FirstOrDefault(x => x.Target == null);
+						if (firstReadyIndicator == null)
+						{
+							firstReadyIndicator = Instantiate(indicatorPrefab, transform).GetComponent<UIUnitIndicator>();
+							indicators.Add(firstReadyIndicator);
+						}
+						firstReadyIndicator.SetTarget(unit);
+					}
+				}
+			}
+
+
+
+
+
+
+
+
+
+
+
+			/*
 			IEnumerable<Unit> targets = Unit.GetAllBeingInspected();
 
 			// remove all not in used indicators
@@ -74,6 +137,7 @@ namespace DiceRoller
 					firstReadyIndicator.SetTarget(target);
 				}
 			}
+			*/
 		}
 	}
 }

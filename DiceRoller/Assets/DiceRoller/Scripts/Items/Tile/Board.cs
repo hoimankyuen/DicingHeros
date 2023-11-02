@@ -19,6 +19,9 @@ namespace DiceRoller
 		[Header("Preset Board Pieces")]
 		public List<BoardPiece> presetBoardPieces = new List<BoardPiece>();
 
+		[Header("Other")]
+		public GameObject tileSelection = null;
+
 		// events
 		public event Action OnBoardChanged = () => { };
 
@@ -52,6 +55,7 @@ namespace DiceRoller
 		private void Start()
 		{
 			SetupPresetBoardPieces();
+			ShowTargetTile(null);
 		}
 
 		/// <summary>
@@ -81,7 +85,10 @@ namespace DiceRoller
 		{
 			foreach (BoardPiece boardPiece in presetBoardPieces)
 			{
-				AddBoardPiece(boardPiece);
+				if (boardPiece.gameObject.activeInHierarchy)
+				{
+					AddBoardPiece(boardPiece);
+				}
 			}
 		}
 
@@ -291,6 +298,10 @@ namespace DiceRoller
 			// prepare containers
 			result.Clear();
 
+			// no result if no starting tiles provided
+			if (startingTiles.Count() == 0)
+				return;
+
 			// calculate the bound of starting tiles
 			Int2 min = Int2.MaxValue;
 			Int2 max = Int2.MinValue;
@@ -333,6 +344,10 @@ namespace DiceRoller
 			List<TileRangePair> open = tempTileRangePairList;
 			open.Clear();
 			result.Clear();
+
+			// no result if no starting tiles provided
+			if (startingTiles.Count() == 0)
+				return;
 
 			// add initial tiles
 			foreach (Tile startingTile in startingTiles)
@@ -431,6 +446,10 @@ namespace DiceRoller
 			open.Clear();
 			closed.Clear();
 			result.Clear();
+
+			// no result if no starting tiles provided
+			if (startingTiles.Count() == 0)
+				return;
 
 			// add initial tiles, also check if target tile is already included in the starting tiles
 			foreach (Tile startingTile in startingTiles)
@@ -706,6 +725,24 @@ namespace DiceRoller
 				tile.HidePath();
 			}
 			activePath.Clear();
+		}
+
+		// ========================================================= Target Tile =========================================================
+
+		/// <summary>
+		/// Show a display of the target tile on the board.
+		/// </summary>
+		public void ShowTargetTile(Tile tile)
+		{
+			if (tile != null)
+			{
+				tileSelection.SetActive(true);
+				tileSelection.transform.position = tile.transform.position + Vector3.up * 0.01f;
+			}
+			else
+			{
+				tileSelection.SetActive(false);
+			}
 		}
 	}
 }

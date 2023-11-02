@@ -56,6 +56,8 @@ namespace DiceRoller
 				Vector3 knockbackDirection = (target.transform.position - self.transform.position).normalized;
 				target.rigidBody.AddForce(knockbackDirection * self.NextAttack.knockbackForce, ForceMode.Impulse);
 
+				target.OnTakingDamage.Invoke();
+
 				// hit and damage animation
 				float duration = 0.5f;
 				float startTime = Time.time;

@@ -30,6 +30,7 @@ namespace DiceRoller
 		private Overlay overlay = null;
 
 		// working variables
+		bool instantEffectRunning = false;
 		private Color overlayColor = Color.magenta;
 		private BlinkType overlayBlinkType = BlinkType.None;
 		private Color outlineColor = Color.magenta;
@@ -90,10 +91,13 @@ namespace DiceRoller
 		private void RegisterCallbacks()
 		{
 			self.OnBlockingChanged += RefreshEffects;
+			self.OnInRangeChanged += RefreshEffects;
 			self.OnTargetableChanged += RefreshEffects;
 			self.OnInspectionChanged += RefreshEffects;
 			self.OnSelectionChanged += RefreshEffects;
 			self.OnUnitStateChange += RefreshEffects;
+
+			self.OnTakingDamage += StartDamageEffect;
 		}
 
 		/// <summary>
@@ -104,20 +108,27 @@ namespace DiceRoller
 			if (self != null)
 			{
 				self.OnBlockingChanged -= RefreshEffects;
+				self.OnInRangeChanged -= RefreshEffects;
 				self.OnTargetableChanged -= RefreshEffects;
 				self.OnInspectionChanged -= RefreshEffects;
 				self.OnSelectionChanged -= RefreshEffects;	
 				self.OnUnitStateChange -= RefreshEffects;
+
+				self.OnTakingDamage -= StartDamageEffect;
 			}
 		}
 
-		// ========================================================= Functionalities =========================================================
+		// ========================================================= Consistant Effects =========================================================
 
 		/// <summary>
 		/// refresh all effects.
 		/// </summary>
 		private void RefreshEffects()
 		{
+			// dont do if instant effect is running
+			if (instantEffectRunning)
+				return;
+
 			// initialize effect
 			bool overlayEnabled = false;
 			Color overlayColor = Color.magenta;
@@ -133,8 +144,9 @@ namespace DiceRoller
 				overlayColor = effectStyle.depletedColor;
 			}
 
-			if (self.IsTargetable)
+			if (self.IsInRange)
 			{
+
 				if (self.Player == game.CurrentPlayer)
 				{
 					overlayEnabled = true;
@@ -146,6 +158,22 @@ namespace DiceRoller
 					overlayEnabled = true;
 					overlayColor = effectStyle.targetableOtherColor;
 					overlayBlinkType = BlinkType.SoftSlow;
+				}
+			}
+
+			if (self.IsTargetable)
+			{
+				if (self.Player == game.CurrentPlayer)
+				{
+					overlayEnabled = true;
+					overlayColor = effectStyle.targetableSelfColor;
+					overlayBlinkType = BlinkType.SoftFast;
+				}
+				else
+				{
+					overlayEnabled = true;
+					overlayColor = effectStyle.targetableOtherColor;
+					overlayBlinkType = BlinkType.SoftFast;
 				}
 			}
 
@@ -220,6 +248,10 @@ namespace DiceRoller
 		/// </summary>
 		private void BlinkEffects()
 		{
+			// dont do if instant effect is running
+			if (instantEffectRunning)
+				return;
+
 			Color targetColor;
 
 			// overlay blinking
@@ -232,7 +264,7 @@ namespace DiceRoller
 						targetColor.a = Mathf.Lerp(0, overlayColor.a, Mathf.Sin(Time.time * 5f) * 0.5f + 0.5f);
 						break;
 					case BlinkType.SoftFast:
-						targetColor.a = Mathf.Lerp(0, overlayColor.a, Mathf.Sin(Time.time * 50f) * 0.5f + 0.5f);
+						targetColor.a = Mathf.Lerp(0, overlayColor.a, Mathf.Sin(Time.time * 10f) * 0.5f + 0.5f);
 						break;
 					case BlinkType.SharpSlow:
 						targetColor.a = Mathf.Lerp(0, overlayColor.a, ((Time.time * 5f) % 1f < 0.5f ? 0f : 1f) * 0.5f + 0.5f);
@@ -254,7 +286,7 @@ namespace DiceRoller
 						targetColor.a = Mathf.Lerp(0, outlineColor.a, Mathf.Sin(Time.time * 5f) * 0.5f + 0.5f);
 						break;
 					case BlinkType.SoftFast:
-						targetColor.a = Mathf.Lerp(0, outlineColor.a, Mathf.Sin(Time.time * 50f) * 0.5f + 0.5f);
+						targetColor.a = Mathf.Lerp(0, outlineColor.a, Mathf.Sin(Time.time * 10f) * 0.5f + 0.5f);
 						break;
 					case BlinkType.SharpSlow:
 						targetColor.a = Mathf.Lerp(0, outlineColor.a, ((Time.time * 5f) % 1f < 0.5f ? 0f : 1f) * 0.5f + 0.5f);
@@ -266,6 +298,33 @@ namespace DiceRoller
 				outline.Color = targetColor;
 			}
 
+		}
+
+		// ========================================================= Instant Effects =========================================================
+
+		/// <summary>
+		/// Start an effect animation of taking damage.
+		/// </summary>
+		private void StartDamageEffect()
+		{
+			StartCoroutine(DamageEffectSequence());
+		}
+		private IEnumerator DamageEffectSequence()
+		{
+			instantEffectRunning = true;
+
+			overlay.enabled = true;
+			overlay.Color = Color.red;
+			yield return new WaitForSeconds(0.05f);
+
+			overlay.enabled = true;
+			overlay.Color = new Color(0, 0, 0, 0);
+			yield return new WaitForSeconds(0.05f);
+
+			// revert back to normal effects
+			instantEffectRunning = false;
+			RefreshEffects();
+			yield return null;
 		}
 	}
 }

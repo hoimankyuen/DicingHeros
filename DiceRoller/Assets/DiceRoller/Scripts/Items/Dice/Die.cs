@@ -92,6 +92,7 @@ namespace DiceRoller
 			base.Update();
 
 			DetectValue();
+			DetectFallen();
 
 			// temporary here only
 			effectTransform.rotation = Quaternion.identity;
@@ -423,6 +424,11 @@ namespace DiceRoller
 				// die is stiill moving, set value to invalid
 				Value = -1;
 			}
+			if (CurrentDieState == DieState.Holding || CurrentDieState == DieState.Expended)
+			{
+				// die is not on scene, set value to invalid
+				Value = -1;
+			}
 			else if (Value == -1 || Quaternion.Angle(transform.rotation, lastRotation) < 1f)
 			{
 				// die is stationary and either value is invalid or the rotation is changed, calculate the current value
@@ -609,6 +615,17 @@ namespace DiceRoller
 			rigidBody.AddTorque(torque, ForceMode.VelocityChange);
 
 			rollInitiating = true;
+		}
+
+		/// <summary>
+		/// Detect and perform necessary action for fallen die.
+		/// </summary>
+		private void DetectFallen()
+		{
+			if (IsFallen)
+			{
+				CurrentDieState = DieState.Holding;
+			}
 		}
 	}
 }

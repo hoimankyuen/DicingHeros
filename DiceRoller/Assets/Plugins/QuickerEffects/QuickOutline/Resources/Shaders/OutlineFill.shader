@@ -27,7 +27,8 @@ Shader "Custom/Outline Fill" {
       Name "Fill"
       Cull Off
       ZTest [_ZTest]
-      ZWrite Off
+      //ZWrite Off
+      ZWrite On
       Blend SrcAlpha OneMinusSrcAlpha
       ColorMask RGB
 

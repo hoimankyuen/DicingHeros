@@ -65,6 +65,11 @@ namespace DiceRoller
 						board.ShowArea(self, Tile.DisplayType.Attack, self.AttackableArea);
 
 						// find all targetable units
+						foreach (Unit unit in Unit.GetAllTargetable())
+						{
+							unit.PendingHealthDelta = 0;
+							unit.IsRecievingDamage = false;
+						}
 						ClearTargetableUnits();
 						foreach (Player player in game.GetAllPlayers().Where(x => x != self.Player))
 						{
@@ -72,6 +77,19 @@ namespace DiceRoller
 							{
 								if (lastAttackableArea.Intersect(unit.OccupiedTiles).Count() > 0)
 								{
+									// calculate damage
+									int damage = 0;
+									if (self.CurrentAttackType == AttackType.Physical)
+									{
+										damage = Mathf.Max(self.PhysicalAttack - unit.PhysicalDefence, 0);
+									}
+									else if (self.CurrentAttackType == AttackType.Magical)
+									{
+										damage = Mathf.Max(self.MagicalAttack - unit.PhysicalDefence, 0);
+									}
+
+									unit.PendingHealthDelta = damage * -1;
+									unit.IsRecievingDamage = true;
 									unit.IsTargetable = true; 
 								}
 							}
@@ -84,10 +102,6 @@ namespace DiceRoller
 					{
 						if (previous != null)
 						{
-							// remove previous pending damage and status from previous target
-							previous.PendingHealthDelta = 0;
-							previous.IsRecievingDamage = false;
-
 							// hide tiles and effect
 							board.HideArea(previous, Tile.DisplayType.EnemyPosition);
 							previous.IsBeingInspected = false;
@@ -95,19 +109,7 @@ namespace DiceRoller
 						
 						if (target != null)
 						{
-							// calculate damage
-							int damage = 0;
-							if (self.CurrentAttackType == AttackType.Physical)
-							{
-								damage = Mathf.Max(self.PhysicalAttack - target.PhysicalDefence, 0);
-							}
-							else if (self.CurrentAttackType == AttackType.Magical)
-							{
-								damage = Mathf.Max(self.MagicalAttack - target.PhysicalDefence, 0);
-							}
-
 							// add pending damage and status to new target
-							target.PendingHealthDelta = damage * -1;
 							target.IsRecievingDamage = true;
 
 							// show tiles and effect
@@ -132,6 +134,7 @@ namespace DiceRoller
 							{
 								damage = Mathf.Max(self.MagicalAttack - target.MagicalDefence, 0);
 							}
+
 							// fill in attack parameters
 							self.NextAttack = new UnitAttack(target, damage, self.KnockbackForce);
 
@@ -196,14 +199,16 @@ namespace DiceRoller
 					CacheUtils.ResetCollectionCache(lastAttackableArea);
 
 					// clear targetable units
+					foreach (Unit unit in Unit.GetAllTargetable())
+					{
+						unit.PendingHealthDelta = 0;
+						unit.IsRecievingDamage = false;
+					}
 					ClearTargetableUnits();
 
 					// remove effect on targeted unit
 					if (targetedUnit != null)
 					{
-						targetedUnit.PendingHealthDelta = 0;
-						targetedUnit.IsRecievingDamage = false;
-
 						board.HideArea(targetedUnit, Tile.DisplayType.EnemyPosition);
 						targetedUnit.IsBeingInspected = false;
 					}
