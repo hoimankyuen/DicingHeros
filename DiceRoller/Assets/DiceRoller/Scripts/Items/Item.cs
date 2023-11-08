@@ -35,9 +35,6 @@ namespace DiceRoller
 		public float height = 1f;
 		public int playerId = 0;
 
-		[Header("Data")]
-		public ItemEffectStyle effectStyle = null;
-
 		// reference
 		protected GameController game => GameController.current;
 		protected StateMachine stateMachine => StateMachine.current;

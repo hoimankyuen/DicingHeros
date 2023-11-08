@@ -7,6 +7,7 @@
 - Model
 - UI
 - Level
+- Game Design Document
 
 == Small Todo ==
 - Find a way to end a async task if it takes too long
@@ -17,3 +18,16 @@
 - Add "?" information button to unit, dice and equipment
 - attack in movement select ?
 - AI tendencies
+- Add unit of larger size
+
+== Notes ==
+- Unit => unit race type
+- Equipment => stats
+- Blessing Effects => special attacks
+- Blessing Artifact => Dice
+
+== Story Notes ==
+- Player Units => Cute Animals
+- Enemy Units => Machines
+- Dice => Blessing from gods
+- 
