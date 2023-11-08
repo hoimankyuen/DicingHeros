@@ -42,6 +42,21 @@ An AI is implemented as the enemy player. The AI would be playing using the same
 - Attack units of the player with the most damaging attack currently possible, consuming dice in the process.
 - Move towards the units of the player.
 
+## Controls
+
+The controls of the game are listed as follows:
+|             Button |                                                                                                 Description |
+|-------------------:|-------------------------------------------------------------------------------------------------------------|
+|   Left Mouse Button| Select Dice / Unit to Action / Movement Target / Unit to Target / Throw Dice / Activate/Deactivate Equipment|
+|  Right Mouse Button|                                        Cancel Selection / Rotate Camera / Remove Die from Equipment Die Slot|
+| Middle Mouse Button|                                                                                                   Pan Camera|
+|         Mouse Wheel|                                                                                                  Zoom In/Out|
+| Mouse Drag and Drop|                                                                             Assign Die to Equipment Die Slot|
+|          W, A, S, D|                                                                                                   Pan Camera|
+|                Q, E|                                                                                                Rotate Camera|
+|                R, F|                                                                                                  Zoom In/Out|
+
+
 ## UI
 
 The following section describes the every UI on each stages of the game.
@@ -58,8 +73,8 @@ Unit Selection UI
 |       6|                Information|
 |       7|       End the current turn|
 |       8| Selected Unit for Movement|
-|       9|              Moveable Area|
-|      10|            Attackable Area|
+|       9|      Moveable Area Display|
+|      10|    Attackable Area Display|
 
 ![alt text](Screenshots/DiceThrow_Annotated.png?raw=true)
 Movement UI
@@ -75,19 +90,20 @@ Attack UI
 |-------:|-------------------------------------------|
 |       1|                      Selected Unit Details|
 |       2|                        Selected Unit Stats|
-|       3|                 Equipment of Selected Unit|
-|       4|                                  Die Slot |
-|       5|                Skip the turn for this unit|
+|       3|                Equipments of Selected Unit|
+|       4|                        Equipment Die Slots|
+|       5|                Skip the Turn for this Unit|
 |       6|               Change to Movement Selection|
 |       7|                 Change to Attack Selection|
 |       8|                  Go back to Unit Selection|
-|       9|                             Movement range|
-|      10|                    CUrrently Selected Path|
-|      11|                            Possible Target|
+|       9|                             Movement Range|
+|      10|            Path to Currently Selected Tile|
+|      11|                           Possible Targets|
 
 ![alt text](Screenshots/Attack_Annotated.png?raw=true)
 Attack UI
-| Number |                               Description |
-|-------:|-------------------------------------------|
-|       1| Enemy Unit Selection and Damage Calcuation|
-|       2|                     Enemy Unit Information|
+| Number |              Description |
+|-------:|--------------------------|
+|       1|              Attack Range|
+|       2|    All Targetable Enemies|
+|       3| Currently Selected Target|
